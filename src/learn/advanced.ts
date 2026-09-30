@@ -1,0 +1,161 @@
+import type { Lesson } from './types'
+
+export const ADVANCED: Lesson[] = [
+  {
+    slug: 'aspect-patterns',
+    level: 'Advanced',
+    title: 'Stelliums and aspect patterns',
+    summary: 'Grand trines, T-squares and stelliums: the chart’s big architecture.',
+    minutes: 12,
+    blocks: [
+      { type: 'p', text: 'When several aspects connect into a shape, the whole is more than the sum of its parts. These patterns often describe the central storyline of a life.' },
+      { type: 'table', headers: ['Pattern', 'Geometry', 'Theme'], rows: [
+        ['Stellium', '3+ planets in one sign or house', 'Concentrated focus; that sign or house dominates'],
+        ['Grand Trine', 'Three planets each 120° apart', 'Closed circuit of talent; ease that can become complacency'],
+        ['T-Square', 'Opposition + both square a third (apex)', 'Dynamic tension discharged through the apex planet'],
+        ['Grand Cross', 'Two oppositions squaring each other', 'Pressure from all sides; great resilience'],
+        ['Yod', 'Two quincunxes (150°) + a sextile', '"Finger of fate"; a special mission or adjustment'],
+      ] },
+      { type: 'h', text: 'Reading a T-square' },
+      { type: 'list', items: [
+        '1. Read the **opposition** as a polarity you are constantly balancing.',
+        '2. The **apex** planet receives the tension. It is where you act, overdo, and ultimately achieve.',
+        '3. The **empty point** opposite the apex (the "missing leg") suggests the sign and house that release the pressure when consciously developed.',
+      ] },
+      { type: 'example', title: 'Deep example: Einstein’s T-square', text: [
+        'Jupiter in Aquarius opposes Uranus in Virgo, and both square Pluto in Taurus at the apex.',
+        '**Opposition**: Jupiter (belief, big frameworks) against Uranus (sudden insight, revolution). This is a tension between established worldviews and radical overturning.',
+        '**Apex Pluto** in the 11th house (collective, the future): the tension discharges as a transformation of how humanity understands reality, with world-altering consequences.',
+        '**Stelliums**: four planets in the 10th (Sun, Mercury, Venus, Saturn) show a life whose centre of gravity is public work, and three in Aries show pioneering ideas.',
+      ] },
+      { type: 'callout', tone: 'note', text: 'Outer-planet patterns (Uranus–Pluto etc.) are shared by many people born in the same years. They become personal when a personal planet or angle joins them, or when they fall in emphasised houses.' },
+      { type: 'try', text: 'Check the Patterns section of your reading. If none appear, your chart is more evenly distributed. That is a pattern too.' },
+    ],
+    quiz: [
+      { q: 'In a T-square, the planet squaring both ends of the opposition is called…', options: ['The stellium', 'The apex', 'The node', 'The ruler'], answer: 1, explain: 'The apex focuses the tension.' },
+    ],
+  },
+  {
+    slug: 'nodes',
+    level: 'Advanced',
+    title: 'The lunar nodes',
+    summary: 'The axis of growth: familiar South Node gifts versus North Node direction.',
+    minutes: 8,
+    blocks: [
+      { type: 'p', text: 'The **lunar nodes** are not planets. They are the two points where the Moon’s orbit crosses the ecliptic (the Sun’s path). Eclipses happen near them. They move backward through the zodiac, completing a cycle in about 18.6 years.' },
+      { type: 'list', items: [
+        '**South Node**: skills and habits that come naturally, which some traditions call past-life talent. It is comfortable and can become a rut.',
+        '**North Node**: the direction of growth. It feels unfamiliar and even awkward, but it is deeply fulfilling over time.',
+      ] },
+      { type: 'example', title: 'Example: North Node in Libra, South Node in Aries', text: [
+        '**South Node Aries**: very capable independently, quick to act alone, used to fighting their own battles.',
+        '**North Node Libra**: life keeps presenting lessons in partnership, compromise and considering others. Growth comes from learning that "we" can be stronger than "I".',
+        'The goal is not to abandon the South Node but to bring its gifts into service of the North Node: courage (Aries) used to make fair partnerships (Libra).',
+      ] },
+      { type: 'callout', tone: 'note', text: 'Astro Life uses the mean node, which is smoothly averaged. The "true" node wobbles up to about 1.5° from it. Both are used in practice.' },
+    ],
+    quiz: [
+      { q: 'The North Node represents…', options: ['Comfortable habits', 'A direction of growth', 'Your career', 'Your partner'], answer: 1, explain: 'It is the path of development.' },
+    ],
+  },
+  {
+    slug: 'how-charts-are-calculated',
+    level: 'Advanced',
+    title: 'How a chart is calculated',
+    summary: 'Time zones, sidereal time, the ecliptic and house systems: the maths under the hood.',
+    minutes: 14,
+    blocks: [
+      { type: 'p', text: 'Understanding the calculation helps you judge accuracy and spot bad data. Here is exactly what Astro Life does in your browser.' },
+      { type: 'h', text: '1. Local time → Universal Time' },
+      { type: 'p', text: 'Your birth time is converted to UTC using the historical time-zone rules for your birthplace (including daylight saving time in force then). Getting this wrong by one hour shifts the Ascendant by about 15°, so it is the most common source of errors.' },
+      { type: 'h', text: '2. Planet positions' },
+      { type: 'p', text: 'Using the open-source **Astronomy Engine** (accurate to within about 1 arcminute), we compute each body’s geocentric position and convert it to **ecliptic longitude**: its position along the Sun’s apparent path, measured from the spring equinox point (0° Aries).' },
+      { type: 'h', text: '3. Tropical vs sidereal zodiac' },
+      { type: 'p', text: 'Western astrology uses the **tropical** zodiac, tied to the seasons: 0° Aries is always the spring equinox. Vedic (Jyotish) astrology uses the **sidereal** zodiac, tied to the constellations. Because of the precession of the equinoxes, the two differ by about 24° today, so many people have a different sidereal Sun sign. Neither is "wrong"; they are different reference frames.' },
+      { type: 'h', text: '4. The angles' },
+      { type: 'p', text: 'We compute **sidereal time**, Earth’s rotation relative to the stars, at your birthplace. Converted to degrees it gives the **RAMC** (right ascension of the Midheaven). With the tilt of Earth’s axis (obliquity, about 23.44°) and your latitude, spherical trigonometry gives:' },
+      { type: 'list', items: [
+        '**MC** = atan2( sin RAMC, cos RAMC · cos ε )',
+        '**ASC** = atan2( cos RAMC, −( sin RAMC · cos ε + tan φ · sin ε ) )',
+      ] },
+      { type: 'h', text: '5. House systems' },
+      { type: 'table', headers: ['System', 'How cusps are found', 'Notes'], rows: [
+        ['Placidus', 'Trisects the time each degree takes to rise to the MC', 'Most popular in modern Western astrology; undefined above ~66° latitude'],
+        ['Whole Sign', 'Each sign = one house, starting with the rising sign', 'Oldest system (Hellenistic); works at any latitude'],
+        ['Equal', '30° segments starting at the exact Ascendant', 'Simple and symmetrical'],
+      ] },
+      { type: 'example', title: 'Why your house can change between systems', text: [
+        'Suppose your Ascendant is 25° Leo and Venus is at 5° Virgo.',
+        '**Whole Sign**: Leo is the 1st house and Virgo is the 2nd, so Venus is in the 2nd house (values, money).',
+        '**Placidus**: the 1st house runs from 25° Leo to perhaps 18° Virgo, so Venus is in the 1st house (self, appearance).',
+        'Neither is universally right. Try both and see which one describes you better.',
+      ] },
+      { type: 'callout', tone: 'tip', text: 'You can switch house systems when creating a chart. Astro Life falls back to Whole Sign automatically at polar latitudes where Placidus fails.' },
+    ],
+    quiz: [
+      { q: 'Tropical 0° Aries is defined by…', options: ['The constellation Aries', 'The spring equinox', 'The star Regulus', 'Your birthday'], answer: 1, explain: 'The tropical zodiac is anchored to the seasons.' },
+      { q: 'An hour’s error in birth time shifts the Ascendant by roughly…', options: ['1°', '5°', '15°', '30°'], answer: 2, explain: 'The sky turns 360° in 24 hours, about 15° per hour (it varies by sign).' },
+    ],
+  },
+  {
+    slug: 'transits-progressions',
+    level: 'Advanced',
+    title: 'Timing: transits and progressions',
+    summary: 'How the moving sky activates your birth chart over time.',
+    minutes: 11,
+    blocks: [
+      { type: 'p', text: 'The birth chart is a fixed snapshot. **Timing techniques** show how its potential unfolds.' },
+      { type: 'h', text: 'Transits' },
+      { type: 'p', text: 'A transit is a planet’s current position making an aspect to a point in your birth chart. Slow planets matter most because they linger for months.' },
+      { type: 'table', headers: ['Transit', 'Age(s)', 'Typical theme'], rows: [
+        ['Jupiter return', '12, 24, 36, 48…', 'New growth cycle, opportunity, expansion'],
+        ['Saturn square Saturn', '~7, 14, 21, 36…', 'Tests of structures you have built'],
+        ['Saturn return', '~29, ~58', 'Maturity, facing reality, restructuring life'],
+        ['Uranus opposition', '~40–42', 'The "midlife" urge for freedom and authenticity'],
+        ['Chiron return', '~50', 'Healing old wounds, becoming a mentor'],
+      ] },
+      { type: 'h', text: 'Secondary progressions' },
+      { type: 'p', text: 'Progressions use the symbolic formula **one day after birth = one year of life**. The progressed Moon moves about 1° per month and changes sign every ~2.5 years, which marks emotional chapters. When the progressed Sun changes sign (roughly every 30 years), people often describe a noticeable shift in identity.' },
+      { type: 'example', title: 'Example: a Saturn return', text: [
+        'Natal Saturn in the 7th house in Libra. Around age 29, transiting Saturn returns to that point.',
+        'Typical experience: relationships are tested for their long-term structure. It is a time when people often commit (marry or formalise partnerships) or end relationships that are not built to last. The lesson is maturity in partnership.',
+      ] },
+      { type: 'callout', tone: 'warn', text: 'Timing describes themes and climates, not guaranteed events. Treat forecasts as prompts for reflection, not predictions to fear.' },
+    ],
+    quiz: [
+      { q: 'The first Saturn return happens around age…', options: ['12', '21', '29', '42'], answer: 2, explain: 'Saturn’s orbit is about 29.5 years.' },
+    ],
+  },
+  {
+    slug: 'whole-chart-synthesis',
+    level: 'Advanced',
+    title: 'Whole-chart synthesis',
+    summary: 'A step-by-step method for reading an entire chart as one coherent story.',
+    minutes: 15,
+    blocks: [
+      { type: 'p', text: 'Beginners read placements one by one, which produces a list of contradictions. Synthesis weaves them into a story. Here is a reliable order of operations:' },
+      { type: 'list', items: [
+        '1. **Overall shape**: element/modality balance and hemisphere emphasis. What is the temperament?',
+        '2. **Big Three**: Sun, Moon and Rising. What is the core, the need and the approach?',
+        '3. **Chart ruler**: follow it to its sign, house and aspects. What is the life direction?',
+        '4. **Emphasis**: stelliums, angular planets, planets in dignity, the tightest aspects. What stands out?',
+        '5. **Patterns**: T-squares, grand trines. What is the central dynamic?',
+        '6. **Repeating themes**: when three separate factors say the same thing, it is a core truth.',
+        '7. **Nodes**: the growth arc tying it together.',
+      ] },
+      { type: 'example', title: 'Full synthesis: Einstein', text: [
+        '**Temperament**: Fire 41%, Water 36%, Air only 5%, Earth 18%. It is striking that the most famous theorist has almost no air, the element of detached intellect. He said he thought in images and feelings rather than words, which is a fire-water mind: intuitive leaps (fire) guided by imagination (water).',
+        '**Big Three**: a Pisces Sun (imagination, the invisible, oneness), a Sagittarius Moon (needs big questions, philosophy, freedom) and Cancer Rising (gentle, protective, unassuming presence).',
+        '**Chart ruler**: the Moon, in Sagittarius in the 6th house. His life is steered by a restless philosophical need expressed through daily work. Famously, he developed relativity while working a routine day job at a patent office.',
+        '**Emphasis**: four planets in the 10th house (public legacy), a 1° Mercury–Saturn conjunction (disciplined, revolutionary thought about time), and Mars exalted in Capricorn (strategic persistence).',
+        '**Pattern**: the Jupiter–Uranus opposition focused through Pluto describes worldview revolution with collective consequences.',
+        '**Repeating theme**: Pisces Sun + Uranus in the 3rd (the mind) + the Mercury–Saturn conjunction all point to thinking that dissolves old boundaries and rebuilds structure.',
+        '**Story**: a gentle, imaginative seeker whose disciplined, radical thinking about time and space became his public legacy.',
+      ] },
+      { type: 'callout', tone: 'tip', text: 'Practise synthesis on your own chart: write one paragraph per step, then compress it into three sentences. That is your chart’s story.' },
+    ],
+    quiz: [
+      { q: 'What should you look for to identify a core truth in a chart?', options: ['The Sun sign alone', 'Themes repeated by several factors', 'The number of trines', 'The outer planets'], answer: 1, explain: 'Repetition across independent factors indicates emphasis.' },
+    ],
+  },
+]
