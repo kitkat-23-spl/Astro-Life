@@ -6,12 +6,14 @@ import { searchPlaces, type Place } from '../lib/geocode'
 interface Props {
   initial?: Partial<BirthData>
   onSubmit: (b: BirthData) => void
+  submitLabel?: string
+  compact?: boolean
 }
 
 const MIN_DATE = '1800-01-01'
 const MAX_DATE = '2100-12-31'
 
-export default function BirthForm({ initial, onSubmit }: Props) {
+export default function BirthForm({ initial, onSubmit, submitLabel = 'Reveal my chart', compact }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [date, setDate] = useState(initial?.date ?? '')
   const [time, setTime] = useState(initial?.time ?? '')
@@ -30,6 +32,7 @@ export default function BirthForm({ initial, onSubmit }: Props) {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const listId = useId()
+  const uid = useId()
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
@@ -86,18 +89,18 @@ export default function BirthForm({ initial, onSubmit }: Props) {
   return (
     <form className="birth-form card" onSubmit={submit} noValidate>
       <div className="field">
-        <label htmlFor="bf-name">Name <span className="muted">(optional)</span></label>
-        <input id="bf-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="given-name" placeholder="e.g. Maya" />
+        <label htmlFor={`bf-name-${uid}`}>Name <span className="muted">(optional)</span></label>
+        <input id={`bf-name-${uid}`} value={name} onChange={(e) => setName(e.target.value)} maxLength={60} autoComplete="given-name" placeholder="e.g. Maya" />
       </div>
 
       <div className="field-row">
         <div className="field">
-          <label htmlFor="bf-date">Birth date</label>
-          <input id="bf-date" type="date" required min={MIN_DATE} max={MAX_DATE} value={date} onChange={(e) => setDate(e.target.value)} />
+          <label htmlFor={`bf-date-${uid}`}>Birth date</label>
+          <input id={`bf-date-${uid}`} type="date" required min={MIN_DATE} max={MAX_DATE} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div className="field">
-          <label htmlFor="bf-time">Birth time</label>
-          <input id="bf-time" type="time" value={time} disabled={unknownTime} onChange={(e) => setTime(e.target.value)} />
+          <label htmlFor={`bf-time-${uid}`}>Birth time</label>
+          <input id={`bf-time-${uid}`} type="time" value={time} disabled={unknownTime} onChange={(e) => setTime(e.target.value)} />
         </div>
       </div>
       <label className="check">
@@ -106,9 +109,9 @@ export default function BirthForm({ initial, onSubmit }: Props) {
       </label>
 
       <div className="field combo">
-        <label htmlFor="bf-place">Birthplace</label>
+        <label htmlFor={`bf-place-${uid}`}>Birthplace</label>
         <input
-          id="bf-place"
+          id={`bf-place-${uid}`}
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
@@ -161,8 +164,8 @@ export default function BirthForm({ initial, onSubmit }: Props) {
       <details className="advanced">
         <summary>Advanced options</summary>
         <div className="field">
-          <label htmlFor="bf-houses">House system <span className="muted">(Western charts; Vedic always uses whole-sign)</span></label>
-          <select id="bf-houses" value={houseSystem} onChange={(e) => setHouseSystem(e.target.value as HouseSystem)}>
+          <label htmlFor={`bf-houses-${uid}`}>House system <span className="muted">(Western charts; Vedic always uses whole-sign)</span></label>
+          <select id={`bf-houses-${uid}`} value={houseSystem} onChange={(e) => setHouseSystem(e.target.value as HouseSystem)}>
             {(Object.keys(HOUSE_SYSTEM_LABELS) as HouseSystem[]).map((h) => (
               <option key={h} value={h}>{HOUSE_SYSTEM_LABELS[h]}</option>
             ))}
@@ -171,8 +174,8 @@ export default function BirthForm({ initial, onSubmit }: Props) {
       </details>
 
       {error && <p className="error" role="alert">{error}</p>}
-      <button className="btn primary block" type="submit">Reveal my chart</button>
-      <p className="muted small center">Calculated privately in your browser. Nothing is stored unless you choose to save it.</p>
+      <button className="btn primary block" type="submit">{submitLabel}</button>
+      {!compact && <p className="muted small center">Calculated privately in your browser. Nothing is stored unless you choose to save it.</p>}
     </form>
   )
 }

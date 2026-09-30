@@ -6,6 +6,9 @@ import ChartPage from './pages/ChartPage'
 import HomePage from './pages/HomePage'
 import LearnPage from './pages/LearnPage'
 import LessonPage from './pages/LessonPage'
+import CareerPage from './pages/CareerPage'
+import MarriagePage from './pages/MarriagePage'
+import MatchPage from './pages/MatchPage'
 import NotFound from './pages/NotFound'
 import PrivacyPage from './pages/PrivacyPage'
 
@@ -23,7 +26,8 @@ export default function App() {
             <span>Astro Life</span>
           </Link>
           <nav className="main-nav" aria-label="Main">
-            <NavLink to="/chart">My Chart</NavLink>
+            <NavLink to="/chart" end>My Chart</NavLink>
+            <NavLink to="/match">Match</NavLink>
             <NavLink to="/learn">Learn</NavLink>
           </nav>
           <UserMenu />
@@ -33,6 +37,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/chart" element={<ChartPage />} />
+          <Route path="/chart/career" element={<CareerPage />} />
+          <Route path="/chart/marriage" element={<MarriagePage />} />
+          <Route path="/match" element={<MatchPage />} />
           <Route path="/learn" element={<LearnPage />} />
           <Route path="/learn/:slug" element={<LessonPage />} />
           <Route path="/account" element={<AccountPage />} />

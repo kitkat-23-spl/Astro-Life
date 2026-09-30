@@ -373,3 +373,112 @@ meter::-webkit-meter-even-less-good-value { background: var(--err); border-radiu
   .dasha-bar { grid-column: 1 / -1; }
 }
 .dasha-theme { color: var(--ink-2); margin: 10px 0 0; }
+
+/* Reports: career, marriage, match */
+.report-head { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: center; margin-bottom: 24px; }
+.report-head h1 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); }
+.dial { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 170px; text-align: center; }
+.dial svg { width: 150px; height: 150px; }
+.dial-track { fill: none; stroke: var(--surface-2); stroke-width: 12; }
+.dial-fill { fill: none; stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray .8s ease; }
+.dial-num { font-family: var(--serif); font-size: 32px; font-weight: 700; fill: var(--ink); }
+.dial-of { font-size: 11px; fill: var(--muted); }
+.dial figcaption { display: flex; flex-direction: column; gap: 2px; }
+.chart-pair { margin-bottom: 8px; }
+.chart-pair-bar { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+.chart-pair .vedic-charts { max-width: 820px; margin: 0 auto; }
+.section-gap { margin-top: 24px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-2 h2, .card h2 { font-size: 1.2rem; }
+.big-verdict { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; color: var(--accent); margin-bottom: .6em; }
+.tag { display: inline-block; font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; vertical-align: middle; }
+.tag.effect-supportive { background: color-mix(in srgb, var(--ok) 16%, var(--surface)); color: var(--ok); }
+.tag.effect-challenging { background: color-mix(in srgb, var(--err) 14%, var(--surface)); color: var(--err); }
+.tag.effect-mixed { background: color-mix(in srgb, var(--gold) 18%, var(--surface)); color: var(--gold); }
+.insight.tone-supportive { border-left: 4px solid var(--ok); }
+.insight.tone-info { border-left: 4px solid var(--line); }
+.rule-toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+.rule-toolbar p { margin: 0; }
+.rule-group h3 { font-size: 1.1rem; margin: 1.4em 0 .2em; }
+.rule-card h4 { font-family: var(--serif); font-size: 1.05rem; margin: 0; }
+.rule-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: .6em; }
+.rule-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.rule-card.not-fired { opacity: .65; box-shadow: none; background: var(--surface-2); }
+.rule-line { color: var(--muted); border-top: 1px solid var(--line); padding-top: 8px; margin: 4px 0 0; }
+.field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.field header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.field header h3 { margin: 0; flex: 1; }
+.field-rank { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-weight: 700; flex: none; }
+.field.top { border: 2px solid var(--accent); }
+.field.top .field-rank { background: var(--accent); color: var(--accent-ink); }
+.field-list { padding-left: 1.1em; margin: 0 0 10px; }
+.field-list li { margin-bottom: 2px; }
+.field details summary { cursor: pointer; color: var(--accent); }
+.modes { display: grid; gap: 14px; }
+.mode-head { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 4px; }
+.mode .bar-track { display: block; }
+.mode p { margin: 4px 0 0; }
+.varga-verdicts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.vv { padding: 14px; border-top: 4px solid var(--line); }
+.vv p { margin: 0 0 4px; }
+.vv-strong { border-top-color: var(--ok); }
+.vv-moderate { border-top-color: var(--gold); }
+.vv-weak { border-top-color: var(--err); }
+.vv-verdict { font-weight: 700; }
+.vv-strong .vv-verdict { color: var(--ok); } .vv-moderate .vv-verdict { color: var(--gold); } .vv-weak .vv-verdict { color: var(--err); }
+.timing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.timing-grid h3 { font-size: 1.05rem; }
+.timing-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; max-height: 620px; overflow: auto; padding-right: 4px; }
+.timing { padding: 12px 14px; }
+.timing.peak { border-color: var(--accent); }
+.timing-head { display: grid; grid-template-columns: auto 1fr 90px; gap: 10px; align-items: center; }
+.timing-bar { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+.timing-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--gold)); }
+.timing ul { margin: 6px 0 0; padding-left: 1.1em; }
+.windows { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.window { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.window.strong { border-color: var(--ok); }
+.window-dates { font-weight: 600; }
+.tendency-bar { display: flex; height: 28px; border-radius: 999px; overflow: hidden; font-size: .8rem; font-weight: 700; margin-bottom: 12px; }
+.tendency-bar span { display: grid; place-items: center; color: #fff; min-width: 70px; }
+.tendency-bar .early { background: var(--ok); } .tendency-bar .delay { background: var(--gold); }
+.factor-list { list-style: none; padding: 0; margin: 0; }
+.factor-list li { padding: 4px 0; border-bottom: 1px solid var(--line); }
+.factor-list li.early span:first-child { color: var(--ok); font-weight: 700; }
+.factor-list li.delay span:first-child { color: var(--gold); font-weight: 700; }
+.spouse-list { padding-left: 1.1em; }
+.spouse-list li { margin-bottom: 8px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two-col ul { padding-left: 1.1em; margin: 6px 0 0; }
+.cta-card { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 32px; flex-wrap: wrap; }
+.cta-card p { margin: 0; }
+.explore { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.explore-card { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; text-decoration: none; color: var(--ink); transition: transform .15s, border-color .15s; }
+.explore-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.explore-card strong { display: block; font-family: var(--serif); font-size: 1.1rem; }
+.explore-card .muted { display: block; }
+.explore-icon { font-family: var(--glyph); font-size: 1.8rem; color: var(--gold); width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); }
+.match-forms { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.match-forms h2 { font-size: 1.25rem; margin-top: 0; display: flex; gap: 8px; align-items: center; }
+.match-people { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 760px; margin: 0 auto 8px; }
+.person h3 { margin-bottom: .2em; }
+.summary-list { padding-left: 1.1em; color: var(--ink-2); }
+.koota-table .koota-bar { display: block; height: 4px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin-top: 4px; min-width: 60px; }
+.koota-table .koota-bar span { display: block; height: 100%; background: var(--accent); }
+.koota-table tr.total td { border-top: 2px solid var(--ink); }
+.porutham-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.porutham { padding: 14px; }
+.porutham.pass { border-left: 4px solid var(--ok); } .porutham.fail { border-left: 4px solid var(--err); }
+.porutham-head { display: flex; justify-content: space-between; gap: 8px; }
+.porutham p { margin: 6px 0; }
+.pos { color: var(--ok); font-weight: 600; } .neg { color: var(--err); font-weight: 600; }
+@media (max-width: 900px) {
+  .report-head, .grid-2, .timing-grid, .match-forms, .explore { grid-template-columns: 1fr; }
+  .report-head .dial { justify-self: center; }
+}
+@media (max-width: 560px) {
+  .match-people, .two-col { grid-template-columns: 1fr; }
+  .window { grid-template-columns: 1fr; }
+  .timing-head { grid-template-columns: 1fr 1fr; }
+  .timing-bar { grid-column: 1 / -1; }
+}

@@ -1,12 +1,15 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import { encodeBirth } from '../../lib/share'
 import type { BirthData } from '../../astro/ephemeris'
-import { GRAHA_INFO, NAKSHATRAS, RASHI, type Graha } from '../../vedic/constants'
+import { GRAHA_INFO, NAKSHATRAS, RASHI } from '../../vedic/constants'
 import { interpretVedic, type VInsight } from '../../vedic/interpret'
-import { computeVedicChart, signName, type VargaChart, type VedicChart } from '../../vedic/sidereal'
+import { computeVedicChart, signName, type VargaChart } from '../../vedic/sidereal'
 import { VARGAS, type VargaN } from '../../vedic/varga'
 import InsightCard from '../InsightCard'
 import Segmented from '../Segmented'
-import SquareChart, { type ChartItem, type ChartStyle } from './SquareChart'
+import SquareChart, { type ChartStyle } from './SquareChart'
+import { STYLE_KEY, itemsFor, lagnaFor, loadStyle } from './chartItems'
 
 type Tab = 'overview' | 'grahas' | 'bhavas' | 'yogas' | 'vargas' | 'dasha'
 const TABS: { id: Tab; label: string }[] = [
@@ -17,37 +20,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'vargas', label: 'D1–D10 Charts' },
   { id: 'dasha', label: 'Dasha' },
 ]
-
-const STYLE_KEY = 'astrolife:chart-style'
-function loadStyle(): ChartStyle {
-  try {
-    return localStorage.getItem(STYLE_KEY) === 'south' ? 'south' : 'north'
-  } catch {
-    return 'north'
-  }
-}
-
-/** Chart items for any varga; D1 also shows degrees and retrograde marks. */
-function itemsFor(chart: VedicChart, vc: VargaChart): ChartItem[] {
-  const items: ChartItem[] = vc.placements.map((p) => {
-    const g = chart.grahas.find((x) => x.graha === p.graha)!
-    const deg = vc.n === 1 ? ` ${Math.floor(g.degree)}°` : ''
-    const retro = g.retrograde && g.graha !== 'Rahu' && g.graha !== 'Ketu' ? '℞' : ''
-    return {
-      sign: p.sign,
-      label: `${GRAHA_INFO[p.graha as Graha].abbr}${deg}${retro}`,
-      title: `${p.graha} in ${signName(p.sign)}${p.dignity && p.dignity !== 'neutral' ? ` (${p.dignity})` : ''}${retro ? ', retrograde' : ''}`,
-      tone: p.dignity === 'exalted' || p.dignity === 'moolatrikona' || p.dignity === 'own' ? 'up' : p.dignity === 'debilitated' ? 'down' : undefined,
-    }
-  })
-  if (vc.lagnaSign !== null) items.unshift({ sign: vc.lagnaSign, label: 'Asc', title: `Lagna in ${signName(vc.lagnaSign)}`, tone: 'asc' })
-  return items
-}
-
-function lagnaFor(vc: VargaChart) {
-  if (vc.lagnaSign !== null) return { sign: vc.lagnaSign, moon: false }
-  return { sign: vc.placements.find((p) => p.graha === 'Moon')!.sign, moon: true }
-}
 
 export default function VedicView({ birth, actions }: { birth: BirthData; actions?: ReactNode }) {
   const chart = useMemo(() => computeVedicChart(birth), [birth])
@@ -123,6 +95,25 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
                   ))}
                 </div>
                 <p className="muted small">Each score combines the house lord’s dignity and placement, the house’s occupants and the significator (karaka), in D1 and the matching divisional chart. Hover for the rule.</p>
+              </div>
+            )}
+            {chart.timeKnown && (
+              <div className="explore">
+                <Link className="card explore-card" to={{ pathname: '/chart/career', hash: encodeBirth(b) }}>
+                  <span className="explore-icon" aria-hidden>♄</span>
+                  <span><strong>Explore your career</strong><span className="muted small">Suitable fields, job vs business, D10 and 5 other vargas, yogas, and the best dasha and transit periods.</span></span>
+                  <span aria-hidden>→</span>
+                </Link>
+                <Link className="card explore-card" to={{ pathname: '/chart/marriage', hash: encodeBirth(b) }}>
+                  <span className="explore-icon" aria-hidden>♀</span>
+                  <span><strong>Explore marriage</strong><span className="muted small">Timing, partner traits, D9 and Upapada, Mangal dosha, love or arranged, and favourable marriage windows.</span></span>
+                  <span aria-hidden>→</span>
+                </Link>
+                <Link className="card explore-card" to="/match">
+                  <span className="explore-icon" aria-hidden>⚭</span>
+                  <span><strong>Match two charts</strong><span className="muted small">36-point Guna Milan, poruthams and dosha matching with a partner.</span></span>
+                  <span aria-hidden>→</span>
+                </Link>
               </div>
             )}
             <h2 className="section-title">The foundations</h2>
