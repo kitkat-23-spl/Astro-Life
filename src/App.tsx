@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import ErrorBoundary from './components/ErrorBoundary'
 import UserMenu from './components/UserMenu'
 import AccountPage from './pages/AccountPage'
 import ChartPage from './pages/ChartPage'
@@ -34,18 +35,20 @@ export default function App() {
         </div>
       </header>
       <main id="main" className="container">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/chart" element={<ChartPage />} />
-          <Route path="/chart/career" element={<CareerPage />} />
-          <Route path="/chart/marriage" element={<MarriagePage />} />
-          <Route path="/match" element={<MatchPage />} />
-          <Route path="/learn" element={<LearnPage />} />
-          <Route path="/learn/:slug" element={<LessonPage />} />
-          <Route path="/account" element={<AccountPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <ErrorBoundary key={pathname}>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/chart" element={<ChartPage />} />
+            <Route path="/chart/career" element={<CareerPage />} />
+            <Route path="/chart/marriage" element={<MarriagePage />} />
+            <Route path="/match" element={<MatchPage />} />
+            <Route path="/learn" element={<LearnPage />} />
+            <Route path="/learn/:slug" element={<LessonPage />} />
+            <Route path="/account" element={<AccountPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </ErrorBoundary>
       </main>
       <footer className="site-footer">
         <div className="container footer-inner">
