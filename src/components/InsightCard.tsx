@@ -1,11 +1,20 @@
 import { Link } from 'react-router-dom'
-import type { Insight } from '../interpret/engine'
 import { lessonBySlug } from '../learn/lessons'
 
-export default function InsightCard({ insight, highlight }: { insight: Insight; highlight?: boolean }) {
+export interface CardInsight {
+  id: string
+  title: string
+  subtitle?: string
+  body: string[]
+  rule: string
+  lesson?: string
+  tone?: 'good' | 'mixed' | 'challenge'
+}
+
+export default function InsightCard({ insight, highlight }: { insight: CardInsight; highlight?: boolean }) {
   const lesson = insight.lesson ? lessonBySlug(insight.lesson) : undefined
   return (
-    <article className={`insight card ${highlight ? 'highlight' : ''}`} id={insight.id}>
+    <article className={`insight card ${highlight ? 'highlight' : ''} ${insight.tone ? `tone-${insight.tone}` : ''}`} id={insight.id}>
       <header>
         <h3>{insight.title}</h3>
         {insight.subtitle && <p className="insight-sub">{insight.subtitle}</p>}

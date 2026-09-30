@@ -1,10 +1,11 @@
 import { ADVANCED } from './advanced'
 import { BEGINNER } from './beginner'
 import { INTERMEDIATE } from './intermediate'
+import { VEDIC } from './vedic'
 import type { Lesson, Level } from './types'
 
-export const LESSONS: Lesson[] = [...BEGINNER, ...INTERMEDIATE, ...ADVANCED]
-export const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced']
+export const LESSONS: Lesson[] = [...BEGINNER, ...INTERMEDIATE, ...ADVANCED, ...VEDIC]
+export const LEVELS: Level[] = ['Beginner', 'Intermediate', 'Advanced', 'Vedic']
 
 export function lessonBySlug(slug: string): Lesson | undefined {
   return LESSONS.find((l) => l.slug === slug)

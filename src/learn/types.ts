@@ -1,4 +1,4 @@
-export type Level = 'Beginner' | 'Intermediate' | 'Advanced'
+export type Level = 'Beginner' | 'Intermediate' | 'Advanced' | 'Vedic'
 
 /** Lesson content is structured data (never raw HTML), rendered safely by React. */
 export type Block =

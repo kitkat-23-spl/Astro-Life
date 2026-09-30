@@ -2,9 +2,10 @@
 
 **Your birth chart, clearly explained.** Astro Life is a free astrology site where anyone can:
 
-- enter birth details and get an **accurate natal chart**, shown as an interactive wheel with Big Three cards, element and modality balance, and trait meters;
+- enter birth details and get a **Vedic Janma Kundali** (default) in **North or South Indian square style**, with divisional charts **D1–D10**, yogas and doshas, Vimshottari dasha and Sade Sati;
+- switch to a **Western tropical chart**: an interactive wheel with Big Three cards, element and modality balance, and trait meters;
 - read a **transparent, rule-based interpretation**, where every insight shows the exact rule that produced it ("Why am I seeing this?") and links to the lesson that teaches it;
-- **learn astrology** through 15 lessons from beginner to advanced, with worked examples (including a full synthesis of Einstein's chart), quizzes and saved progress;
+- **learn astrology** through 21 lessons, including a 6-lesson Jyotish track, from beginner to advanced, with worked examples (including a full synthesis of Einstein's chart), quizzes and saved progress;
 - **sign in with Google** (Supabase Auth) to save charts privately.
 
 ## How it works
@@ -12,6 +13,8 @@
 | Layer | What it does |
 |---|---|
 | `src/astro/` | Chart maths. [Astronomy Engine](https://github.com/cosinekitty/astronomy) gives tropical geocentric positions (±1′). Luxon converts local birth time → UTC using historical time zones. Ascendant/MC come from sidereal time + obliquity, with Placidus / Whole Sign / Equal houses (Placidus falls back to Whole Sign at polar latitudes). Also covers retrogrades, dignities, the mean node, and aspects with orbs plus applying/separating. |
+| `src/vedic/` | Jyotish engine. Lahiri ayanamsa (ICRC definition + IAU 2006 precession + nutation), 9 grahas, whole-sign bhavas, dignities (exaltation, moolatrikona, own, friend/enemy), combustion, dig bala, 27 nakshatras and padas, vargas D1–D10, Vimshottari dasha/antardasha, and Parashari rules: house lords, Raja/Dhana/Gajakesari/Mahapurusha/Viparita/Parivartana/Neecha Bhanga/Kemadruma yogas, Mangal dosha, Kaal Sarp, Sade Sati, per-varga readings and life-area scores. |
+| `src/components/vedic/` | North Indian (diamond) and South Indian (fixed-sign grid) SVG charts. |
 | `src/interpret/` | Rules engine. Content tables (signs, planets, houses, aspect pairs) are combined by rules: Big Three, chart ruler, planet-in-sign-in-house, dignity, retrograde, aspects, stelliums, grand trines, T-squares, element/modality/hemisphere balance, nodes. Each `Insight` carries its `rule` string. |
 | `src/learn/` | Curriculum as structured data (no raw HTML), rendered safely. |
 | `src/lib/` | Supabase client, Google auth, geocoding (Open-Meteo, no API key), saved charts, shareable links. |

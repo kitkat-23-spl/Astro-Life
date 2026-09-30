@@ -5,6 +5,7 @@ const LEVEL_BLURB = {
   Beginner: 'The building blocks: what a chart is, the signs, elements, planets and your Big Three.',
   Intermediate: 'Houses, angles, aspects and rulerships, plus a formula for reading any placement.',
   Advanced: 'Aspect patterns, the nodes, the maths of chart calculation, timing, and whole-chart synthesis.',
+  Vedic: 'Jyotish: sidereal zodiac, North & South Indian charts, grahas and bhavas, nakshatras, yogas, divisional charts D1–D10 and dashas.',
 }
 
 export default function LearnPage() {
@@ -27,7 +28,7 @@ export default function LearnPage() {
           <div className="level-head">
             <span className="level-num">{li + 1}</span>
             <div>
-              <h2>{level}</h2>
+              <h2>{level === 'Vedic' ? 'Vedic Astrology (Jyotish)' : level}</h2>
               <p className="muted">{LEVEL_BLURB[level]}</p>
             </div>
           </div>

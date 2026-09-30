@@ -161,7 +161,7 @@ export default function BirthForm({ initial, onSubmit }: Props) {
       <details className="advanced">
         <summary>Advanced options</summary>
         <div className="field">
-          <label htmlFor="bf-houses">House system</label>
+          <label htmlFor="bf-houses">House system <span className="muted">(Western charts; Vedic always uses whole-sign)</span></label>
           <select id="bf-houses" value={houseSystem} onChange={(e) => setHouseSystem(e.target.value as HouseSystem)}>
             {(Object.keys(HOUSE_SYSTEM_LABELS) as HouseSystem[]).map((h) => (
               <option key={h} value={h}>{HOUSE_SYSTEM_LABELS[h]}</option>

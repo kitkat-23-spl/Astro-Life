@@ -3,16 +3,34 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { computeChart, type BirthData, type Chart } from '../astro/ephemeris'
 import BirthForm from '../components/BirthForm'
 import ChartView from '../components/ChartView'
+import Segmented from '../components/Segmented'
+import VedicView from '../components/vedic/VedicView'
 import { GoogleIcon } from '../components/UserMenu'
 import { useAuth } from '../lib/auth'
 import { saveChart } from '../lib/charts'
 import { decodeBirth, encodeBirth } from '../lib/share'
 import { authEnabled } from '../lib/supabase'
 
+type System = 'vedic' | 'western'
+const SYSTEM_KEY = 'astrolife:system'
+
+function loadSystem(): System {
+  try {
+    return localStorage.getItem(SYSTEM_KEY) === 'western' ? 'western' : 'vedic'
+  } catch {
+    return 'vedic'
+  }
+}
+
 export default function ChartPage() {
   const { hash } = useLocation()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
+  const [system, setSystemState] = useState<System>(loadSystem)
+  const setSystem = (v: System) => {
+    setSystemState(v)
+    try { localStorage.setItem(SYSTEM_KEY, v) } catch { /* not persisted */ }
+  }
 
   const birth = useMemo(() => (hash.length > 1 ? decodeBirth(hash.slice(1)) : null), [hash])
   const result = useMemo((): { chart: Chart } | { error: string } | null => {
@@ -44,7 +62,15 @@ export default function ChartPage() {
     )
   }
 
-  return <ChartView chart={result.chart} actions={<ChartActions birth={birth} onEdit={() => setEditing(true)} />} />
+  const actions = (
+    <>
+      <Segmented label="Astrology system" value={system} onChange={setSystem} options={[['vedic', 'Vedic'], ['western', 'Western']]} />
+      <ChartActions birth={birth} onEdit={() => setEditing(true)} />
+    </>
+  )
+  return system === 'vedic'
+    ? <VedicView birth={birth} actions={actions} />
+    : <ChartView chart={result.chart} actions={actions} />
 }
 
 function ChartActions({ birth, onEdit }: { birth: BirthData; onEdit: () => void }) {
