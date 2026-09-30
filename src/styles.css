@@ -482,3 +482,8 @@ meter::-webkit-meter-even-less-good-value { background: var(--err); border-radiu
   .timing-head { grid-template-columns: 1fr 1fr; }
   .timing-bar { grid-column: 1 / -1; }
 }
+.track { margin-bottom: 48px; }
+.track-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--line); margin-bottom: 20px; }
+.track-head h2 { margin: 0 0 .4em; }
+.module-title { font-size: 1.3rem; margin: 0 0 .2em; }
+.level-num.alt { background: var(--surface-2); color: var(--ink); }

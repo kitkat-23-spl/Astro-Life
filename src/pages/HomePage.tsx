@@ -59,7 +59,7 @@ export default function HomePage() {
         <div className="card feature">
           <span className="feature-icon" aria-hidden>✦</span>
           <h2>Learn step by step</h2>
-          <p>Twenty-one lessons, including a full Jyotish track, with worked examples, quizzes and prompts to explore your own chart.</p>
+          <p>A 19-lesson Jyotish course, from basics to drishti, yogas, dashas, transits, career and marriage, with real-life examples. A Western track is included too.</p>
         </div>
       </section>
 

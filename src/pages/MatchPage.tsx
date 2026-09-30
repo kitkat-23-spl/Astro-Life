@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { BirthData } from '../astro/ephemeris'
 import BirthForm from '../components/BirthForm'
 import { ScoreDial } from '../components/vedic/ReportParts'
@@ -90,6 +90,7 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
       </div>
 
       <h2 className="section-title">Ashtakoota Guna Milan (36 points)</h2>
+      <p className="small"><Link to="/learn/vedic-matching">How kundali matching works →</Link></p>
       <div className="card table-wrap">
         <table className="data-table koota-table">
           <thead><tr><th>Koota</th><th>Checks</th><th>{bName}</th><th>{gName}</th><th>Score</th></tr></thead>

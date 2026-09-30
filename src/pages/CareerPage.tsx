@@ -79,6 +79,7 @@ export default function CareerPage() {
       </div>
 
       <h2 className="section-title">Complete rule analysis</h2>
+      <p className="small"><Link to="/learn/vedic-career">Learn the method behind this report →</Link></p>
       <RuleGroups groups={report.groups} />
       <p className="muted small center disclaimer">These are traditional Jyotish indications produced by fixed rules, not guarantees. Use them for reflection alongside your own interests, skills and professional advice.</p>
     </div>

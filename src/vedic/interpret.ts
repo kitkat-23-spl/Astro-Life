@@ -131,7 +131,7 @@ function grahaInsight(chart: VedicChart, g: GrahaPos, d9: VargaChart): VInsight 
     id: `graha-${g.graha}`,
     title: `${g.graha} (${info.sanskrit}) in ${RASHI[signName(g.sign)]}${g.house ? ` · ${h(g.house)}` : ''}`,
     subtitle: `${deg} ${signName(g.sign)}${g.retrograde ? ' · ℞' : ''} · ${nk.name} ${g.pada}`,
-    body, rule: rules.join(' + '), lesson: 'vedic-grahas-bhavas', tone,
+    body, rule: rules.join(' + '), lesson: 'vedic-planets-in-houses', tone,
   }
 }
 

@@ -16,10 +16,10 @@ export default function LessonPage() {
   return (
     <article className="lesson" key={lesson.slug}>
       <nav className="crumbs small" aria-label="Breadcrumb">
-        <Link to="/learn">Learn</Link> / <span>{lesson.level}</span>
+        <Link to="/learn">Learn</Link> / <span>{lesson.level === 'Vedic' ? `Jyotish · ${lesson.module ?? ''}` : `Western · ${lesson.level}`}</span>
       </nav>
       <header>
-        <p className="eyebrow">{lesson.level} · {lesson.minutes} min</p>
+        <p className="eyebrow">{lesson.level === 'Vedic' ? `Jyotish · ${lesson.module}` : lesson.level} · {lesson.minutes} min</p>
         <h1>{lesson.title}</h1>
         <p className="lede">{lesson.summary}</p>
       </header>

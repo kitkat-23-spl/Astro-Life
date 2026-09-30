@@ -113,6 +113,7 @@ export default function MarriagePage() {
       </div>
 
       <h2 className="section-title">Complete rule analysis</h2>
+      <p className="small"><Link to="/learn/vedic-marriage">Learn the method behind this report →</Link></p>
       <RuleGroups groups={report.groups} />
 
       <div className="card cta-card">

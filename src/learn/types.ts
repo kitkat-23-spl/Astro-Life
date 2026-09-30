@@ -20,6 +20,7 @@ export interface QuizQuestion {
 export interface Lesson {
   slug: string
   level: Level
+  module?: string
   title: string
   summary: string
   minutes: number

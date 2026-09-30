@@ -4,6 +4,7 @@ export const VEDIC: Lesson[] = [
   {
     slug: 'vedic-intro',
     level: 'Vedic',
+    module: 'Foundations',
     title: 'Jyotish basics: sidereal zodiac, lagna and the kundali',
     summary: 'How Vedic astrology differs from Western, and how to read North and South Indian charts.',
     minutes: 10,
@@ -40,7 +41,8 @@ export const VEDIC: Lesson[] = [
   {
     slug: 'vedic-grahas-bhavas',
     level: 'Vedic',
-    title: 'Grahas, bhavas and house lords',
+    module: 'Planetary relationships',
+    title: 'House lords and Bhavat Bhavam',
     summary: 'The nine grahas, the twelve bhavas and the core Parashari technique: follow the house lord.',
     minutes: 12,
     blocks: [
@@ -80,6 +82,7 @@ export const VEDIC: Lesson[] = [
   {
     slug: 'vedic-nakshatras',
     level: 'Vedic',
+    module: 'Foundations',
     title: 'The 27 nakshatras',
     summary: 'Lunar mansions of 13°20′, their rulers, and why your birth star matters.',
     minutes: 9,
@@ -104,6 +107,7 @@ export const VEDIC: Lesson[] = [
   {
     slug: 'vedic-yogas',
     level: 'Vedic',
+    module: 'Planetary relationships',
     title: 'Yogas and doshas',
     summary: 'Classical planetary combinations: Raja, Dhana, Gajakesari, Mahapurusha, and the doshas.',
     minutes: 12,
@@ -135,6 +139,7 @@ export const VEDIC: Lesson[] = [
   {
     slug: 'vedic-vargas',
     level: 'Vedic',
+    module: 'Divisional charts & timing',
     title: 'Divisional charts (D1–D10)',
     summary: 'How each sign is subdivided into vargas, and what each chart says about a life area.',
     minutes: 14,
@@ -181,6 +186,7 @@ export const VEDIC: Lesson[] = [
   {
     slug: 'vedic-dashas',
     level: 'Vedic',
+    module: 'Divisional charts & timing',
     title: 'Vimshottari dasha and Sade Sati',
     summary: 'The 120-year planetary period system that times events, plus Saturn’s famous transit.',
     minutes: 11,
