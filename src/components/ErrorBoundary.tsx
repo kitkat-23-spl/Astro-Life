@@ -26,7 +26,7 @@ export default class ErrorBoundary extends Component<{ children: ReactNode }, St
         <p className="eyebrow">Something went wrong</p>
         <h1>This page couldn’t be displayed</h1>
         <p className="lede">
-          If your browser is translating this page or an extension is changing it, please turn that off for this site and reload.
+          Please reload the page. If it keeps happening, share the technical details below so it can be fixed.
         </p>
         <div className="row" style={{ justifyContent: 'center' }}>
           <button className="btn primary" onClick={() => window.location.reload()}>Reload page</button>

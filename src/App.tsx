@@ -15,7 +15,10 @@ import PrivacyPage from './pages/PrivacyPage'
 
 export default function App() {
   const { pathname } = useLocation()
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  // Braces matter: newer browsers return a Promise from scrollTo, which React would treat as a cleanup function.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   return (
     <div className="app">
