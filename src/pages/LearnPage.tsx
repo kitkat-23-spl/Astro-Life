@@ -22,7 +22,7 @@ export default function LearnPage() {
   const vedicDone = VEDIC_COURSE.filter((l) => done.has(l.slug)).length
   return (
     <div className="learn">
-      <header className="page-head">
+      <header className="page-head night">
         <p className="eyebrow">Astrology school</p>
         <h1>Learn Jyotish from the ground up</h1>
         <p className="lede">A structured course that starts with the basics and builds up through planets, placements, aspects (drishti), combinations, yogas, divisional charts, dashas and transits, then applies it all to career, marriage and matching. Every lesson has worked examples, many from real, well-known charts.</p>

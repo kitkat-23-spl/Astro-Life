@@ -5,6 +5,8 @@ import App from './App'
 import ErrorBoundary from './components/ErrorBoundary'
 import { installDomGuard } from './lib/domGuard'
 import { AuthProvider } from './lib/auth'
+import '@fontsource-variable/fraunces'
+import '@fontsource-variable/plus-jakarta-sans'
 import './styles.css'
 
 installDomGuard()

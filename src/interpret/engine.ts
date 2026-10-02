@@ -21,6 +21,8 @@ export interface Insight {
   subtitle?: string
   body: string[]
   rule: string
+  /** The concrete chart combinations that produced this reading. */
+  basis?: string[]
   lesson?: string // slug in the learning section
   weight: number // higher = more central to the chart
   point?: PointName
@@ -142,6 +144,7 @@ function placementInsight(p: Placement): Insight {
     subtitle: `${glyph} ${formatDegree(p.longitude)} ${p.sign}${p.retrograde ? ' ℞' : ''} · ${pt.question}`,
     body,
     rule: rules.join(' + '),
+    basis: rules,
     lesson: p.house ? 'houses' : 'planets',
     weight,
     point: p.name,
@@ -161,6 +164,7 @@ function aspectInsight(a: Aspect): Insight {
   const w = (WEIGHTS[a.a] ?? 0.5) + (WEIGHTS[a.b] ?? 0.5)
   return {
     id: `aspect-${a.a}-${a.b}`,
+    basis: [`${a.a} ${a.type.name.toLowerCase()} ${a.b}`, `orb ${a.orb.toFixed(1)}°`, a.applying ? 'applying' : 'separating'],
     category: 'aspect',
     title: `${a.a} ${a.type.glyph} ${a.b}`,
     subtitle: `${a.type.name} · orb ${a.orb.toFixed(1)}° · ${a.applying ? 'applying' : 'separating'}`,
@@ -190,6 +194,7 @@ function findPatterns(chart: Chart): Insight[] {
           `Expect ${sign} qualities to be a defining theme, even more than your Sun sign might suggest. ${st.essence}`,
         ],
         rule: '3 or more planets in the same sign',
+        basis: ps.map((p) => `${p.name} in ${sign}`),
         lesson: 'aspect-patterns',
         weight: 5 + ps.length,
       })
@@ -207,6 +212,7 @@ function findPatterns(chart: Chart): Insight[] {
           subtitle: `${h.title} · ${ps.map((p) => PLANET_GLYPHS[p.name]).join(' ')}`,
           body: [`${ps.length} planets (${ps.map((p) => p.name).join(', ')}) fall in the house of ${h.area}. A large share of your life focus and experience will centre on this area.`],
           rule: '3 or more planets in the same house',
+          basis: ps.map((p) => `${p.name} in the ${ordinal(Number(house))} house`),
           lesson: 'aspect-patterns',
           weight: 5 + ps.length,
         })
@@ -240,6 +246,7 @@ function findPatterns(chart: Chart): Insight[] {
               'This is a real gift, and it can also be a comfort zone. Talents here come so easily that they reach their potential only when you consciously put them to work.',
             ],
             rule: 'three planets each 120° apart',
+            basis: [`${a} trine ${b}`, `${b} trine ${c}`, `${a} trine ${c}`],
             lesson: 'aspect-patterns',
             weight: 8,
           })
@@ -260,6 +267,7 @@ function findPatterns(chart: Chart): Insight[] {
                 `Your ${POINT_NOUN[apex]} is where you work hardest and, over time, achieve the most.`,
               ],
               rule: 'opposition + two squares to a third planet',
+              basis: [`${x} opposite ${y}`, `${x} square ${apex}`, `${y} square ${apex}`],
               lesson: 'aspect-patterns',
               weight: 8,
             })
@@ -299,7 +307,7 @@ export function interpret(chart: Chart): Reading {
 
   // --- Core: Big Three -----------------------------------------------------
   insights.push({
-    id: 'core-sun', category: 'core', point: 'Sun',
+    id: 'core-sun', category: 'core', point: 'Sun', basis: [`Sun in ${sun.sign}`, ...(sun.house ? [`${ordinal(sun.house)} house`] : [])],
     title: `Sun in ${sun.sign}: your core self`,
     subtitle: SIGN_TEXT[sun.sign].keywords.join(' · '),
     body: [SIGN_TEXT[sun.sign].essence, SIGN_TEXT[sun.sign].sun],
@@ -308,7 +316,7 @@ export function interpret(chart: Chart): Reading {
   })
   const moonNote = chart.timeKnown ? [] : ['Your birth time is unknown, and the Moon moves about 13° a day, so if it sits near the edge of a sign, check the neighbouring sign too.']
   insights.push({
-    id: 'core-moon', category: 'core', point: 'Moon',
+    id: 'core-moon', category: 'core', point: 'Moon', basis: [`Moon in ${moon.sign}`, ...(moon.house ? [`${ordinal(moon.house)} house`] : [])],
     title: `Moon in ${moon.sign}: your emotional world`,
     subtitle: SIGN_TEXT[moon.sign].keywords.join(' · '),
     body: [SIGN_TEXT[moon.sign].moon, ...moonNote],
@@ -317,7 +325,7 @@ export function interpret(chart: Chart): Reading {
   })
   if (risingSign) {
     insights.push({
-      id: 'core-rising', category: 'core', point: 'Ascendant',
+      id: 'core-rising', category: 'core', point: 'Ascendant', basis: [`Ascendant in ${risingSign}`],
       title: `${risingSign} Rising: how you meet the world`,
       subtitle: `Ascendant ${formatDegree(chart.ascendant!)} ${risingSign}`,
       body: [SIGN_TEXT[risingSign].rising],
@@ -332,7 +340,7 @@ export function interpret(chart: Chart): Reading {
     chartRuler = SIGN_BY_NAME[risingSign].ruler
     const r = chart.placements.find((p) => p.name === chartRuler)!
     insights.push({
-      id: 'chart-ruler', category: 'direction', point: chartRuler,
+      id: 'chart-ruler', category: 'direction', point: chartRuler, basis: [`${risingSign} rising`, `ruled by ${chartRuler}`, `${chartRuler} in ${r.sign}`, ...(r.house ? [`${ordinal(r.house)} house`] : [])],
       title: `Chart ruler: ${chartRuler} in ${r.sign}${r.house ? `, ${ordinal(r.house)} house` : ''}`,
       subtitle: `${risingSign} rising is ruled by ${chartRuler}`,
       body: [
@@ -355,6 +363,7 @@ export function interpret(chart: Chart): Reading {
       ...(elements.percent[elements.weakest] <= 12 ? [ELEMENT_MEANING[elements.weakest].weak] : []),
     ],
     rule: 'Weighted count: Sun, Moon, Asc ×3; Mercury, Venus, Mars ×2; Jupiter, Saturn, MC ×1; outer planets ×0.5',
+    basis: (['Fire', 'Earth', 'Air', 'Water'] as Element[]).map((e) => `${e} ${elements.percent[e]}%`),
     lesson: 'elements-modalities', weight: 7,
   })
   insights.push({
@@ -363,6 +372,7 @@ export function interpret(chart: Chart): Reading {
     subtitle: (['Cardinal', 'Fixed', 'Mutable'] as Modality[]).map((m) => `${m} ${modalities.percent[m]}%`).join(' · '),
     body: [MODALITY_MEANING[modalities.dominant].strong],
     rule: 'Same weighting as elements, grouped by modality',
+    basis: (['Cardinal', 'Fixed', 'Mutable'] as Modality[]).map((m) => `${m} ${modalities.percent[m]}%`),
     lesson: 'elements-modalities', weight: 6.5,
   })
 
@@ -381,6 +391,7 @@ export function interpret(chart: Chart): Reading {
         id: 'hemispheres', category: 'balance', title: 'Hemisphere emphasis',
         subtitle: `${above} of ${planets.length} above horizon · ${east} of ${planets.length} in the east`,
         body: lines, rule: 'Count of planets by chart hemisphere (7+ of 10 = strong emphasis)',
+        basis: [`${above} planets above the horizon`, `${east} planets in the east`],
         lesson: 'houses', weight: 5,
       })
     }
@@ -390,7 +401,7 @@ export function interpret(chart: Chart): Reading {
   const node = chart.placements.find((p) => p.name === 'North Node')!
   const southSign = signOf(node.longitude + 180).name
   insights.push({
-    id: 'nodes', category: 'direction', point: 'North Node',
+    id: 'nodes', category: 'direction', point: 'North Node', basis: [`North Node in ${node.sign}`, `South Node in ${southSign}`, ...(node.house ? [`${ordinal(node.house)} house`] : [])],
     title: `North Node in ${node.sign}: your growth direction`,
     subtitle: `South Node in ${southSign}`,
     body: [
@@ -415,6 +426,7 @@ export function interpret(chart: Chart): Reading {
       subtitle: `MC ${formatDegree(chart.midheaven)} ${mcSign} · What am I here to build publicly?`,
       body: [`Your public path and vocation are shaped by ${mcSign}: you are drawn to be known for ${SIGN_TEXT[mcSign].keywords.slice(0, 3).join(', ')}. You build a reputation ${SIGN_TEXT[mcSign].style}.`],
       rule: 'Sign on the Midheaven (cusp of the 10th house region)',
+      basis: [`Midheaven in ${mcSign}`],
       lesson: 'angles', weight: 4,
     })
   }

@@ -22,13 +22,13 @@ export default function HomePage() {
 
   return (
     <div className="home">
-      <section className="hero">
+      <section className="hero night">
         <div className="hero-text">
           <p className="eyebrow">Vedic kundali &amp; Western charts, clearly explained</p>
           <h1>Understand yourself through the sky you were born under.</h1>
           <p className="lede">
             Enter your birth details to get your Janma Kundali in North or South Indian style, with divisional charts D1–D10,
-            yogas, dashas and plain-language insights. Every insight shows the classical rule behind it, so you can learn Jyotish as you go.
+            yogas, dashas and plain-language insights. Every insight lists the planetary combinations behind it, so you can learn Jyotish as you go.
           </p>
           <div className="hero-cta">
             <Link to="/chart" className="btn primary">Create my free chart</Link>
@@ -37,7 +37,7 @@ export default function HomePage() {
           <ul className="trust-list">
             <li>Lahiri ayanamsa, astronomy-grade positions</li>
             <li>Calculated privately in your browser</li>
-            <li>Transparent, rule-based readings</li>
+            <li>Every reading shows the combinations behind it</li>
           </ul>
         </div>
         <div className="hero-wheel">

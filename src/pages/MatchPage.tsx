@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { BirthData } from '../astro/ephemeris'
 import BirthForm from '../components/BirthForm'
+import Basis from '../components/Basis'
 import { ScoreDial } from '../components/vedic/ReportParts'
 import SquareChart from '../components/vedic/SquareChart'
 import { itemsFor, lagnaFor, loadStyle } from '../components/vedic/chartItems'
@@ -60,7 +61,7 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
 
   return (
     <div className="report">
-      <header className="report-head">
+      <header className="report-head night">
         <div>
           <p className="eyebrow">Kundali matching</p>
           <h1>{bName} &amp; {gName}</h1>
@@ -145,7 +146,7 @@ function Checks({ items }: { items: Check[] }) {
         <article key={c.title} className={`insight card tone-${c.effect === 'supportive' ? 'good' : c.effect === 'challenging' ? 'challenge' : 'mixed'}`}>
           <h3>{c.title}</h3>
           <p>{c.detail}</p>
-          <p className="rule-line small"><strong>Rule:</strong> {c.rule}</p>
+          <Basis items={c.rule.split(/;\s*|,\s*(?=[A-Z])/)} />
         </article>
       ))}
     </div>

@@ -15,6 +15,8 @@ export interface VInsight {
   subtitle?: string
   body: string[]
   rule: string
+  /** The concrete chart combinations that produced this reading. */
+  basis?: string[]
   lesson?: string
   tone?: 'good' | 'mixed' | 'challenge'
 }
@@ -131,7 +133,7 @@ function grahaInsight(chart: VedicChart, g: GrahaPos, d9: VargaChart): VInsight 
     id: `graha-${g.graha}`,
     title: `${g.graha} (${info.sanskrit}) in ${RASHI[signName(g.sign)]}${g.house ? ` · ${h(g.house)}` : ''}`,
     subtitle: `${deg} ${signName(g.sign)}${g.retrograde ? ' · ℞' : ''} · ${nk.name} ${g.pada}`,
-    body, rule: rules.join(' + '), lesson: 'vedic-planets-in-houses', tone,
+    body, rule: rules.join(' + '), basis: rules, lesson: 'vedic-planets-in-houses', tone,
   }
 }
 
@@ -155,6 +157,7 @@ function lordInsight(chart: VedicChart, hse: number): VInsight {
   if (p.dignity === 'debilitated' && tone === 'good') tone = 'mixed'
   return {
     id: `lord-${hse}`,
+    basis: [`${ordinal(hse)} lord ${lord}`, `placed in the ${h(to)}`, ...(p.dignity ? [`${lord} ${p.dignity}`] : [])],
     title: `${ordinal(hse)} lord ${lord} in the ${h(to)}`,
     subtitle: `${from.name} → ${dest.name} · ${from.short} → ${dest.short}`,
     body, rule, lesson: 'vedic-grahas-bhavas', tone,
@@ -375,7 +378,7 @@ function dashaInsights(chart: VedicChart, periods: Period[]): VInsight[] {
   const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
   if (md) {
     out.push({
-      id: 'dasha-current', title: `Now: ${md.lord} Mahadasha${ad ? ` · ${ad.lord} Antardasha` : ''}`,
+      id: 'dasha-current', basis: [`${md.lord} Mahadasha`, ...(ad ? [`${ad.lord} Antardasha`] : []), 'Moon’s nakshatra'], title: `Now: ${md.lord} Mahadasha${ad ? ` · ${ad.lord} Antardasha` : ''}`,
       subtitle: `${md.lord}: ${fmt(md.start)} – ${fmt(md.end)}${ad ? ` · ${ad.lord}: ${fmt(ad.start)} – ${fmt(ad.end)}` : ''}`,
       body: [
         `The major period brings the themes of ${dashaText(chart, md.lord)}`,
@@ -420,6 +423,7 @@ function vargaInsights(info: VargaInfo, vc: VargaChart, d1: VargaChart): VInsigh
     const ll = P(lagLord)
     out.push({
       id: `${info.code}-lagna`,
+      basis: [`${info.code} lagna ${RASHI[signName(vc.lagnaSign)]}`, `lord ${lagLord} in the ${h(ll.house!)}`, ...(ll.dignity ? [`${lagLord} ${ll.dignity}`] : [])],
       title: `${info.code} lagna ${RASHI[signName(vc.lagnaSign)]}; its lord ${lagLord} is in the ${h(ll.house!)}`,
       subtitle: `${info.name}: ${info.domain}`,
       body: [
@@ -470,7 +474,7 @@ function vargaInsights(info: VargaInfo, vc: VargaChart, d1: VargaChart): VInsigh
     const improved = d1.placements.filter((p) => p.dignity === 'debilitated' && GOOD.includes(P(p.graha as Graha).dignity ?? 'neutral')).map((p) => p.graha)
     if (improved.length) body.push(`${improved.join(', ')} ${improved.length > 1 ? 'are' : 'is'} debilitated in D1 but strong in D9, a pattern of weakness in youth that becomes strength with maturity.`)
   }
-  out.push({ id: `${info.code}-strength`, title: `${info.code} planetary strength`, subtitle: 'Karakas, dignities and special combinations', body, rule: `${info.code} sign dignities of all grahas`, lesson, tone: strong.length > weak.length ? 'good' : weak.length > strong.length ? 'challenge' : 'mixed' })
+  out.push({ id: `${info.code}-strength`, basis: [...strong.map((x) => `${x} in ${info.code}`), ...weak.map((x) => `${x} debilitated in ${info.code}`)].slice(0, 6), title: `${info.code} planetary strength`, subtitle: 'Karakas, dignities and special combinations', body, rule: `${info.code} sign dignities of all grahas`, lesson, tone: strong.length > weak.length ? 'good' : weak.length > strong.length ? 'challenge' : 'mixed' })
   return out
 }
 
@@ -520,7 +524,7 @@ export function interpretVedic(chart: VedicChart): VedicReading {
     const lord = SIGN_LORD[chart.lagnaSign]
     const lp = pos(chart, lord)
     core.push({
-      id: 'core-lagna', title: `Lagna: ${RASHI[lagSign]} (${lagSign})`, subtitle: `Lagna lord ${lord} in the ${h(lp.house!)}`,
+      id: 'core-lagna', basis: [`Lagna ${RASHI[lagSign]}`, `Lagna lord ${lord}`, `${lord} in the ${h(lp.house!)}`, ...(lp.dignity ? [`${lord} ${lp.dignity}`] : [])], title: `Lagna: ${RASHI[lagSign]} (${lagSign})`, subtitle: `Lagna lord ${lord} in the ${h(lp.house!)}`,
       body: [
         `The lagna (ascendant) is the most important point in Jyotish: your body, temperament and the lens for the whole chart. ${SIGN_TEXT[lagSign].rising}`,
         `Its lord ${lord} sits in the ${h(lp.house!)}, so your life energy flows toward ${BHAVA[lp.house! - 1].topics}.${lp.dignity ? ` ${lord} ${DIGNITY_TEXT[lp.dignity]}` : ''}`,
@@ -529,12 +533,12 @@ export function interpretVedic(chart: VedicChart): VedicReading {
     })
   }
   core.push({
-    id: 'core-moon', title: `Chandra Rashi (Moon sign): ${RASHI[signName(moon.sign)]} (${signName(moon.sign)})`, subtitle: 'Used for daily horoscopes and transits in India',
+    id: 'core-moon', basis: [`Moon in ${RASHI[signName(moon.sign)]}`, ...(moon.dignity ? [`Moon ${moon.dignity}`] : [])], title: `Chandra Rashi (Moon sign): ${RASHI[signName(moon.sign)]} (${signName(moon.sign)})`, subtitle: 'Used for daily horoscopes and transits in India',
     body: [SIGN_TEXT[signName(moon.sign)].moon, `Many Indian traditions read the chart from the Moon as a second lagna (Chandra lagna), because the Moon shows the mind that experiences everything.`],
     rule: 'Sidereal sign of the Moon', lesson: 'vedic-intro', tone: 'mixed',
   })
   core.push({
-    id: 'core-nakshatra', title: `Janma Nakshatra: ${nk.name}, pada ${moon.pada}`, subtitle: `Ruled by ${nk.lord} · deity ${nk.deity} · symbol ${nk.symbol}`,
+    id: 'core-nakshatra', basis: [`Moon in ${nk.name}`, `Pada ${moon.pada}`, `Star lord ${nk.lord}`], title: `Janma Nakshatra: ${nk.name}, pada ${moon.pada}`, subtitle: `Ruled by ${nk.lord} · deity ${nk.deity} · symbol ${nk.symbol}`,
     body: [
       `Your birth star is ${nk.name}. Its qualities (${nk.keywords}) describe your instinctive emotional nature.`,
       `Because it is ruled by ${nk.lord}, your life begins in ${nk.lord}’s Vimshottari dasha.`,
@@ -548,9 +552,11 @@ export function interpretVedic(chart: VedicChart): VedicReading {
   for (const v of VARGAS) if (v.n !== 1) vargas[v.n] = vargaInsights(v, vargaCharts[v.n], d1)
   const dashas = vimshottari(moon.lon, chart.utc)
 
+  const withBasis = (list: VInsight[]) => list.map((i) => ({ ...i, basis: i.basis ?? (i.subtitle ? i.subtitle.split(' · ') : i.rule.split(' + ')) }))
+  for (const k of Object.keys(vargas)) vargas[Number(k)] = withBasis(vargas[Number(k)])
   return {
-    core, grahas: grahaIns, lords, yogas: yogas(chart), vargas, vargaCharts, dashas,
-    dashaInsights: dashaInsights(chart, dashas), lifeAreas: lifeAreas(chart, vargaCharts),
+    core: withBasis(core), grahas: grahaIns, lords, yogas: withBasis(yogas(chart)), vargas, vargaCharts, dashas,
+    dashaInsights: withBasis(dashaInsights(chart, dashas)), lifeAreas: lifeAreas(chart, vargaCharts),
     dashaThemes: Object.fromEntries(GRAHAS.map((g) => [g, dashaText(chart, g)])),
   }
 }

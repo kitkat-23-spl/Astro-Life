@@ -2,10 +2,12 @@ import { useState } from 'react'
 import type { RuleResult } from '../../vedic/rules'
 import type { DashaHighlight } from '../../vedic/rules'
 import type { TransitWindow } from '../../vedic/techniques'
+import Basis from '../Basis'
 
 export const fmtMonth = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
 
-const EFFECT_LABEL = { supportive: 'Supportive', challenging: 'Challenging', mixed: 'Mixed', info: 'Context' } as const
+const EFFECT_LABEL = { supportive: 'Strength', challenging: 'Needs care', mixed: 'Mixed', info: 'Insight' } as const
+const EFFECT_PILL = { supportive: 'good', challenging: 'challenge', mixed: 'mixed', info: 'info' } as const
 
 export function ScoreDial({ value, label, caption, max = 100 }: { value: number; label: string; caption?: string; max?: number }) {
   const r = 52, c = 2 * Math.PI * r
@@ -31,9 +33,9 @@ export function RuleGroups({ groups }: { groups: { title: string; results: RuleR
   return (
     <div className="rule-groups">
       <div className="rule-toolbar">
-        <p className="muted small">{total} rules checked · {fired} apply to this chart</p>
+        <p className="muted small">{fired} of {total} classical combinations are present in this chart</p>
         <label className="check small">
-          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show rules that did not apply
+          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Also show combinations that are absent
         </label>
       </div>
       {groups.map((g) => (
@@ -41,17 +43,15 @@ export function RuleGroups({ groups }: { groups: { title: string; results: RuleR
           <h3>{g.title}</h3>
           <div className="insight-list">
             {g.results.filter((r) => showAll || r.fired).map((r) => (
-              <article key={r.id} className={`insight card rule-card ${r.fired ? `tone-${r.effect}` : 'not-fired'}`}>
-                <header className="rule-head">
-                  <h4>{r.fired ? '' : '✗ '}{r.title}</h4>
-                  <span className="rule-tags">
-                    <span className="tag">{r.chart}</span>
-                    {r.fired && <span className={`tag effect-${r.effect}`}>{EFFECT_LABEL[r.effect]}</span>}
-                    {!r.fired && <span className="tag">Not present</span>}
-                  </span>
+              <article key={r.id} className={`insight card rule-card ${r.fired ? `tone-${EFFECT_PILL[r.effect]}` : 'not-fired'}`}>
+                <header className="insight-head">
+                  <h4>{r.title}</h4>
+                  {r.fired
+                    ? <span className={`pill pill-${EFFECT_PILL[r.effect]}`}>{EFFECT_LABEL[r.effect]}</span>
+                    : <span className="pill">Not present</span>}
                 </header>
-                {r.fired && r.detail.map((d, i) => <p key={i}>{d}</p>)}
-                <p className="rule-line small"><strong>Rule:</strong> {r.rule}</p>
+                {r.fired && <div className="insight-body">{r.detail.map((d, i) => <p key={i}>{d}</p>)}</div>}
+                <Basis items={[r.chart, r.rule.replace(/\s*\([^)]*\)/g, '')]} label={r.fired ? 'Based on' : 'Looks for'} />
               </article>
             ))}
           </div>

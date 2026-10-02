@@ -11,6 +11,10 @@ import Segmented from '../Segmented'
 import SquareChart, { type ChartStyle } from './SquareChart'
 import { STYLE_KEY, itemsFor, lagnaFor, loadStyle } from './chartItems'
 
+const LIFE_ICON: Record<string, string> = {
+  'Career & status': '💼', 'Marriage & partnership': '💍', Wealth: '💰', 'Home & property': '🏡', 'Children & creativity': '🧒', 'Courage & siblings': '💪',
+}
+
 type Tab = 'overview' | 'grahas' | 'bhavas' | 'yogas' | 'vargas' | 'dasha'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -50,7 +54,7 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
 
   return (
     <div className="chart-view vedic">
-      <section className="vedic-hero">
+      <section className="vedic-hero night">
         <div className="chart-hero-text">
           <p className="eyebrow">{b.name ? `${b.name}’s Janma Kundali` : 'Janma Kundali'} · Vedic / Jyotish</p>
           <h1>{heading}</h1>
@@ -87,14 +91,15 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
                 <h3>Life areas at a glance</h3>
                 <div className="life-grid">
                   {reading.lifeAreas.map((a) => (
-                    <div key={a.label} className="life-area" title={a.rule}>
-                      <div className="life-head"><span>{a.label}</span><span className="muted small">{a.code}</span></div>
+                    <div key={a.label} className={`life-area ${a.score >= 65 ? 'hi' : a.score >= 45 ? 'mid' : 'lo'}`}>
+                      <div className="life-head"><span className="life-icon" aria-hidden>{LIFE_ICON[a.label] ?? '✦'}</span><span>{a.label}</span></div>
                       <meter min={0} max={100} low={45} high={65} optimum={90} value={a.score} aria-label={`${a.label}: ${a.verdict}`} />
-                      <span className="small muted">{a.verdict}</span>
+                      <span className="life-verdict">{a.verdict}</span>
+                      <span className="life-basis">{a.rule.replace(/ dignity & placement/, '').replace(/, in /, ' · ')}</span>
                     </div>
                   ))}
                 </div>
-                <p className="muted small">Each score combines the house lord’s dignity and placement, the house’s occupants and the significator (karaka), in D1 and the matching divisional chart. Hover for the rule.</p>
+
               </div>
             )}
             {chart.timeKnown && (

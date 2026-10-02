@@ -56,6 +56,7 @@ export default defineConfig(({ mode }) => {
   return {
     base,
     plugins: [react(), csp(env.VITE_SUPABASE_URL), ...(env.GH_PAGES ? [ghPages404(base)] : [])],
-    build: { sourcemap: false, chunkSizeWarningLimit: 900 },
+    // Never inline fonts as data: URIs; the CSP only allows fonts from this origin.
+    build: { sourcemap: false, chunkSizeWarningLimit: 1200, assetsInlineLimit: (file: string) => (/\.(woff2?|ttf)$/.test(file) ? false : undefined) },
   }
 })

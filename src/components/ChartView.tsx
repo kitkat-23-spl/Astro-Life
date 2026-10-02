@@ -40,7 +40,7 @@ export default function ChartView({ chart, actions }: { chart: Chart; actions?: 
 
   return (
     <div className="chart-view">
-      <section className="chart-hero">
+      <section className="chart-hero night">
         <div className="chart-hero-text">
           <p className="eyebrow">{b.name ? `${b.name}’s birth chart` : 'Birth chart'}</p>
           <h1>{reading.headline}</h1>

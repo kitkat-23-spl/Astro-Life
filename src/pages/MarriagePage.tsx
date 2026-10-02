@@ -37,7 +37,7 @@ export default function MarriagePage() {
   return (
     <div className="report">
       <nav className="crumbs small"><Link to={{ pathname: '/chart', hash }}>← Back to {birth.name ? `${birth.name}’s` : 'the'} kundali</Link></nav>
-      <header className="report-head">
+      <header className="report-head night">
         <div>
           <p className="eyebrow">Marriage report · Vedic</p>
           <h1>{birth.name ? `${birth.name}’s marriage & partnership` : 'Marriage & partnership'}</h1>

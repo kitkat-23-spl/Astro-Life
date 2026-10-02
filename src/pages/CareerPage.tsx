@@ -4,6 +4,7 @@ import { GRAHA_INFO } from '../vedic/constants'
 import { careerReport } from '../vedic/career'
 import { computeVedicChart, vargaChart } from '../vedic/sidereal'
 import { DashaTimeline, RuleGroups, ScoreDial, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
+import Basis from '../components/Basis'
 import { ChartPair } from '../components/vedic/ChartPair'
 import { decodeBirth } from '../lib/share'
 
@@ -19,7 +20,7 @@ export default function CareerPage() {
   return (
     <div className="report">
       <nav className="crumbs small"><Link to={{ pathname: '/chart', hash }}>← Back to {birth.name ? `${birth.name}’s` : 'the'} kundali</Link></nav>
-      <header className="report-head">
+      <header className="report-head night">
         <div>
           <p className="eyebrow">Career report · Vedic</p>
           <h1>{birth.name ? `${birth.name}’s career path` : 'Career path'}</h1>
@@ -42,10 +43,7 @@ export default function CareerPage() {
               <span className="tag">{f.score} pts</span>
             </header>
             <ul className="field-list">{f.fields.map((x) => <li key={x}>{x}</li>)}</ul>
-            <details>
-              <summary className="small">Why {f.planet}? ({f.reasons.length} rules)</summary>
-              <ul className="small muted">{f.reasons.map((r, j) => <li key={j}>{r}</li>)}</ul>
-            </details>
+            <Basis items={f.reasons} />
           </article>
         ))}
       </div>
