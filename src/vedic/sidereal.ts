@@ -1,7 +1,7 @@
 import * as Astronomy from 'astronomy-engine'
 import { angDist, norm360, SIGNS, type SignName } from '../astro/constants'
 import { longitudeOf, toUtc, type BirthData } from '../astro/ephemeris'
-import { ascendant } from '../astro/houses'
+import { ascendant, midheaven } from '../astro/houses'
 import {
   COMBUSTION, EXALTATION, FRIENDS, GRAHAS, MOOLATRIKONA, NAKSHATRAS, NAKSHATRA_SPAN, SIGN_LORD, houseFrom,
   type Graha,
@@ -44,9 +44,10 @@ export function ayanamsaAt(date: Date, kind: Ayanamsa = 'lahiri'): number {
   return mean + Astronomy.e_tilt(Astronomy.MakeTime(date)).dpsi / 3600
 }
 
-/** Sidereal longitude of a body at any date (used for transits). */
-export function siderealLongitude(body: 'Sun' | 'Moon' | 'Mars' | 'Mercury' | 'Jupiter' | 'Venus' | 'Saturn', date: Date, kind: Ayanamsa = 'lahiri') {
-  return norm360(longitudeOf(body, date) - ayanamsaAt(date, kind))
+/** Sidereal longitude of any graha at any date (used for transits and annual charts). */
+export function siderealLongitude(g: Graha, date: Date, s: Pick<CalcSettings, 'ayanamsa' | 'node'> = DEFAULT_SETTINGS) {
+  const trop = g === 'Rahu' || g === 'Ketu' ? nodeLongitude(date, s.node) + (g === 'Ketu' ? 180 : 0) : longitudeOf(g, date)
+  return norm360(trop - ayanamsaAt(date, s.ayanamsa))
 }
 
 /* ------------------------------------------------------------------ */
@@ -80,6 +81,7 @@ export interface GrahaPos {
   dignity: VedicDignity | null
   nakshatra: number // 0..26
   pada: number // 1..4
+  speed: number // degrees per day; negative when retrograde
 }
 
 export interface VedicChart {
@@ -89,6 +91,8 @@ export interface VedicChart {
   ayanamsa: number
   lagna: number | null // sidereal longitude
   lagnaSign: number | null
+  /** Sidereal midheaven (10th cusp), when the time is known. */
+  mc: number | null
   grahas: GrahaPos[]
   utc: Date
 }
@@ -119,16 +123,29 @@ export function signName(i: number): SignName {
   return SIGNS[((i % 12) + 12) % 12].name
 }
 
+/** Sidereal ascendant and midheaven for a moment and place. */
+export function siderealAngles(date: Date, latitude: number, longitude: number, ayanamsa: number) {
+  const t = Astronomy.MakeTime(date)
+  const ramc = norm360(Astronomy.SiderealTime(t) * 15 + longitude)
+  const obl = Astronomy.e_tilt(t).tobl
+  return { asc: norm360(ascendant(ramc, obl, latitude) - ayanamsa), mc: norm360(midheaven(ramc, obl) - ayanamsa), ramc, obliquity: obl }
+}
+
 export function computeVedicChart(birth: BirthData, settings: CalcSettings = DEFAULT_SETTINGS): VedicChart {
   const timeKnown = birth.time !== null && birth.time !== ''
-  const utc = toUtc(birth.date, timeKnown ? birth.time : null, birth.timezone)
+  return chartAt(birth, toUtc(birth.date, timeKnown ? birth.time : null, birth.timezone), timeKnown, settings)
+}
+
+/** Chart for an exact moment at the birth place (used for annual charts). */
+export function chartAt(birth: BirthData, utc: Date, timeKnown: boolean, settings: CalcSettings = DEFAULT_SETTINGS): VedicChart {
   const ayanamsa = ayanamsaAt(utc, settings.ayanamsa)
-  const t = Astronomy.MakeTime(utc)
 
   let lagna: number | null = null
+  let mc: number | null = null
   if (timeKnown) {
-    const ramc = norm360(Astronomy.SiderealTime(t) * 15 + birth.longitude)
-    lagna = norm360(ascendant(ramc, Astronomy.e_tilt(t).tobl, birth.latitude) - ayanamsa)
+    const a = siderealAngles(utc, birth.latitude, birth.longitude, ayanamsa)
+    lagna = a.asc
+    mc = a.mc
   }
   const lagnaSign = lagna === null ? null : Math.floor(lagna / 30)
 
@@ -137,14 +154,14 @@ export function computeVedicChart(birth: BirthData, settings: CalcSettings = DEF
   const raw = GRAHAS.map((g) => {
     let lon = norm360(tropical(g, utc) - ayanamsa)
     if (g === 'Ketu') lon = norm360(lon + 180)
-    if (g === 'Rahu' || g === 'Ketu') return { graha: g, lon, retrograde: true }
     let delta = norm360(tropical(g, new Date(utc.getTime() + sixHours)) - tropical(g, new Date(utc.getTime() - sixHours)))
     if (delta > 180) delta -= 360
-    return { graha: g, lon, retrograde: delta < 0 }
+    if (g === 'Rahu' || g === 'Ketu') return { graha: g, lon, retrograde: true, speed: delta * 2 }
+    return { graha: g, lon, retrograde: delta < 0, speed: delta * 2 }
   })
 
   const sunLon = raw[0].lon
-  const grahas: GrahaPos[] = raw.map(({ graha, lon, retrograde }) => {
+  const grahas: GrahaPos[] = raw.map(({ graha, lon, retrograde, speed }) => {
     const sign = Math.floor(lon / 30)
     const degree = lon - sign * 30
     const comb = COMBUSTION[graha]
@@ -156,10 +173,11 @@ export function computeVedicChart(birth: BirthData, settings: CalcSettings = DEF
       dignity: dignityOf(graha, sign, degree),
       nakshatra: nk.index,
       pada: nk.pada,
+      speed,
     }
   })
 
-  return { birth, settings, timeKnown, ayanamsa, lagna, lagnaSign, grahas, utc }
+  return { birth, settings, timeKnown, ayanamsa, lagna, lagnaSign, mc, grahas, utc }
 }
 
 /* ------------------------------------------------------------------ */

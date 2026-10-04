@@ -3,6 +3,7 @@ import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import ErrorBoundary from './components/ErrorBoundary'
 import UserMenu from './components/UserMenu'
 import AccountPage from './pages/AccountPage'
+import AnnualPage from './pages/AnnualPage'
 import ChartPage from './pages/ChartPage'
 import HomePage from './pages/HomePage'
 import LearnPage from './pages/LearnPage'
@@ -45,6 +46,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/chart" element={<ChartPage />} />
+            <Route path="/chart/annual" element={<AnnualPage />} />
             <Route path="/chart/:report" element={<ReportPage />} />
             <Route path="/panchang" element={<PanchangPage />} />
             <Route path="/settings" element={<SettingsPage />} />

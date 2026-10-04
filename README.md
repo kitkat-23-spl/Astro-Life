@@ -2,7 +2,14 @@
 
 Astro Life is a free Vedic astrology site. Every reading comes from a fixed classical rule, and every card lists the planetary combinations that produced it.
 
-- **Kundali**: North or South Indian charts, 19 divisional charts (D1 to D60), planet table, house lords, Vimshottari dasha to four levels and Sade Sati.
+- **Kundali**: North or South Indian charts and 19 divisional charts (D1 to D60), organised in tabs:
+  - *Planets*: positions, Shadbala, Vimsopaka bala and avasthas.
+  - *Houses*: lords and Bhava bala, Bhava Chalit (Sripati) and KP cusps with sign, star and sub lords.
+  - *Ashtakavarga*: the seven planet tables and the Sarvashtakavarga.
+  - *Dasha*: Vimshottari (four levels), Yogini, Ashtottari and Chara dasha, with the houses each running period activates.
+  - *Transits*: natal and transit chart, a gochara scorecard with vedha and Ashtakavarga, a 12-month outlook, upcoming sign changes and stations, and Sade Sati.
+  - *Special points*: Sudarshan Chakra, Bhava/Hora/Ghati/Sree lagnas, Pranapada, Gulika, Indu lagna, all twelve arudhas, Yogi and Avayogi, Pushkara, 64th navamsa and 22nd drekkana.
+- **Annual chart**: Varshaphal (muntha, the five office bearers, year lord, sahams, Mudda dasha) and Tithi Pravesh for any year.
 - **Yogas**: a catalogue of 80+ classical yogas (Pancha Mahapurusha, Raja, Dhana, solar and lunar, Nabhasa, doshas). The Yogas tab shows the ones present and, on request, the ones checked and not present.
 - **Life-area reports**: Career, Marriage, Wealth, Education and Children. Each report scores its rules, lists every rule (fired or not), rates the relevant divisional charts and gives dasha and double-transit timing.
 - **Panchang**: tithi, vara, nakshatra, yoga, karana, lunar month, sunrise and moonrise, Rahu Kaal, Yamaganda, Gulika, Abhijit, Choghadiya and Hora for any place and date.
@@ -18,7 +25,11 @@ Astro Life is a free Vedic astrology site. Every reading comes from a fixed clas
 |---|---|
 | `src/astro/` | Ephemeris (Astronomy Engine), time zones (Luxon), ascendant and house systems. |
 | `src/vedic/sidereal.ts` | Ayanamsas, mean and true nodes, sidereal chart, dignities, nakshatras, divisional charts. |
-| `src/vedic/varga.ts`, `dasha.ts` | Divisional-chart rules (BPHS ch. 6) and multi-level Vimshottari. |
+| `src/vedic/varga.ts`, `dasha.ts` | Divisional-chart rules (BPHS ch. 6); Vimshottari, Yogini, Ashtottari and Chara dashas. |
+| `src/vedic/strength.ts`, `ashtakavarga.ts` | Shadbala, Bhava bala, Vimsopaka, avasthas; Ashtakavarga. |
+| `src/vedic/transits.ts` | Gochara scorecard, monthly outlook, transit events, Sade Sati, double transits. |
+| `src/vedic/jaimini.ts`, `special.ts`, `kp.ts` | Chara karakas and arudhas; special lagnas and points; KP cusps and Bhava Chalit. |
+| `src/vedic/annual.ts` | Varshaphal and Tithi Pravesh. |
 | `src/vedic/query.ts` | Shared chart queries: lords, occupants, drishti, sambandha, dignity scores. |
 | `src/vedic/yogas.ts` | The yoga catalogue and Mangal dosha. |
 | `src/vedic/rules.ts` | Rule framework shared by all reports: rule results, scoring, evidence, divisional verdicts, timing. |

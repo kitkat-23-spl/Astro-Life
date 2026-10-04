@@ -123,5 +123,5 @@ export function educationReport(chart: VedicChart, now = new Date(), yogas: Yoga
   ]
   const top = subjects[0]
   const headline = `The 5th lord ${l5} is in the ${h(pos(chart, l5).house!)} and the 4th lord ${l4} in the ${h(pos(chart, l4).house!)}.${top ? ` The strongest subject indications come from ${top.planet}: ${top.subjects.slice(0, 2).join(', ').toLowerCase()}.` : ''}`
-  return { score: areaScore(groups.flatMap((g) => g.results), { median: 8.9, spread: 6.9 }), headline, groups, vargas, ...timing, subjects }
+  return { score: areaScore(groups.flatMap((g) => g.results), { median: 10.8, spread: 7.0 }), headline, groups, vargas, ...timing, subjects }
 }

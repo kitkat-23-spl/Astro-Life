@@ -24,7 +24,7 @@ export const YOGAS_27 = [
 const INAUSPICIOUS_YOGAS = new Set(['Vishkambha', 'Atiganda', 'Shoola', 'Ganda', 'Vyaghata', 'Vajra', 'Vyatipata', 'Parigha', 'Vaidhriti'])
 const MOVABLE_KARANAS = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Gara', 'Vanija', 'Vishti']
 export const VARAS = ['Ravivara', 'Somavara', 'Mangalavara', 'Budhavara', 'Guruvara', 'Shukravara', 'Shanivara']
-const WEEKDAY_LORD: Graha[] = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
+export const WEEKDAY_LORD: Graha[] = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn']
 const MASAS = ['Chaitra', 'Vaishakha', 'Jyeshtha', 'Ashadha', 'Shravana', 'Bhadrapada', 'Ashwin', 'Kartika', 'Margashirsha', 'Pausha', 'Magha', 'Phalguna']
 
 /** One-eighth segment of daytime (1-based), by weekday from Sunday. */
@@ -40,7 +40,7 @@ export const CHOGHADIYA_QUALITY: Record<ChoghadiyaName, 'good' | 'neutral' | 'ba
   Amrit: 'good', Shubh: 'good', Labh: 'good', Char: 'neutral', Udveg: 'bad', Kaal: 'bad', Rog: 'bad',
 }
 /** Chaldean order used for horas. */
-const HORA_ORDER: Graha[] = ['Sun', 'Venus', 'Mercury', 'Moon', 'Saturn', 'Jupiter', 'Mars']
+export const HORA_ORDER: Graha[] = ['Sun', 'Venus', 'Mercury', 'Moon', 'Saturn', 'Jupiter', 'Mars']
 
 export interface Limb { name: string; index: number; ends: Date | null; next?: string }
 export interface Span { name: string; start: Date; end: Date; quality?: 'good' | 'neutral' | 'bad'; lord?: Graha }
@@ -119,6 +119,32 @@ function masaAt(d: Date, kind: Ayanamsa) {
   const sign = (t: Date) => Math.floor(norm360(sun(t) - ayanamsaAt(t, kind)) / 30)
   const s0 = sign(prev.date), s1 = sign(next.date)
   return { name: MASAS[(s0 + 1) % 12], adhika: s0 === s1 }
+}
+
+export interface HinduDay {
+  sunrise: Date
+  sunset: Date
+  nextSunrise: Date
+  /** True between sunrise and sunset. */
+  isDay: boolean
+  /** Weekday of the Hindu day (0 = Sunday), which begins at sunrise. */
+  weekday: number
+}
+
+/** The sunrise-to-sunrise day containing a moment, or null in polar day or night. */
+export function hinduDay(at: Date, latitude: number, longitude: number): HinduDay | null {
+  const observer = new Astronomy.Observer(latitude, longitude, 0)
+  let sunrise = riseSet(Astronomy.Body.Sun, observer, 1, new Date(at.getTime() - 86400000), 1.2)
+  if (sunrise && sunrise > at) sunrise = riseSet(Astronomy.Body.Sun, observer, 1, new Date(at.getTime() - 2 * 86400000), 1.2)
+  if (!sunrise) return null
+  const next = riseSet(Astronomy.Body.Sun, observer, 1, new Date(sunrise.getTime() + 3600000), 1.2)
+  if (next && next <= at) sunrise = next
+  const sunset = riseSet(Astronomy.Body.Sun, observer, -1, sunrise, 1)
+  const nextSunrise = sunset && riseSet(Astronomy.Body.Sun, observer, 1, sunset, 1)
+  if (!sunset || !nextSunrise) return null
+  // The local solar date at sunrise gives the weekday anywhere on Earth.
+  const weekday = new Date(sunrise.getTime() + (longitude / 15) * 3600000).getUTCDay()
+  return { sunrise, sunset, nextSunrise, isDay: at < sunset, weekday }
 }
 
 export function computePanchang(date: string, latitude: number, longitude: number, zone: string, kind: Ayanamsa = 'lahiri'): Panchang {

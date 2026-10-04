@@ -1,10 +1,11 @@
 import { SIGNS, ordinal } from '../astro/constants'
 import { SIGN_TEXT } from '../interpret/signs'
-import { BHAVA, DIG_BALA, DUSTHANA, GRAHAS, GRAHA_INFO, KENDRA, NAKSHATRAS, RASHI, SIGN_LORD, UPACHAYA, houseFrom, type Graha } from './constants'
+import { BHAVA, DIG_BALA, DUSTHANA, GRAHAS, GRAHA_INFO, KENDRA, NAKSHATRAS, RASHI, SIGN_LORD, UPACHAYA, type Graha } from './constants'
 import { periodChain, vimshottari, type Period } from './dasha'
 import { GOOD_DIGNITY, h, housesRuledBy, isStrongSign, lordOfHouse, pos } from './query'
-import { siderealLongitude, signName, vargaChart, type GrahaPos, type VargaChart, type VedicChart, type VedicDignity } from './sidereal'
-import { VARGAS, type VargaInfo } from './varga'
+import { signName, vargaChart, type GrahaPos, type VargaChart, type VedicChart, type VedicDignity } from './sidereal'
+import { VARGAS, vargaSign, type VargaInfo } from './varga'
+import { shadbala } from './strength'
 import { evaluateYogas, type YogaResult } from './yogas'
 
 export interface VInsight {
@@ -96,6 +97,8 @@ function grahaInsight(chart: VedicChart, g: GrahaPos, d9: VargaChart): VInsight 
   }
   const nk = NAKSHATRAS[g.nakshatra]
   body.push(`Nakshatra ${nk.name}, pada ${g.pada}, ruled by ${nk.lord}.`)
+  const sb = shadbala(chart)?.find((x) => x.graha === g.graha)
+  if (sb) basis.push(`Shadbala ${Math.round(sb.ratio * 100)}%`)
   const d9p = d9.placements.find((p) => p.graha === g.graha)!
   if (d9p.sign === g.sign) {
     body.push('Vargottama: the same sign in D1 and D9, which makes its results dependable.')
@@ -140,31 +143,32 @@ function lordInsight(chart: VedicChart, hse: number): VInsight {
   }
 }
 
-function sadeSati(chart: VedicChart, at = new Date()): VInsight {
-  const moonSign = pos(chart, 'Moon').sign
-  const satSign = Math.floor(siderealLongitude('Saturn', at, chart.settings.ayanamsa) / 30)
-  const rel = houseFrom(moonSign, satSign)
-  const phase = rel === 12 ? 'first phase' : rel === 1 ? 'peak phase' : rel === 2 ? 'last phase' : null
-  return {
-    id: 'sade-sati',
-    title: phase ? `Sade Sati is running: ${phase}` : 'Sade Sati is not running',
-    subtitle: `Transiting Saturn in ${RASHI[signName(satSign)]}, ${ordinal(rel)} from the Moon`,
-    basis: [`Saturn in ${signName(satSign)}`, `${ordinal(rel)} from the natal Moon`],
-    tone: phase ? 'mixed' : 'good',
-    body: phase
-      ? ['Saturn is crossing the 12th, 1st and 2nd signs from the natal Moon, a period of about seven and a half years. It brings responsibility, pressure and reality checks, and rewards patience and steady work.']
-      : ['Saturn is not in the 12th, 1st or 2nd sign from the natal Moon. Sade Sati recurs about every 30 years.'],
-    rule: 'Transiting sidereal Saturn in the 12th, 1st or 2nd sign from the natal Moon',
-    lesson: 'vedic-dashas',
-  }
+export interface ActiveHouse { house: number; via: string[] }
+
+/**
+ * Houses a planet brings into focus during its dasha: the house it occupies,
+ * the houses it rules, and the houses ruled by its sign, star and navamsa lords.
+ */
+export function activatedHouses(chart: VedicChart, g: Graha): ActiveHouse[] {
+  if (chart.lagnaSign === null) return []
+  const p = pos(chart, g)
+  const map = new Map<number, Set<string>>()
+  const add = (h: number, why: string) => { if (!map.has(h)) map.set(h, new Set()); map.get(h)!.add(why) }
+  add(p.house!, 'occupies')
+  housesRuledBy(chart, g).forEach((h) => add(h, 'rules'))
+  const via = (lord: Graha, label: string) => { if (lord !== g) housesRuledBy(chart, lord).forEach((h) => add(h, `${label} ${lord} rules`)) }
+  via(SIGN_LORD[p.sign], 'sign lord')
+  via(NAKSHATRAS[p.nakshatra].lord, 'star lord')
+  via(SIGN_LORD[vargaSign(9, p.lon)], 'navamsa lord')
+  return [...map.entries()].sort((a, b) => a[0] - b[0]).map(([house, why]) => ({ house, via: [...why] }))
 }
 
 function dashaText(chart: VedicChart, lord: Graha): string {
   const p = pos(chart, lord)
   const owns = housesRuledBy(chart, lord)
   const parts = [`${lord} (${GRAHA_INFO[lord].karaka})`]
-  if (p.house) parts.push(`placed in the ${h(p.house)} (${BHAVA[p.house - 1].topics})`)
-  if (owns.length) parts.push(`ruling the ${owns.map(ordinal).join(' and ')} (${owns.map((o) => BHAVA[o - 1].short).join(', ')})`)
+  if (p.house) parts.push(`placed in the ${h(p.house)}`)
+  if (owns.length) parts.push(`ruling the ${owns.map(ordinal).join(' and ')}`)
   const q = p.dignity === 'debilitated' ? ' Debilitated, so the period asks for patience and effort.' : p.dignity && GOOD_DIGNITY.includes(p.dignity) ? ` ${p.dignity[0].toUpperCase() + p.dignity.slice(1)}, so the period is usually productive.` : ''
   return parts.join(', ') + '.' + q
 }
@@ -187,7 +191,6 @@ function dashaInsights(chart: VedicChart, periods: Period[]): VInsight[] {
       lesson: 'vedic-dashas', tone: 'mixed',
     })
   }
-  out.push(sadeSati(chart))
   return out
 }
 
@@ -217,7 +220,8 @@ function vargaInsights(info: VargaInfo, vc: VargaChart, d1: VargaChart): VInsigh
     return out
   }
 
-  if (vc.lagnaSign !== null) {
+  // D1's lagna is covered by the overview, so its varga view shows planetary strength only.
+  if (vc.lagnaSign !== null && info.n !== 1) {
     const lagLord = SIGN_LORD[vc.lagnaSign]
     const ll = P(lagLord)
     out.push({
@@ -327,7 +331,7 @@ export function interpretVedic(chart: VedicChart): VedicReading {
   const grahaIns = GRAHAS.map((g) => grahaInsight(chart, pos(chart, g), d9))
   const lords = chart.lagnaSign === null ? [] : Array.from({ length: 12 }, (_, i) => lordInsight(chart, i + 1))
   const vargas: Record<number, VInsight[]> = {}
-  for (const v of VARGAS) if (v.n !== 1) vargas[v.n] = vargaInsights(v, vargaCharts[v.n], d1)
+  for (const v of VARGAS) vargas[v.n] = vargaInsights(v, vargaCharts[v.n], d1)
   const dashas = vimshottari(moon.lon, chart.utc)
 
   return {

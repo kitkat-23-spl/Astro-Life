@@ -4,7 +4,7 @@ import { marriageReport } from '../marriage'
 import { matchCharts } from '../matching'
 import { computeVedicChart } from '../sidereal'
 import { aspectedSigns } from '../query'
-import { charaKarakas, upapada } from '../techniques'
+import { charaKarakas, upapada } from '../jaimini'
 
 const birth = { name: 'Einstein', date: '1879-03-14', time: '11:30', place: 'Ulm', latitude: 48.4, longitude: 10.0, timezone: 'UTC+0:40', houseSystem: 'placidus' as const }
 const chart = computeVedicChart(birth)

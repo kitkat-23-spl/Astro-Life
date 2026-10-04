@@ -4,11 +4,11 @@ import {
   lordOfHouse, occupants, pos,
 } from './query'
 import {
-  Evidence, areaScore, areaTiming, effectOf, rule, vargaVerdict, weigh, yogaRule,
+  Evidence, areaScore, areaTiming, effectOf, rule, shadbalaNote, vargaVerdict, weigh, yogaRule,
   type AreaReport, type RuleResult, type VargaVerdict, type Weights,
 } from './rules'
 import { signName, vargaChart, type VargaChart, type VedicChart } from './sidereal'
-import { charaKarakas } from './techniques'
+import { charaKarakas } from './jaimini'
 import { evaluateYogas, type YogaResult } from './yogas'
 
 export const PLANET_CAREERS: Record<Graha, string[]> = {
@@ -72,11 +72,13 @@ export function careerReport(chart: VedicChart, now = new Date(), yogas: YogaRes
 
   const g1: RuleResult[] = []
   const tq = houseGroup(tl.house!)
+  const tsb = shadbalaNote(chart, tenthLord)
+  const tw = dignityScore(tl.dignity) + tsb.adjust
   g1.push(rule({
     id: 'c-10lord-dignity', group: '10th house', chart: 'D1', title: `10th lord ${tenthLord} is ${dignityPhrase(tl.dignity)}`,
-    effect: effectOf(dignityScore(tl.dignity), 0.5), weight: dignityScore(tl.dignity),
-    detail: [`${describeLord(chart, 10, tenthLord)}. The dignity of the career lord shows how easily professional matters progress.`],
-    rule: 'Dignity of the 10th lord (BPHS: a strong karmesha gives a successful profession)',
+    effect: effectOf(tw, 0.5), weight: tw,
+    detail: [`${describeLord(chart, 10, tenthLord)}. The strength of the career lord shows how easily professional matters progress.`, ...tsb.text],
+    rule: 'Dignity and Shadbala of the 10th lord (BPHS: a strong karmesha gives a successful profession)',
   }))
   g1.push(rule({
     id: 'c-10lord-house', group: '10th house', chart: 'D1', title: `10th lord in the ${h(tl.house!)}`,
@@ -328,5 +330,5 @@ export function careerReport(chart: VedicChart, now = new Date(), yogas: YogaRes
   const headline = top
     ? `The strongest indications point to ${top.planet}-ruled fields (${top.fields.slice(0, 2).join(', ').toLowerCase()}). The 10th lord ${tenthLord} is in the ${h(tl.house!)}.`
     : `The 10th lord ${tenthLord} in the ${h(tl.house!)} shapes the career.`
-  return { score: areaScore(groups.flatMap((g) => g.results), { median: 10.9, spread: 6.1 }), headline, fields, modes, groups, vargas, ...timing }
+  return { score: areaScore(groups.flatMap((g) => g.results), { median: 11.3, spread: 6.2 }), headline, fields, modes, groups, vargas, ...timing }
 }

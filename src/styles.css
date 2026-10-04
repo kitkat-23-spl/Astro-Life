@@ -367,6 +367,7 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .vc-item.up { fill: var(--ok); }
 .vc-item.down { fill: var(--err); }
 .vc-item.asc { fill: var(--gold); font-weight: 700; }
+.vc-item.transit { fill: var(--accent); font-style: italic; }
 .vc-title { font-family: var(--serif); font-size: 22px; font-weight: 600; fill: var(--ink); }
 .vc-sub { font-size: 13px; fill: var(--muted); }
 .vchart-cap { text-align: center; font-size: .85rem; color: var(--muted); margin-top: 6px; }
@@ -391,10 +392,44 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .varga-thumb.active { border-color: var(--accent); }
 .varga-thumb:hover { border-color: var(--line); }
 
+/* Kundali tabs */
+.subnav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+.subnav label { font-weight: 600; }
+.date-input, .age-select { width: auto; min-height: 36px; padding: 6px 10px; }
+.sub-h { font-size: 1rem; margin: 1.2em 0 .4em; }
+.now-list { list-style: none; margin: 0; padding: 8px 22px; }
+.now-list li { display: grid; grid-template-columns: 110px 1fr auto; gap: 12px; align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.now-list li:last-child { border-bottom: 0; }
+.now-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.now-list a, .now-list .linklike { font-size: .88rem; font-weight: 600; white-space: nowrap; text-decoration: none; }
+.upcoming li.now-row { background: var(--accent-soft); border-radius: 8px; padding: 4px 8px; }
+.chip-list { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.active-houses ul { margin: 0 0 10px; padding-left: 1.1em; }
+.active-houses p { margin: 0 0 4px; }
+.av-table td, .av-table th { padding: 8px 6px; text-align: center; }
+.av-table td:first-child, .av-table th:first-child { text-align: left; }
+.outlook { display: grid; gap: 8px; }
+.outlook-row { display: grid; grid-template-columns: 90px minmax(80px, 1fr) 36px minmax(0, 2fr); gap: 12px; align-items: center; }
+.outlook-month { font-weight: 600; font-size: .9rem; }
+.bar-fill.good { background: var(--ok); }
+.bar-fill.bad { background: var(--err); }
+.sudarshan { margin: 0; max-width: 460px; }
+.sudarshan svg { width: 100%; height: auto; display: block; }
+.sc-ring { stroke: var(--ink); stroke-opacity: .45; stroke-width: 1.2; }
+.sc-ring-0 { fill: color-mix(in srgb, var(--gold) 10%, var(--surface)); }
+.sc-ring-1 { fill: var(--surface); }
+.sc-ring-2 { fill: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.sc-core { fill: var(--surface-2); stroke: var(--ink); stroke-opacity: .45; }
+.sc-spoke { stroke: var(--ink); stroke-opacity: .35; }
+.sc-num { font-size: 9px; fill: var(--muted); font-weight: 600; }
+.sc-planets { fill: var(--ink); font-weight: 700; font-family: var(--sans); }
+.sc-title { font-family: var(--serif); font-size: 14px; fill: var(--ink); font-weight: 600; }
+
 /* Dasha */
 .chain { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .chain li { display: grid; grid-template-columns: 140px 1fr auto; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .chain li:last-child { border-bottom: 0; }
+.chain li.now-row { background: var(--accent-soft); border-radius: 8px; padding-left: 8px; }
 .chain strong { font-family: var(--serif); font-size: 1.05rem; }
 .upcoming { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
 .dasha-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
@@ -415,6 +450,7 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .pratyantar { list-style: none; margin: 0 0 6px; padding: 4px 8px 4px 20px; font-size: .82rem; }
 .pratyantar li { display: flex; justify-content: space-between; padding: 2px 0; }
 .pratyantar li.now { font-weight: 700; color: var(--accent); }
+.sub-row { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; }
 
 /* ------------------------------------------------------------------ */
 /* Reports                                                              */
@@ -607,6 +643,10 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
   .dasha-bar { grid-column: 1 / -1; }
   .chain li { grid-template-columns: 1fr auto; }
   .chain li > span:last-child { grid-column: 1 / -1; }
+  .now-list li { grid-template-columns: 1fr auto; }
+  .now-list li > span:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .outlook-row { grid-template-columns: 70px 1fr 30px; }
+  .outlook-why { grid-column: 1 / -1; }
   .window { grid-template-columns: 1fr; }
   .timing-head { grid-template-columns: 1fr 1fr; }
   .timing-bar { grid-column: 1 / -1; }

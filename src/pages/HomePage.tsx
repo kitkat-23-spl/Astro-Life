@@ -10,7 +10,7 @@ import { computeVedicChart, signName } from '../vedic/sidereal'
 import { YOGAS } from '../vedic/yogas'
 
 const TOOLS: { to: string; title: string; text: string }[] = [
-  { to: '/chart', title: 'Kundali', text: 'D1 to D60 divisional charts, planet strengths, house lords, yogas and Vimshottari dasha to four levels.' },
+  { to: '/chart', title: 'Kundali', text: 'D1 to D60 vargas, Shadbala, Ashtakavarga, four dasha systems, transits, KP cusps and the annual chart.' },
   { to: '/chart', title: 'Life-area reports', text: 'Career, marriage, wealth, education and children, each scored from classical rules with timing windows.' },
   { to: '/match', title: 'Kundali matching', text: '36-point Ashtakoota, ten South Indian poruthams and Mangal dosha for both partners.' },
   { to: '/panchang', title: 'Panchang', text: 'Tithi, nakshatra, yoga, karana, Rahu Kaal, Choghadiya and Hora for any place and date.' },

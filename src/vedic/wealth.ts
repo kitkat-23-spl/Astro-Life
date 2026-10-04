@@ -5,7 +5,7 @@ import {
   type AreaReport, type RuleResult, type VargaVerdict, type Weights,
 } from './rules'
 import { signName, vargaChart, type VedicChart } from './sidereal'
-import { induLagna } from './techniques'
+import { induLagna } from './special'
 import { evaluateYogas, type YogaResult } from './yogas'
 
 /** What a house contributes when the 2nd or 11th lord sits in it. */
@@ -152,7 +152,7 @@ export function wealthReport(chart: VedicChart, now = new Date(), yogas: YogaRes
   ]
   const headline = `Income is shown by the 11th lord ${l11} in the ${h(p11.house!)} and savings by the 2nd lord ${l2} in the ${h(p2.house!)}. Main source of gain: ${GAIN_FROM[p11.house! - 1]}.`
   return {
-    score: areaScore(groups.flatMap((g) => g.results), { median: 8.3, spread: 5.7 }), headline, groups, vargas, ...timing,
+    score: areaScore(groups.flatMap((g) => g.results), { median: 10.1, spread: 5.8 }), headline, groups, vargas, ...timing,
     sources: sources.filter((s, i, a) => a.findIndex((x) => x.text === s.text) === i), induSign: indu, hora: { sun: sunH, moon: moonH },
   }
 }

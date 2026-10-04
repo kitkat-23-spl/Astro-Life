@@ -6,7 +6,7 @@ import {
   type AreaReport, type RuleResult, type VargaVerdict, type Weights,
 } from './rules'
 import { signName, vargaChart, type VedicChart } from './sidereal'
-import { charaKarakas } from './techniques'
+import { charaKarakas } from './jaimini'
 import { vargaSign } from './varga'
 import type { Gender } from './marriage'
 
@@ -138,5 +138,5 @@ export function childrenReport(chart: VedicChart, gender: Gender, now = new Date
   ]
   const p5 = pos(chart, l5)
   const headline = `The 5th lord ${l5} is ${dignityPhrase(p5.dignity)} in the ${h(p5.house!)}, and Jupiter is ${houseOf(chart, 'Jupiter', chart.lagnaSign) === 5 ? 'in the 5th' : `in the ${h(jup.house!)}`}.`
-  return { score: areaScore(groups.flatMap((g) => g.results), { median: 5.3, spread: 4.4 }), headline, groups, vargas, ...timing, sphutas, putrakaraka: pk }
+  return { score: areaScore(groups.flatMap((g) => g.results), { median: 6.0, spread: 4.5 }), headline, groups, vargas, ...timing, sphutas, putrakaraka: pk }
 }

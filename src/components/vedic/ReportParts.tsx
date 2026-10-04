@@ -2,13 +2,12 @@ import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import type { DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
 import { REPORTS } from '../../vedic/reports'
-import type { TransitWindow } from '../../vedic/techniques'
+import type { TransitWindow } from '../../vedic/transits'
 import { yogaTone, type YogaResult } from '../../vedic/yogas'
 import Basis from '../Basis'
+import { fmtRange } from './format'
 import { TONE_LABEL } from '../InsightCard'
 
-export const fmtMonth = (d: Date) => d.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
-export const fmtRange = (a: Date, b: Date) => `${fmtMonth(a)} to ${fmtMonth(b)}`
 
 const EFFECT_LABEL = { supportive: 'Supportive', challenging: 'Needs care', mixed: 'Mixed', info: 'Note' } as const
 const EFFECT_PILL = { supportive: 'good', challenging: 'challenge', mixed: 'mixed', info: 'info' } as const
@@ -18,6 +17,7 @@ export function ReportNav({ hash }: { hash: string }) {
   return (
     <nav className="report-nav" aria-label="Chart sections">
       <NavLink to={{ pathname: '/chart', hash }} end>Kundali</NavLink>
+      <NavLink to={{ pathname: '/chart/annual', hash }}>Annual</NavLink>
       {REPORTS.map((r) => <NavLink key={r.key} to={{ pathname: `/chart/${r.key}`, hash }}>{r.title}</NavLink>)}
     </nav>
   )

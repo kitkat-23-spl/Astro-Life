@@ -7,8 +7,9 @@ import { BHAVA, GRAHAS, SIGN_LORD, type Graha } from './constants'
 import { vimshottari, type Period } from './dasha'
 import { aspectors, describeLord, dignityPhrase, dignityScore, h, isBenefic, occupants, placementScore, pos } from './query'
 import { vargaChart, type VedicChart } from './sidereal'
-import { doubleTransitWindows, type TransitWindow } from './techniques'
+import { doubleTransitWindows, type TransitWindow } from './transits'
 import type { VargaN } from './varga'
+import { shadbalaRatio } from './strength'
 import { yogaTone, type YogaResult } from './yogas'
 
 export type Effect = 'supportive' | 'challenging' | 'mixed' | 'info'
@@ -71,13 +72,14 @@ export function areaScore(results: RuleResult[], calib: { median: number; spread
 export function lordRule(chart: VedicChart, house: number, group: string, idPrefix: string, note?: string, scale = 1): RuleResult {
   const lord = pos(chart, SIGN_LORD[(chart.lagnaSign! + house - 1) % 12]).graha
   const p = pos(chart, lord)
-  const w = (dignityScore(p.dignity) + placementScore(p.house!, house) - (p.combust ? 1 : 0)) * scale
+  const sb = shadbalaNote(chart, lord)
+  const w = (dignityScore(p.dignity) + placementScore(p.house!, house) - (p.combust ? 1 : 0) + sb.adjust) * scale
   return rule({
     id: `${idPrefix}-${house}lord`, group, chart: 'D1',
     title: `${ordinal(house)} lord ${lord} is ${dignityPhrase(p.dignity)} in the ${h(p.house!)}`,
     effect: effectOf(w, scale), weight: w,
-    detail: [`${describeLord(chart, house, lord)}${p.combust ? ', combust' : ''}. ${note ?? `The ${h(house)} covers ${BHAVA[house - 1].topics}.`}`],
-    rule: `Dignity and house of the ${ordinal(house)} lord`,
+    detail: [`${describeLord(chart, house, lord)}${p.combust ? ', combust' : ''}. ${note ?? `The ${h(house)} covers ${BHAVA[house - 1].topics}.`}`, ...sb.text],
+    rule: `Dignity, house and Shadbala of the ${ordinal(house)} lord`,
   })
 }
 
@@ -96,16 +98,27 @@ export function yogaRule(yogas: YogaResult[], id: string, group: string, weight:
   })
 }
 
-/** Generic rule: condition of a natural karaka (dignity, placement, combustion). */
+/** Shadbala adjustment: up to one point either way for strength above or below the required minimum. */
+export function shadbalaNote(chart: VedicChart, g: Graha): { adjust: number; text: string[] } {
+  const r = shadbalaRatio(chart, g)
+  if (r === null) return { adjust: 0, text: [] }
+  return {
+    adjust: Math.max(-1, Math.min(1, (r - 1) * 2)),
+    text: [`Shadbala: ${Math.round(r * 100)}% of the required strength${r >= 1 ? '' : ', so it delivers less than its placement suggests'}.`],
+  }
+}
+
+/** Generic rule: condition of a natural karaka (dignity, placement, combustion, Shadbala). */
 export function karakaRule(chart: VedicChart, g: Graha, role: string, group: string, idPrefix: string, scale = 1): RuleResult {
   const p = pos(chart, g)
-  const w = (dignityScore(p.dignity) + (p.house ? placementScore(p.house) : 0) - (p.combust ? 1 : 0)) * scale
+  const sb = shadbalaNote(chart, g)
+  const w = (dignityScore(p.dignity) + (p.house ? placementScore(p.house) : 0) - (p.combust ? 1 : 0) + sb.adjust) * scale
   return rule({
     id: `${idPrefix}-karaka-${g}`, group, chart: 'D1',
     title: `${g}, karaka of ${role}, is ${dignityPhrase(p.dignity)}${p.house ? ` in the ${h(p.house)}` : ''}`,
     effect: effectOf(w, scale), weight: w,
-    detail: [`${g} is the natural significator of ${role}.${p.combust ? ' It is combust, which weakens it.' : ''}${p.retrograde && g !== 'Rahu' && g !== 'Ketu' ? ' It is retrograde.' : ''}`],
-    rule: `Condition of ${g}: dignity, house and combustion`,
+    detail: [`${g} is the natural significator of ${role}.${p.combust ? ' It is combust, which weakens it.' : ''}${p.retrograde && g !== 'Rahu' && g !== 'Ketu' ? ' It is retrograde.' : ''}`, ...sb.text],
+    rule: `Condition of ${g}: dignity, house, combustion and Shadbala`,
   })
 }
 

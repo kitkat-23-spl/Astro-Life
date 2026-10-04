@@ -10,7 +10,7 @@ import {
   lordOfHouse, occupants, pos, rashiDrishti, sambandha,
 } from './query'
 import { signName, type VedicChart } from './sidereal'
-import { charaKarakas } from './techniques'
+import { charaKarakas } from './jaimini'
 import { vargaSign } from './varga'
 
 export type YogaGroup = 'Pancha Mahapurusha' | 'Raja' | 'Dhana' | 'Solar' | 'Lunar' | 'Nabhasa' | 'Doshas and afflictions' | 'Other'

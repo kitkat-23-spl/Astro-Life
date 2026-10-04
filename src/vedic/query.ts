@@ -145,12 +145,6 @@ export function placementScore(house: number, ruledHouse?: number): number {
   return 0.3
 }
 
-/** Combined strength of a planet: dignity in D1 plus its placement. */
-export function strengthOf(chart: VedicChart, g: Graha): number {
-  const p = pos(chart, g)
-  return dignityScore(p.dignity) + (p.house ? placementScore(p.house) : 0) - (p.combust ? 1 : 0)
-}
-
 export const describeLord = (chart: VedicChart, house: number, lord: Graha) => {
   const p = pos(chart, lord)
   return `${ordinal(house)} lord ${lord} is ${dignityPhrase(p.dignity)} in the ${h(p.house!)}`

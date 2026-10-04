@@ -4,9 +4,9 @@ import {
   aspectors, aspectsOnGraha, conjunctWith, describeLord, dignityPhrase, dignityScore, h, houseGroup, influencesHouse,
   isBenefic, linked, lordOfHouse, occupants, pos,
 } from './query'
-import { areaScore, areaTiming, rule, vargaVerdict, weigh, type AreaReport, type RuleResult, type VargaVerdict, type Weights } from './rules'
+import { areaScore, areaTiming, rule, shadbalaNote, vargaVerdict, weigh, type AreaReport, type RuleResult, type VargaVerdict, type Weights } from './rules'
 import { signName, vargaChart, type VedicChart } from './sidereal'
-import { charaKarakas, upapada } from './techniques'
+import { charaKarakas, upapada } from './jaimini'
 import { mangalDosha, type MangalDosha } from './yogas'
 
 export type { Gender } from './settings'
@@ -52,17 +52,19 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
 
   const g1: RuleResult[] = []
   const q7 = houseGroup(p7.house!)
+  const sb7 = shadbalaNote(chart, l7)
   g1.push(rule({
     id: 'm-7lord', group: '7th house', chart: 'D1', title: `7th lord ${l7} is ${dignityPhrase(p7.dignity)} in the ${h(p7.house!)}`,
     effect: dignityScore(p7.dignity) > 0 || q7 === 'kendra' || q7 === 'trikona' ? 'supportive' : p7.dignity === 'debilitated' || q7 === 'dusthana' ? 'challenging' : 'mixed',
-    weight: dignityScore(p7.dignity) + (q7 === 'kendra' || q7 === 'trikona' || p7.house === 11 ? 1.5 : q7 === 'dusthana' ? -1.5 : 0),
+    weight: dignityScore(p7.dignity) + (q7 === 'kendra' || q7 === 'trikona' || p7.house === 11 ? 1.5 : q7 === 'dusthana' ? -1.5 : 0) + sb7.adjust,
     detail: [
       `${describeLord(chart, 7, l7)}.`,
       p7.house === 7 ? 'The 7th lord in its own house is a classic sign of a stable, committed partnership.'
         : q7 === 'dusthana' ? `In the ${h(p7.house!)} the partnership matures through challenges: ${BHAVA[p7.house! - 1].topics} enter the relationship story.`
           : `Partnership connects with ${BHAVA[p7.house! - 1].topics}.`,
+      ...sb7.text,
     ],
-    rule: 'Dignity and house of the 7th lord (kalatra bhava lord)',
+    rule: 'Dignity, house and Shadbala of the 7th lord (kalatra bhava lord)',
   }))
   const occ7 = occupants(chart, 7)
   g1.push(rule({
@@ -305,7 +307,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
     { title: 'Upapada Lagna (Jaimini)', results: g4 },
     { title: 'Family, home and children', results: g5 },
   ]
-  const score = areaScore(groups.flatMap((g) => g.results), { median: 2.8, spread: 5.2 })
+  const score = areaScore(groups.flatMap((g) => g.results), { median: 3.1, spread: 5.4 })
   const headline = `The 7th lord ${l7} in the ${h(p7.house!)}, ${gender === 'female' ? 'Jupiter and Venus' : 'Venus'} as karaka${gender === 'female' ? 's' : ''}, and a ${signName(s7)} 7th house shape your marriage story. ${tendency.label}.`
   return { gender, score, headline, tendency, style: { love, arranged }, spouse, mangal, groups, vargas, ...timing, upapadaSign: ul, darakaraka: dk }
 }
