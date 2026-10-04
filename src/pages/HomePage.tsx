@@ -1,20 +1,42 @@
+import { DateTime } from 'luxon'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { DateTime } from 'luxon'
 import SquareChart from '../components/vedic/SquareChart'
+import { useSettings } from '../lib/settings'
 import { GRAHA_INFO } from '../vedic/constants'
+import { computePanchang } from '../vedic/panchang'
+import { DEFAULT_PLACE } from '../vedic/settings'
 import { computeVedicChart, signName } from '../vedic/sidereal'
-import { SIGNS } from '../astro/constants'
+import { YOGAS } from '../vedic/yogas'
+
+const TOOLS: { to: string; title: string; text: string }[] = [
+  { to: '/chart', title: 'Kundali', text: 'D1 to D60 divisional charts, planet strengths, house lords, yogas and Vimshottari dasha to four levels.' },
+  { to: '/chart', title: 'Life-area reports', text: 'Career, marriage, wealth, education and children, each scored from classical rules with timing windows.' },
+  { to: '/match', title: 'Kundali matching', text: '36-point Ashtakoota, ten South Indian poruthams and Mangal dosha for both partners.' },
+  { to: '/panchang', title: 'Panchang', text: 'Tithi, nakshatra, yoga, karana, Rahu Kaal, Choghadiya and Hora for any place and date.' },
+  { to: '/learn', title: 'Learn Jyotish', text: 'A 19-lesson course from signs and houses to yogas, dashas and transits, with worked examples.' },
+  { to: '/settings', title: 'Settings', text: 'Choose the ayanamsa, mean or true nodes, the karaka scheme and North or South Indian charts.' },
+]
 
 export default function HomePage() {
+  const { settings } = useSettings()
+  const place = settings.place ?? DEFAULT_PLACE
   const now = useMemo(() => {
-    const dt = DateTime.now().setZone('Asia/Kolkata')
+    const dt = DateTime.now().setZone(place.timezone)
     return computeVedicChart({
-      name: 'The sky right now', date: dt.toISODate()!, time: dt.toFormat('HH:mm'), place: 'New Delhi',
-      latitude: 28.6139, longitude: 77.209, timezone: 'Asia/Kolkata', houseSystem: 'whole-sign',
-    })
-  }, [])
-  const moon = now.grahas[1]
+      name: '', date: dt.toISODate()!, time: dt.toFormat('HH:mm'), place: place.label,
+      latitude: place.latitude, longitude: place.longitude, timezone: place.timezone, houseSystem: 'whole-sign',
+    }, settings)
+  }, [place, settings])
+  const today = useMemo(() => {
+    try {
+      return computePanchang(DateTime.now().setZone(place.timezone).toISODate()!, place.latitude, place.longitude, place.timezone, settings.ayanamsa)
+    } catch {
+      return null
+    }
+  }, [place, settings.ayanamsa])
+  const t = (d: Date) => DateTime.fromJSDate(d).setZone(place.timezone).toFormat('HH:mm')
+
   const items = [
     { sign: now.lagnaSign!, label: 'Asc', title: `Lagna ${signName(now.lagnaSign!)}`, tone: 'asc' as const },
     ...now.grahas.map((g) => ({ sign: g.sign, label: `${GRAHA_INFO[g.graha].abbr} ${Math.floor(g.degree)}°`, title: `${g.graha} in ${signName(g.sign)}` })),
@@ -24,62 +46,60 @@ export default function HomePage() {
     <div className="home">
       <section className="hero night">
         <div className="hero-text">
-          <p className="eyebrow">Vedic kundali &amp; Western charts, clearly explained</p>
-          <h1>Understand yourself through the sky you were born under.</h1>
+          <p className="eyebrow">Vedic astrology, calculated in your browser</p>
+          <h1>Kundali, Panchang and matching, with every rule shown.</h1>
           <p className="lede">
-            Enter your birth details to get your Janma Kundali in North or South Indian style, with divisional charts D1–D10,
-            yogas, dashas and plain-language insights. Every insight lists the planetary combinations behind it, so you can learn Jyotish as you go.
+            Enter birth details for a North or South Indian kundali with 19 divisional charts, Vimshottari dasha and {YOGAS.length} classical yogas.
+            Each reading lists the planetary combinations behind it.
           </p>
           <div className="hero-cta">
-            <Link to="/chart" className="btn primary">Create my free chart</Link>
-            <Link to="/learn" className="btn ghost">Start learning</Link>
+            <Link to="/chart" className="btn primary">Create a kundali</Link>
+            <Link to="/panchang" className="btn ghost">Today's Panchang</Link>
           </div>
           <ul className="trust-list">
-            <li>Lahiri ayanamsa, astronomy-grade positions</li>
-            <li>Calculated privately in your browser</li>
-            <li>Every reading shows the combinations behind it</li>
+            <li>Lahiri, KP, Raman or True Chitra ayanamsa</li>
+            <li>Birth data stays on your device</li>
+            <li>Rules cite their classical source</li>
           </ul>
         </div>
         <div className="hero-wheel">
-          <SquareChart style="north" lagnaSign={now.lagnaSign!} items={items} title="Live kundali" subtitle={`Right now over New Delhi · Moon in ${signName(moon.sign)}`} />
+          <SquareChart style={settings.chartStyle} lagnaSign={now.lagnaSign!} items={items} title="Sky now" subtitle={`${place.label} · Moon in ${signName(now.grahas[1].sign)}`} />
         </div>
       </section>
 
-      <section className="features">
-        <div className="card feature">
-          <span className="feature-icon" aria-hidden>☉</span>
-          <h2>Accurate kundali</h2>
-          <p>Sidereal positions (Lahiri) from the open-source Astronomy Engine, historical time zones, D1–D10 divisional charts and Vimshottari dasha. Western tropical charts are one click away.</p>
-        </div>
-        <div className="card feature">
-          <span className="feature-icon" aria-hidden>⚖</span>
-          <h2>Readings you can trust</h2>
-          <p>No vague horoscopes. Each insight comes from a Parashari rule, such as house lordship, dignity, a yoga or a dasha, and tells you exactly why it applies.</p>
-        </div>
-        <div className="card feature">
-          <span className="feature-icon" aria-hidden>✦</span>
-          <h2>Learn step by step</h2>
-          <p>A 19-lesson Jyotish course, from basics to drishti, yogas, dashas, transits, career and marriage, with real-life examples. A Western track is included too.</p>
-        </div>
-      </section>
-
-      <section className="sign-strip" aria-label="The twelve signs">
-        {SIGNS.map((s) => (
-          <div key={s.name} className={`sign-chip el-${s.element.toLowerCase()}`}>
-            <span className="sign-chip-glyph" aria-hidden>{s.glyph}</span>
-            <span>{s.name}</span>
-            <span className="muted small">{s.dates}</span>
+      {today && (
+        <section className="card today">
+          <div className="today-head">
+            <h2>Today in {place.label.split(',')[0]}</h2>
+            <Link to="/panchang" className="small">Full Panchang</Link>
           </div>
+          <dl className="today-grid">
+            <div><dt>Tithi</dt><dd>{today.tithi.paksha} {today.tithi.name}</dd></div>
+            <div><dt>Nakshatra</dt><dd>{today.nakshatra.name}</dd></div>
+            <div><dt>Yoga</dt><dd>{today.yoga.name}</dd></div>
+            <div><dt>Sunrise</dt><dd>{t(today.sunrise)}</dd></div>
+            <div><dt>Rahu Kaal</dt><dd>{t(today.periods.rahuKaal.start)} to {t(today.periods.rahuKaal.end)}</dd></div>
+            <div><dt>Abhijit</dt><dd>{t(today.periods.abhijit.start)} to {t(today.periods.abhijit.end)}</dd></div>
+          </dl>
+        </section>
+      )}
+
+      <h2 className="section-title">Tools</h2>
+      <div className="tool-grid">
+        {TOOLS.map((x) => (
+          <Link key={x.title} to={x.to} className="card tool-card">
+            <strong>{x.title}</strong>
+            <span>{x.text}</span>
+          </Link>
         ))}
-      </section>
+      </div>
 
       <section className="how card">
-        <h2>How it works</h2>
+        <h2>How readings are made</h2>
         <ol className="steps">
-          <li><strong>Enter your birth date, time and place.</strong> The exact time matters for your rising sign and houses.</li>
-          <li><strong>We calculate the sky.</strong> Your local time is converted to UTC, planets are placed along the ecliptic, and houses are computed for your latitude.</li>
-          <li><strong>Rules turn geometry into insight.</strong> Clear, published rules combine planet, sign, house, dignity and aspect meanings into a reading about you.</li>
-          <li><strong>Save it (optional).</strong> Sign in with Google to keep your charts. Only you can see them.</li>
+          <li><strong>Positions.</strong> Planet positions come from the open-source Astronomy Engine, converted to the sidereal zodiac with the ayanamsa you choose. Historical time zones are applied automatically.</li>
+          <li><strong>Rules.</strong> Each reading is a fixed rule from Parashari, Jaimini or Phaladeepika practice: house lordship, dignity, aspects, yogas, divisional charts and dashas. No AI writes or judges your chart.</li>
+          <li><strong>Evidence.</strong> Every card lists the combinations that triggered it, and reports also show the rules that did not apply.</li>
         </ol>
       </section>
     </div>

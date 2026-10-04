@@ -13,7 +13,7 @@ export interface CardInsight {
   tone?: 'good' | 'mixed' | 'challenge'
 }
 
-export const TONE_LABEL = { good: 'Strength', mixed: 'Mixed', challenge: 'Needs care' } as const
+export const TONE_LABEL = { good: 'Supportive', mixed: 'Mixed', challenge: 'Needs care' } as const
 
 export default function InsightCard({ insight, highlight }: { insight: CardInsight; highlight?: boolean }) {
   const lesson = insight.lesson ? lessonBySlug(insight.lesson) : undefined
@@ -26,7 +26,7 @@ export default function InsightCard({ insight, highlight }: { insight: CardInsig
       {insight.subtitle && <p className="insight-sub">{insight.subtitle}</p>}
       <div className="insight-body">{insight.body.map((b, i) => <p key={i}>{b}</p>)}</div>
       <Basis items={insight.basis ?? insight.rule.split(' + ')} />
-      {lesson && <Link className="learn-link" to={`/learn/${lesson.slug}`}>Learn more: {lesson.title} →</Link>}
+      {lesson && <Link className="learn-link" to={`/learn/${lesson.slug}`}>Lesson: {lesson.title}</Link>}
     </article>
   )
 }

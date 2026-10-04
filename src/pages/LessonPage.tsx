@@ -27,7 +27,7 @@ export default function LessonPage() {
       {lesson.quiz.length > 0 && <Quiz questions={lesson.quiz} onPass={() => markLessonComplete(lesson.slug)} />}
       <nav className="lesson-nav">
         {prev ? <Link to={`/learn/${prev.slug}`} className="btn ghost">← {prev.title}</Link> : <span />}
-        {next ? <Link to={`/learn/${next.slug}`} className="btn primary">{next.title} →</Link> : <Link to="/chart" className="btn primary">Read your chart →</Link>}
+        {next ? <Link to={`/learn/${next.slug}`} className="btn primary">{next.title} →</Link> : <Link to="/chart" className="btn primary">Open a kundali</Link>}
       </nav>
     </article>
   )
@@ -66,7 +66,7 @@ function BlockView({ block }: { block: Block }) {
     case 'try':
       return (
         <p className="callout try">
-          <strong>Try it:</strong> <RichText text={block.text} /> <Link to="/chart">Open my chart →</Link>
+          <strong>Try it:</strong> <RichText text={block.text} /> <Link to="/chart">Open a kundali</Link>
         </p>
       )
   }
@@ -111,7 +111,7 @@ function Quiz({ questions, onPass }: { questions: QuizQuestion[]; onPass: () => 
       ))}
       {answered && (
         <div className="quiz-result">
-          <p><strong>{correct} / {questions.length}</strong> {passed ? '· Lesson complete ✓' : '· Review the lesson and try again.'}</p>
+          <p><strong>{correct} / {questions.length}</strong> {passed ? '· Lesson complete' : '· Review the lesson and try again.'}</p>
           {!passed && <button className="btn ghost small" onClick={() => setAnswers(questions.map(() => null))}>Retry quiz</button>}
         </div>
       )}

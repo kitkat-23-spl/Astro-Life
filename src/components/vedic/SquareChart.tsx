@@ -1,7 +1,8 @@
 import { RASHI } from '../../vedic/constants'
 import { signName } from '../../vedic/sidereal'
 
-export type ChartStyle = 'north' | 'south'
+import type { ChartStyle } from '../../vedic/settings'
+export type { ChartStyle }
 
 export interface ChartItem {
   sign: number

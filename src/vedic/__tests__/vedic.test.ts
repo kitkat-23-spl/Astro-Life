@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computeVedicChart, lahiriAyanamsa, signName, vargaChart } from '../sidereal'
+import { ayanamsaAt, computeVedicChart, signName, vargaChart } from '../sidereal'
 import { vargaSign } from '../varga'
 import { currentPeriods, vimshottari } from '../dasha'
 
@@ -11,11 +11,11 @@ const g = (name: string) => einstein.grahas.find((x) => x.graha === name)!
 
 describe('Lahiri ayanamsa', () => {
   it('matches the reference value at J2000 (23°51′ ≈ 23.857°)', () => {
-    const mean = lahiriAyanamsa(new Date('2000-01-01T12:00:00Z'))
+    const mean = ayanamsaAt(new Date('2000-01-01T12:00:00Z'))
     expect(Math.abs(mean - 23.857)).toBeLessThan(0.01) // nutation adds at most ±0.005°
   })
   it('matches the reference at 21 Mar 1956 (23°15′)', () => {
-    expect(Math.abs(lahiriAyanamsa(new Date('1956-03-21T00:00:00Z')) - 23.2455)).toBeLessThan(0.006)
+    expect(Math.abs(ayanamsaAt(new Date('1956-03-21T00:00:00Z')) - 23.2455)).toBeLessThan(0.006)
   })
 })
 

@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import type { BirthData } from '../astro/ephemeris'
 import { HOUSE_SYSTEM_LABELS, type HouseSystem } from '../astro/houses'
-import { searchPlaces, type Place } from '../lib/geocode'
+import type { Place } from '../lib/geocode'
+import PlaceSearch from './PlaceSearch'
 
 interface Props {
   initial?: Partial<BirthData>
@@ -24,49 +25,8 @@ export default function BirthForm({ initial, onSubmit, submitLabel = 'Reveal my 
       ? { id: 0, name: initial.place, label: initial.place, latitude: initial.latitude, longitude: initial.longitude, timezone: initial.timezone }
       : null,
   )
-  const [query, setQuery] = useState(initial?.place ?? '')
-  const [results, setResults] = useState<Place[]>([])
-  const [open, setOpen] = useState(false)
-  const [activeIndex, setActiveIndex] = useState(-1)
-  const [searching, setSearching] = useState(false)
-  const [searchError, setSearchError] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const listId = useId()
   const uid = useId()
-  const abortRef = useRef<AbortController | null>(null)
-
-  useEffect(() => {
-    if (place && query === place.label) return
-    const q = query.trim()
-    if (q.length < 2) {
-      setResults([])
-      return
-    }
-    const t = setTimeout(async () => {
-      abortRef.current?.abort()
-      const ctrl = new AbortController()
-      abortRef.current = ctrl
-      setSearching(true)
-      setSearchError(null)
-      try {
-        const r = await searchPlaces(q, ctrl.signal)
-        setResults(r)
-        setOpen(true)
-        setActiveIndex(r.length ? 0 : -1)
-      } catch (e) {
-        if ((e as Error).name !== 'AbortError') setSearchError((e as Error).message)
-      } finally {
-        setSearching(false)
-      }
-    }, 300)
-    return () => clearTimeout(t)
-  }, [query, place])
-
-  const choose = (p: Place) => {
-    setPlace(p)
-    setQuery(p.label)
-    setOpen(false)
-  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -108,58 +68,7 @@ export default function BirthForm({ initial, onSubmit, submitLabel = 'Reveal my 
         I don’t know my birth time <span className="muted">(no rising sign or houses)</span>
       </label>
 
-      <div className="field combo">
-        <label htmlFor={`bf-place-${uid}`}>Birthplace</label>
-        <input
-          id={`bf-place-${uid}`}
-          role="combobox"
-          aria-expanded={open}
-          aria-controls={listId}
-          aria-autocomplete="list"
-          aria-activedescendant={open && activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
-          autoComplete="off"
-          placeholder="Start typing a city…"
-          value={query}
-          maxLength={100}
-          onChange={(e) => { setQuery(e.target.value); setPlace(null) }}
-          onFocus={() => results.length && setOpen(true)}
-          onBlur={() => setTimeout(() => setOpen(false), 150)}
-          onKeyDown={(e) => {
-            if (!open || !results.length) return
-            if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex((i) => (i + 1) % results.length) }
-            if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex((i) => (i - 1 + results.length) % results.length) }
-            if (e.key === 'Enter' && activeIndex >= 0) { e.preventDefault(); choose(results[activeIndex]) }
-            if (e.key === 'Escape') setOpen(false)
-          }}
-        />
-        {searching && <span className="combo-status muted">Searching…</span>}
-        {open && results.length > 0 && (
-          <ul className="combo-list" id={listId} role="listbox">
-            {results.map((r, i) => (
-              <li
-                key={r.id}
-                id={`${listId}-${i}`}
-                role="option"
-                aria-selected={i === activeIndex}
-                className={i === activeIndex ? 'active' : ''}
-                onMouseDown={(e) => { e.preventDefault(); choose(r) }}
-              >
-                <span>{r.label}</span>
-                <span className="muted small">{r.timezone}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {open && !searching && query.trim().length >= 2 && results.length === 0 && !searchError && (
-          <p className="muted small">No places found. Try the nearest larger town.</p>
-        )}
-        {searchError && <p className="error small">{searchError}</p>}
-        {place && (
-          <p className="muted small">
-            {place.latitude.toFixed(2)}°, {place.longitude.toFixed(2)}° · time zone {place.timezone}
-          </p>
-        )}
-      </div>
+      <PlaceSearch label="Birthplace" value={place} onChange={setPlace} />
 
       <details className="advanced">
         <summary>Advanced options</summary>

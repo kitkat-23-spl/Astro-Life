@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { computeChart, type BirthData, type Chart } from '../astro/ephemeris'
 import BirthForm from '../components/BirthForm'
 import ChartView from '../components/ChartView'
@@ -8,31 +8,17 @@ import VedicView from '../components/vedic/VedicView'
 import { GoogleIcon } from '../components/UserMenu'
 import { useAuth } from '../lib/auth'
 import { saveChart } from '../lib/charts'
-import { decodeBirth, encodeBirth } from '../lib/share'
+import { encodeBirth } from '../lib/share'
+import { useSettings } from '../lib/settings'
+import { useBirthFromHash } from '../lib/useVedic'
 import { authEnabled } from '../lib/supabase'
 
-type System = 'vedic' | 'western'
-const SYSTEM_KEY = 'astrolife:system'
-
-function loadSystem(): System {
-  try {
-    return localStorage.getItem(SYSTEM_KEY) === 'western' ? 'western' : 'vedic'
-  } catch {
-    return 'vedic'
-  }
-}
-
 export default function ChartPage() {
-  const { hash } = useLocation()
+  const { hash, birth } = useBirthFromHash()
   const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
-  const [system, setSystemState] = useState<System>(loadSystem)
-  const setSystem = (v: System) => {
-    setSystemState(v)
-    try { localStorage.setItem(SYSTEM_KEY, v) } catch { /* not persisted */ }
-  }
-
-  const birth = useMemo(() => (hash.length > 1 ? decodeBirth(hash.slice(1)) : null), [hash])
+  const { settings, update } = useSettings()
+  const system = settings.system
   const result = useMemo((): { chart: Chart } | { error: string } | null => {
     if (!birth) return null
     try {
@@ -51,10 +37,10 @@ export default function ChartPage() {
     return (
       <div className="chart-form-page">
         <div className="form-intro">
-          <p className="eyebrow">Free birth chart</p>
-          <h1>Enter your birth details</h1>
-          <p className="lede">Your exact birth time and place let us calculate your rising sign and houses. You’ll find them on a birth certificate, or ask a parent.</p>
-          {hash.length > 1 && !birth && <p className="error">That chart link is invalid or incomplete. Please enter the details again.</p>}
+          <p className="eyebrow">Kundali</p>
+          <h1>Birth details</h1>
+          <p className="lede">The birth time and place set the lagna and houses. A time from a birth certificate is best.</p>
+          {hash.length > 1 && !birth && <p className="error">This chart link is invalid or incomplete. Enter the details again.</p>}
           {result && 'error' in result && <p className="error">{result.error}</p>}
         </div>
         <BirthForm initial={birth ?? undefined} onSubmit={show} />
@@ -64,7 +50,7 @@ export default function ChartPage() {
 
   const actions = (
     <>
-      <Segmented label="Astrology system" value={system} onChange={setSystem} options={[['vedic', 'Vedic'], ['western', 'Western']]} />
+      <Segmented label="Astrology system" value={system} onChange={(v) => update({ system: v })} options={[['vedic', 'Vedic'], ['western', 'Western']]} />
       <ChartActions birth={birth} onEdit={() => setEditing(true)} />
     </>
   )

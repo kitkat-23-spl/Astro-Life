@@ -65,7 +65,7 @@ export default function AccountPage() {
       {error && <p className="error">{error}</p>}
       {charts === null && !error && <p className="muted">Loading…</p>}
       {charts?.length === 0 && (
-        <p className="muted">No saved charts yet. <Link to="/chart">Create one →</Link></p>
+        <p className="muted">No saved charts yet. <Link to="/chart">Create one</Link></p>
       )}
       <div className="saved-grid">
         {charts?.filter((c) => isBirthData(c.birth)).map((c) => (

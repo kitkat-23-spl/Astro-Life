@@ -7,11 +7,12 @@ import ChartPage from './pages/ChartPage'
 import HomePage from './pages/HomePage'
 import LearnPage from './pages/LearnPage'
 import LessonPage from './pages/LessonPage'
-import CareerPage from './pages/CareerPage'
-import MarriagePage from './pages/MarriagePage'
 import MatchPage from './pages/MatchPage'
 import NotFound from './pages/NotFound'
+import PanchangPage from './pages/PanchangPage'
 import PrivacyPage from './pages/PrivacyPage'
+import ReportPage from './pages/ReportPage'
+import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
   const { pathname } = useLocation()
@@ -30,9 +31,11 @@ export default function App() {
             <span>Astro Life</span>
           </Link>
           <nav className="main-nav" aria-label="Main">
-            <NavLink to="/chart" end>My Chart</NavLink>
+            <NavLink to="/chart">Kundali</NavLink>
+            <NavLink to="/panchang">Panchang</NavLink>
             <NavLink to="/match">Match</NavLink>
             <NavLink to="/learn">Learn</NavLink>
+            <NavLink to="/settings">Settings</NavLink>
           </nav>
           <UserMenu />
         </div>
@@ -42,8 +45,9 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/chart" element={<ChartPage />} />
-            <Route path="/chart/career" element={<CareerPage />} />
-            <Route path="/chart/marriage" element={<MarriagePage />} />
+            <Route path="/chart/:report" element={<ReportPage />} />
+            <Route path="/panchang" element={<PanchangPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
             <Route path="/match" element={<MatchPage />} />
             <Route path="/learn" element={<LearnPage />} />
             <Route path="/learn/:slug" element={<LessonPage />} />
@@ -55,10 +59,14 @@ export default function App() {
       </main>
       <footer className="site-footer">
         <div className="container footer-inner">
-          <span>© {new Date().getFullYear()} Astro Life · Rule-based astrology, calculated in your browser.</span>
+          <span>© {new Date().getFullYear()} Astro Life. Rule-based Jyotish, calculated in your browser.</span>
           <nav aria-label="Footer">
+            <Link to="/chart">Kundali</Link>
+            <Link to="/panchang">Panchang</Link>
+            <Link to="/match">Match</Link>
             <Link to="/learn">Learn</Link>
-            <Link to="/privacy">Privacy &amp; Security</Link>
+            <Link to="/settings">Settings</Link>
+            <Link to="/privacy">Privacy</Link>
           </nav>
         </div>
       </footer>

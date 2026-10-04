@@ -2,7 +2,7 @@ export default function Segmented<T extends string>({ label, value, onChange, op
   return (
     <div className="segmented" role="group" aria-label={label}>
       {options.map(([v, text]) => (
-        <button key={v} className={value === v ? 'active' : ''} aria-pressed={value === v} onClick={() => onChange(v)}>{text}</button>
+        <button type="button" key={v} className={value === v ? 'active' : ''} aria-pressed={value === v} onClick={() => onChange(v)}>{text}</button>
       ))}
     </div>
   )

@@ -1,28 +1,71 @@
 import * as Astronomy from 'astronomy-engine'
-import { norm360, angDist, SIGNS, type SignName } from '../astro/constants'
+import { angDist, norm360, SIGNS, type SignName } from '../astro/constants'
 import { longitudeOf, toUtc, type BirthData } from '../astro/ephemeris'
 import { ascendant } from '../astro/houses'
 import {
   COMBUSTION, EXALTATION, FRIENDS, GRAHAS, MOOLATRIKONA, NAKSHATRAS, NAKSHATRA_SPAN, SIGN_LORD, houseFrom,
   type Graha,
 } from './constants'
+import { DEFAULT_SETTINGS, type Ayanamsa, type CalcSettings, type NodeMode } from './settings'
 import { vargaSign, type VargaN } from './varga'
 
-/**
- * Lahiri (Chitrapaksha) ayanamsa, as defined by the Indian Calendar Reform
- * Committee: 23°15′00.658″ at 21 March 1956 (JD 2435553.5, the value used by
- * the Swiss Ephemeris), advanced by IAU 2006 general precession in longitude.
- * Adding nutation gives the "true" ayanamsa used with true-of-date positions.
- */
-export function lahiriAyanamsa(date: Date): number {
-  const jd = date.getTime() / 86400000 + 2440587.5
-  const p = (T: number) => 5028.796195 * T + 1.1054348 * T * T // arcseconds
-  const T = (jd - 2451545.0) / 36525
-  const T0 = (2435553.5 - 2451545.0) / 36525
-  const mean = 23.245524743 + (p(T) - p(T0)) / 3600
-  const nutation = Astronomy.e_tilt(Astronomy.MakeTime(date)).dpsi / 3600
-  return mean + nutation
+/* ------------------------------------------------------------------ */
+/* Ayanamsa                                                             */
+/* ------------------------------------------------------------------ */
+
+/** IAU 2006 general precession in longitude, arcseconds since J2000. */
+const precession = (T: number) => 5028.796195 * T + 1.1054348 * T * T
+const julianDay = (d: Date) => d.getTime() / 86400000 + 2440587.5
+
+/** Reference epochs and values (same definitions as the Swiss Ephemeris). */
+const AYANAMSA_EPOCH: Record<Exclude<Ayanamsa, 'true-chitra'>, { jd: number; value: number }> = {
+  lahiri: { jd: 2435553.5, value: 23.245524743 }, // ICRC: 23°15′00.658″ on 21 Mar 1956
+  raman: { jd: 2415020.0, value: 21.014444 },
+  kp: { jd: 2415020.0, value: 22.363889 },
 }
+
+// Spica (α Virginis), J2000 position. Used for the True Chitra ayanamsa.
+let spicaDefined = false
+function spicaLongitude(date: Date): number {
+  if (!spicaDefined) {
+    Astronomy.DefineStar(Astronomy.Body.Star1, 13 + 25 / 60 + 11.579 / 3600, -(11 + 9 / 60 + 40.75 / 3600), 250)
+    spicaDefined = true
+  }
+  return Astronomy.Ecliptic(Astronomy.GeoVector(Astronomy.Body.Star1, date, true)).elon
+}
+
+/** True (nutation-corrected) ayanamsa, to subtract from true-of-date tropical longitudes. */
+export function ayanamsaAt(date: Date, kind: Ayanamsa = 'lahiri'): number {
+  if (kind === 'true-chitra') return norm360(spicaLongitude(date) - 180)
+  const e = AYANAMSA_EPOCH[kind]
+  const T = (julianDay(date) - 2451545.0) / 36525
+  const T0 = (e.jd - 2451545.0) / 36525
+  const mean = e.value + (precession(T) - precession(T0)) / 3600
+  return mean + Astronomy.e_tilt(Astronomy.MakeTime(date)).dpsi / 3600
+}
+
+/** Sidereal longitude of a body at any date (used for transits). */
+export function siderealLongitude(body: 'Sun' | 'Moon' | 'Mars' | 'Mercury' | 'Jupiter' | 'Venus' | 'Saturn', date: Date, kind: Ayanamsa = 'lahiri') {
+  return norm360(longitudeOf(body, date) - ayanamsaAt(date, kind))
+}
+
+/* ------------------------------------------------------------------ */
+/* Nodes                                                                */
+/* ------------------------------------------------------------------ */
+
+/** Tropical longitude of Rahu. "True" is the osculating node of the Moon's orbit. */
+export function nodeLongitude(date: Date, mode: NodeMode): number {
+  if (mode === 'mean') return longitudeOf('North Node', date)
+  const state = Astronomy.RotateState(Astronomy.Rotation_EQJ_ECT(date), Astronomy.GeoMoonState(date))
+  // Orbit normal h = r × v; the ascending node lies along (h.x, h.y) rotated by −90°.
+  const hx = state.y * state.vz - state.z * state.vy
+  const hy = state.z * state.vx - state.x * state.vz
+  return norm360((Math.atan2(hx, -hy) * 180) / Math.PI)
+}
+
+/* ------------------------------------------------------------------ */
+/* Chart                                                                */
+/* ------------------------------------------------------------------ */
 
 export type VedicDignity = 'exalted' | 'moolatrikona' | 'own' | 'friend' | 'neutral' | 'enemy' | 'debilitated'
 
@@ -41,6 +84,7 @@ export interface GrahaPos {
 
 export interface VedicChart {
   birth: BirthData
+  settings: CalcSettings
   timeKnown: boolean
   ayanamsa: number
   lagna: number | null // sidereal longitude
@@ -75,10 +119,10 @@ export function signName(i: number): SignName {
   return SIGNS[((i % 12) + 12) % 12].name
 }
 
-export function computeVedicChart(birth: BirthData): VedicChart {
+export function computeVedicChart(birth: BirthData, settings: CalcSettings = DEFAULT_SETTINGS): VedicChart {
   const timeKnown = birth.time !== null && birth.time !== ''
   const utc = toUtc(birth.date, timeKnown ? birth.time : null, birth.timezone)
-  const ayanamsa = lahiriAyanamsa(utc)
+  const ayanamsa = ayanamsaAt(utc, settings.ayanamsa)
   const t = Astronomy.MakeTime(utc)
 
   let lagna: number | null = null
@@ -88,19 +132,15 @@ export function computeVedicChart(birth: BirthData): VedicChart {
   }
   const lagnaSign = lagna === null ? null : Math.floor(lagna / 30)
 
-  const hours = 3600000
-  const tropical = (name: 'Sun' | 'Moon' | 'Mars' | 'Mercury' | 'Jupiter' | 'Venus' | 'Saturn' | 'North Node', d: Date) => longitudeOf(name, d)
-
+  const tropical = (g: Graha, d: Date) => (g === 'Rahu' || g === 'Ketu' ? nodeLongitude(d, settings.node) : longitudeOf(g, d))
+  const sixHours = 6 * 3600000
   const raw = GRAHAS.map((g) => {
-    const key = g === 'Rahu' || g === 'Ketu' ? 'North Node' : g
-    const trop = tropical(key, utc)
-    const before = tropical(key, new Date(utc.getTime() - 6 * hours))
-    const after = tropical(key, new Date(utc.getTime() + 6 * hours))
-    let delta = norm360(after - before)
-    if (delta > 180) delta -= 360
-    let lon = norm360(trop - ayanamsa)
+    let lon = norm360(tropical(g, utc) - ayanamsa)
     if (g === 'Ketu') lon = norm360(lon + 180)
-    return { graha: g, lon, retrograde: g === 'Rahu' || g === 'Ketu' ? true : delta < 0 }
+    if (g === 'Rahu' || g === 'Ketu') return { graha: g, lon, retrograde: true }
+    let delta = norm360(tropical(g, new Date(utc.getTime() + sixHours)) - tropical(g, new Date(utc.getTime() - sixHours)))
+    if (delta > 180) delta -= 360
+    return { graha: g, lon, retrograde: delta < 0 }
   })
 
   const sunLon = raw[0].lon
@@ -119,10 +159,14 @@ export function computeVedicChart(birth: BirthData): VedicChart {
     }
   })
 
-  return { birth, timeKnown, ayanamsa, lagna, lagnaSign, grahas, utc }
+  return { birth, settings, timeKnown, ayanamsa, lagna, lagnaSign, grahas, utc }
 }
 
-export interface VargaPlacement { graha: Graha | 'Lagna'; sign: number; house: number | null; dignity: VedicDignity | null }
+/* ------------------------------------------------------------------ */
+/* Divisional charts                                                    */
+/* ------------------------------------------------------------------ */
+
+export interface VargaPlacement { graha: Graha; sign: number; house: number | null; dignity: VedicDignity | null }
 
 export interface VargaChart {
   n: VargaN
@@ -135,13 +179,8 @@ export function vargaChart(chart: VedicChart, n: VargaN): VargaChart {
   const lagnaSign = chart.lagna === null ? null : vargaSign(n, chart.lagna)
   const placements: VargaPlacement[] = chart.grahas.map((g) => {
     const sign = vargaSign(n, g.lon)
-    // Within a varga, dignity is judged by sign only (the degree inside the division is not meaningful).
+    // Within a varga, dignity is judged by sign only.
     return { graha: g.graha, sign, house: lagnaSign === null ? null : houseFrom(lagnaSign, sign), dignity: n === 1 ? g.dignity : dignityOf(g.graha, sign, 15) }
   })
   return { n, lagnaSign, placements }
-}
-
-/** Planet's sign lord (dispositor). */
-export function lordOf(sign: number): Graha {
-  return SIGN_LORD[sign]
 }

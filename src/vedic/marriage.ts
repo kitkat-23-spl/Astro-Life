@@ -1,17 +1,19 @@
 import { SIGN_TEXT } from '../interpret/signs'
 import { BHAVA, KENDRA, RASHI, SIGN_LORD, houseFrom, type Graha } from './constants'
-import { vimshottari } from './dasha'
 import {
-  GOOD_DIGNITY, areaScore, aspectors, dashaHighlights, describeLord, dignityPhrase, dignityScore, h, houseQuality,
-  influencesHouse, isBenefic, linked, occupants, rule, type DashaHighlight, type RuleResult,
-} from './rules'
+  aspectors, aspectsOnGraha, conjunctWith, describeLord, dignityPhrase, dignityScore, h, houseGroup, influencesHouse,
+  isBenefic, linked, lordOfHouse, occupants, pos,
+} from './query'
+import { areaScore, areaTiming, rule, vargaVerdict, weigh, type AreaReport, type RuleResult, type VargaVerdict, type Weights } from './rules'
 import { signName, vargaChart, type VedicChart } from './sidereal'
-import { aspectsOnGraha, charaKarakas, conjunctWith, doubleTransitWindows, lordOfHouse, pos, upapada, type TransitWindow } from './techniques'
+import { charaKarakas, upapada } from './techniques'
+import { mangalDosha, type MangalDosha } from './yogas'
 
-export type Gender = 'male' | 'female' | 'unspecified'
+export type { Gender } from './settings'
+import type { Gender } from './settings'
 
 const SPOUSE_BY_PLANET: Record<Graha, string> = {
-  Sun: 'dignified, proud and principled, possibly from a respected family; mutual respect for each other’s ego is key',
+  Sun: 'dignified, proud and principled, possibly from a respected family; mutual respect matters',
   Moon: 'caring, emotional, attractive and family-oriented',
   Mars: 'energetic, assertive, athletic and passionate; channel disagreements constructively',
   Mercury: 'youthful, witty, communicative and intelligent, often business-minded',
@@ -22,25 +24,15 @@ const SPOUSE_BY_PLANET: Record<Graha, string> = {
   Ketu: 'spiritual, introspective and somewhat detached; conscious bonding keeps the relationship warm',
 }
 
-/** Classical sign-specific Mangal dosha cancellations: Mars in [house] in these signs does not cause dosha. */
-const MANGAL_SIGN_EXCEPTIONS: Record<number, number[]> = { 1: [0, 7], 2: [2, 5], 4: [0, 7], 7: [3, 9], 8: [8, 11], 12: [1, 6] }
-
 export interface SpouseTrait { text: string; source: string }
-export interface MangalCheck { from: string; house: number; present: boolean }
 export interface TimingFactor { label: string; direction: 'early' | 'delay'; source: string }
 
-export interface MarriageReport {
+export interface MarriageReport extends AreaReport {
   gender: Gender
-  score: number
-  headline: string
   tendency: { label: string; early: number; delay: number; factors: TimingFactor[] }
   style: { love: string[]; arranged: string[] }
   spouse: SpouseTrait[]
-  mangal: { checks: MangalCheck[]; cancellations: string[]; status: 'none' | 'present' | 'cancelled' }
-  groups: { title: string; results: RuleResult[] }[]
-  vargas: { code: string; name: string; focus: string; verdict: 'strong' | 'moderate' | 'weak'; detail: string }[]
-  dashas: DashaHighlight[]
-  windows: TransitWindow[]
+  mangal: MangalDosha
   upapadaSign: number
   darakaraka: Graha
 }
@@ -48,18 +40,18 @@ export interface MarriageReport {
 export function marriageReport(chart: VedicChart, gender: Gender, now = new Date()): MarriageReport | null {
   if (chart.lagnaSign === null) return null
   const L = chart.lagnaSign
-  const moon = pos(chart, 'Moon'), venus = pos(chart, 'Venus'), jup = pos(chart, 'Jupiter'), mars = pos(chart, 'Mars')
+  const moon = pos(chart, 'Moon'), venus = pos(chart, 'Venus'), jup = pos(chart, 'Jupiter')
   const l7 = lordOfHouse(chart, 7), p7 = pos(chart, l7)
   const l1 = lordOfHouse(chart, 1)
   const d9 = vargaChart(chart, 9), d7 = vargaChart(chart, 7)
   const vp = (vc: typeof d9, g: Graha) => vc.placements.find((p) => p.graha === g)!
   const karakas = charaKarakas(chart)
-  const dk = karakas.Darakaraka
+  const dk = karakas.Darakaraka!
   // Spouse karaka: Venus for everyone; Jupiter additionally for a woman’s husband (classical).
   const karakasForSpouse: Graha[] = gender === 'female' ? ['Jupiter', 'Venus'] : ['Venus']
 
   const g1: RuleResult[] = []
-  const q7 = houseQuality(p7.house!)
+  const q7 = houseGroup(p7.house!)
   g1.push(rule({
     id: 'm-7lord', group: '7th house', chart: 'D1', title: `7th lord ${l7} is ${dignityPhrase(p7.dignity)} in the ${h(p7.house!)}`,
     effect: dignityScore(p7.dignity) > 0 || q7 === 'kendra' || q7 === 'trikona' ? 'supportive' : p7.dignity === 'debilitated' || q7 === 'dusthana' ? 'challenging' : 'mixed',
@@ -87,10 +79,10 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
     effect: ben7.length > mal7.length ? 'supportive' : mal7.length > ben7.length ? 'challenging' : 'mixed',
     weight: ben7.length * (ben7.includes('Jupiter') ? 1.5 : 1) - mal7.length * 0.8,
     detail: [
-      ...(ben7.includes('Jupiter') ? ['Jupiter’s aspect on the 7th is the single most protective influence on marriage: it brings wisdom, blessings and staying power.'] : []),
+      ...(ben7.includes('Jupiter') ? ['Jupiter\'s aspect on the 7th is the strongest classical protection for marriage.'] : []),
       ...(ben7.filter((g) => g !== 'Jupiter').length ? [`${ben7.filter((g) => g !== 'Jupiter').join(', ')} add warmth.`] : []),
-      ...(mal7.includes('Saturn') ? ['Saturn’s aspect on the 7th often delays marriage or brings a mature, duty-bound partnership.'] : []),
-      ...(mal7.includes('Mars') ? ['Mars’s aspect on the 7th adds passion and the potential for arguments.'] : []),
+      ...(mal7.includes('Saturn') ? ['Saturn\'s aspect on the 7th often delays marriage or brings a mature, duty-bound partnership.'] : []),
+      ...(mal7.includes('Mars') ? ['Mars\'s aspect on the 7th adds passion and a tendency to argue.'] : []),
       ...(mal7.filter((g) => !['Saturn', 'Mars'].includes(g)).length ? [`${mal7.filter((g) => !['Saturn', 'Mars'].includes(g)).join(', ')} add intensity or unconventional elements.`] : []),
     ],
     rule: 'Parashari drishti on the 7th house',
@@ -104,7 +96,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
   const l1l7 = linked(chart, l1, l7)
   g1.push(rule({
     id: 'm-1-7', group: '7th house', chart: 'D1', fired: !!l1l7 && l1 !== l7, title: 'Lagna lord and 7th lord linked', effect: 'supportive', weight: 1.5,
-    detail: [`${l1} and ${l7} are linked (${l1l7}): self and partner are naturally drawn together, which is a strong indicator of marriage and mutual attachment.`],
+    detail: [`${l1} and ${l7} are linked (${l1l7}). This is a strong indicator of marriage and mutual attachment.`],
     rule: 'Lord of the 1st linked with lord of the 7th',
   }))
   for (const [ref, refSign] of [['Moon', moon.sign], ['Venus', venus.sign]] as const) {
@@ -129,7 +121,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
       effect: w >= 1 ? 'supportive' : w < 0 ? 'challenging' : 'mixed', weight: w,
       detail: [
         `${k} describes the quality of partnership and the partner.${p.combust ? ` It is combust, so ${k.toLowerCase() === 'venus' ? 'romantic expression' : 'guidance in marriage'} can be overshadowed by ego or career; conscious attention helps.` : ''}`,
-        ...(aff.length ? [`It is influenced by ${[...new Set(aff)].join(', ')}, which bring ${aff.includes('Saturn') ? 'delay and seriousness' : ''}${aff.includes('Rahu') ? ' unconventional attraction' : ''}${aff.includes('Ketu') ? ' detachment' : ''}${aff.includes('Mars') ? ' passion and friction' : ''}.`] : []),
+        ...(aff.length ? [`It is influenced by ${[...new Set(aff)].join(', ')}, which ${aff.length > 1 ? 'bring' : 'brings'} ${[aff.includes('Saturn') && 'delay and seriousness', aff.includes('Rahu') && 'unconventional attraction', aff.includes('Ketu') && 'detachment', aff.includes('Mars') && 'passion and friction'].filter(Boolean).join(', ')}.`] : []),
       ],
       rule: `Condition of ${k}: dignity, combustion, malefic conjunction or aspect`,
     }))
@@ -140,7 +132,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
     effect: dignityScore(dkp.dignity) + dignityScore(dkD9.dignity) > 0 ? 'supportive' : dignityScore(dkp.dignity) + dignityScore(dkD9.dignity) < 0 ? 'challenging' : 'mixed',
     weight: (dignityScore(dkp.dignity) + dignityScore(dkD9.dignity)) * 0.4,
     detail: [`In Jaimini astrology the planet with the lowest degree is the Darakaraka, and it represents the spouse. ${dk} suggests a partner who is ${SPOUSE_BY_PLANET[dk]}. It is ${dignityPhrase(dkp.dignity)} in D1 and ${dignityPhrase(dkD9.dignity)} in D9.`],
-    rule: 'Jaimini chara karaka: lowest degree among the seven planets = Darakaraka',
+    rule: 'Jaimini chara karaka: lowest degree = Darakaraka',
   }))
 
   // Navamsa.
@@ -153,7 +145,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
       id: 'm-d9-7', group: 'Navamsa (D9)', chart: 'D9', title: `D9 7th house ${RASHI[signName(s7)]}; lord ${d9l7} in the ${h(d9l7p.house!)}${d9occ7.length ? `; holds ${d9occ7.join(', ')}` : ''}`,
       effect: dignityScore(d9l7p.dignity) > 0 || KENDRA.includes(d9l7p.house!) || [5, 9, 11].includes(d9l7p.house!) ? 'supportive' : [6, 8, 12].includes(d9l7p.house!) || d9l7p.dignity === 'debilitated' ? 'challenging' : 'mixed',
       weight: dignityScore(d9l7p.dignity) * 0.8 + (KENDRA.includes(d9l7p.house!) || [5, 9, 11].includes(d9l7p.house!) ? 1.2 : [6, 8, 12].includes(d9l7p.house!) ? -1.2 : 0) + d9occ7.reduce((s, g) => s + (isBenefic(g) ? 0.6 : -0.4), 0),
-      detail: ['The Navamsa is the chart of marriage. Its 7th house and lord show how the marriage feels from the inside and how it matures over time.', `The D9 7th sign ${signName(s7)} suggests a partner with ${SIGN_TEXT[signName(s7)].keywords.slice(0, 3).join(', ')}.`],
+      detail: ['The navamsa is the main chart for marriage. Its 7th house and lord show the quality of married life and how it develops.', `The D9 7th sign ${signName(s7)} suggests a partner with ${SIGN_TEXT[signName(s7)].keywords.slice(0, 3).join(', ')}.`],
       rule: 'D9 7th house, its lord and occupants',
     }))
     g3.push(rule({
@@ -169,7 +161,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
         id: `m-d9-${k}`, group: 'Navamsa (D9)', chart: 'D9', title: `${k} in D9: ${dignityPhrase(kp.dignity)} (${RASHI[signName(kp.sign)]})`,
         effect: dignityScore(kp.dignity) > 0 ? 'supportive' : dignityScore(kp.dignity) < 0 ? 'challenging' : 'mixed', weight: dignityScore(kp.dignity) * 0.8,
         detail: [`The true strength of ${k} for marriage is judged in D9. ${dignityScore(kp.dignity) > 0 ? 'Strong here, it sustains harmony and attraction over the years.' : dignityScore(kp.dignity) < 0 ? 'Weak here, relationship happiness grows through effort, understanding and shared values.' : 'Moderate strength.'}`],
-        rule: `${k}’s dignity in the Navamsa`,
+        rule: `${k}'s dignity in the navamsa`,
       }))
     }
     const l7d9 = vp(d9, l7)
@@ -210,7 +202,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
   g5.push(rule({
     id: 'm-8th', group: 'Supporting houses', chart: 'D1', fired: house8occ.length > 0 || gender === 'female', title: `8th house (${gender === 'female' ? 'mangalya sthana, ' : ''}longevity of marriage)${house8occ.length ? `: ${house8occ.join(', ')}` : ''}`,
     effect: house8mal.length ? 'mixed' : 'info', weight: -house8mal.length * (gender === 'female' ? 0.8 : 0.4),
-    detail: [gender === 'female' ? 'For a woman, classical texts read the 8th house as the mangalya sthana (the bond and the spouse’s longevity).' : 'The 8th house shows shared resources, in-laws and the depth of intimacy.', house8mal.length ? `${house8mal.join(', ')} here bring intensity; strong benefic aspects soften it.` : 'No malefic occupation.'],
+    detail: [gender === 'female' ? 'For a woman, classical texts read the 8th house as the mangalya sthana (the continuity of the marriage).' : 'The 8th house shows shared resources, in-laws and the depth of intimacy.', house8mal.length ? `${house8mal.join(', ')} here bring intensity; strong benefic aspects soften it.` : 'No malefic occupation.'],
     rule: '8th house occupants (malefics add strain)',
   }))
   const l2 = lordOfHouse(chart, 2), p2 = pos(chart, l2)
@@ -237,20 +229,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
     }))
   }
 
-  // Mangal dosha from lagna, Moon and Venus.
-  const checks: MangalCheck[] = ([['Lagna', L], ['Moon', moon.sign], ['Venus', venus.sign]] as const).map(([from, s]) => {
-    const house = houseFrom(s, mars.sign)
-    return { from, house, present: [1, 2, 4, 7, 8, 12].includes(house) }
-  })
-  const cancellations: string[] = []
-  if (mars.dignity && GOOD_DIGNITY.includes(mars.dignity)) cancellations.push(`Mars is ${dignityPhrase(mars.dignity)}`)
-  const lagnaCheck = checks[0]
-  if (lagnaCheck.present && MANGAL_SIGN_EXCEPTIONS[lagnaCheck.house]?.includes(mars.sign)) cancellations.push(`Mars in ${signName(mars.sign)} in the ${h(lagnaCheck.house)} is a classical sign exception`)
-  if (aspectsOnGraha(chart, 'Mars').includes('Jupiter') || conjunctWith(chart, 'Mars').includes('Jupiter')) cancellations.push('Jupiter aspects or joins Mars')
-  if (conjunctWith(chart, 'Mars').includes('Moon')) cancellations.push('Moon joins Mars (Chandra–Mangala)')
-  if ([...occupants(chart, 1), ...occupants(chart, 7)].some((g) => g === 'Jupiter' || g === 'Venus')) cancellations.push('Jupiter or Venus in the 1st or 7th house')
-  const anyPresent = checks.some((c) => c.present)
-  const mangal = { checks, cancellations, status: (!anyPresent ? 'none' : cancellations.length ? 'cancelled' : 'present') as 'none' | 'present' | 'cancelled' }
+  const mangal = mangalDosha(chart)
 
   // Timing tendency.
   const factors: TimingFactor[] = []
@@ -297,37 +276,27 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
   }
   if (p7.house === 9 || p7.house === 12 || occ7.includes('Rahu')) spouse.push({ text: 'Indications of a partner from a distant place, another culture or abroad.', source: '7th lord in 9th/12th or Rahu in 7th' })
 
-  // Divisional charts relevant to marriage.
-  const vargas: MarriageReport['vargas'] = []
-  const vv = (n: 1 | 2 | 4 | 7 | 9, code: string, name: string, focus: string, house: number) => {
-    const vc = n === 1 ? null : vargaChart(chart, n)
-    const lord = n === 1 ? l7 : SIGN_LORD[(vc!.lagnaSign! + house - 1) % 12]
-    const p = n === 1 ? { dignity: p7.dignity, house: p7.house } : vp(vc!, lord)
-    const s = dignityScore(p.dignity) + (KENDRA.includes(p.house!) || [5, 9, 11].includes(p.house!) ? 1.5 : [6, 8, 12].includes(p.house!) ? -1.5 : 0)
-    vargas.push({ code, name, focus, verdict: s >= 2 ? 'strong' : s >= 0 ? 'moderate' : 'weak', detail: `${h(house)} lord ${lord} is ${dignityPhrase(p.dignity)} in the ${h(p.house!)}.` })
-  }
-  vv(1, 'D1', 'Rashi', 'promise of marriage', 7)
-  vv(9, 'D9', 'Navamsa', 'quality of married life', 7)
-  vv(7, 'D7', 'Saptamsa', 'children', 5)
-  vv(2, 'D2', 'Hora', 'family resources', 2)
-  vv(4, 'D4', 'Chaturthamsa', 'home & domestic happiness', 4)
+  const vargas = [
+    vargaVerdict(chart, 1, 7, 'Rashi', 'promise of marriage'),
+    vargaVerdict(chart, 9, 7, 'Navamsa', 'quality of married life'),
+    vargaVerdict(chart, 7, 5, 'Saptamsa', 'children'),
+    vargaVerdict(chart, 2, 2, 'Hora', 'family resources'),
+    vargaVerdict(chart, 4, 4, 'Chaturthamsa', 'home and domestic happiness'),
+  ].filter((v): v is VargaVerdict => v !== null)
 
   // Timing: dashas from age 18 onward and double transits over the 7th.
-  const periods = vimshottari(moon.lon, chart.utc)
   const adult = new Date(chart.utc.getTime() + 18 * 365.25 * 86400000)
   const from = adult > now ? adult : now
-  const weights: Partial<Record<Graha, { w: number; why: string }>> = {}
-  weights[l7] = { w: 3, why: '7th lord (marriage)' }
-  weights.Venus = weights.Venus ?? { w: 2.5, why: 'Venus, karaka of marriage' }
-  if (gender === 'female' && !weights.Jupiter) weights.Jupiter = { w: 2.5, why: 'Jupiter, karaka of the husband' }
-  occ7.forEach((g) => (weights[g] = weights[g] ?? { w: 2, why: 'placed in the 7th' }))
-  weights[dk] = weights[dk] ?? { w: 2, why: 'Darakaraka (spouse significator)' }
-  if (d9.lagnaSign !== null) { const g = SIGN_LORD[(d9.lagnaSign + 6) % 12]; weights[g] = weights[g] ?? { w: 1.5, why: 'D9 7th lord' } }
-  ;(['Rahu', 'Ketu'] as Graha[]).forEach((g) => { if ([1, 7].includes(pos(chart, g).house!)) weights[g] = weights[g] ?? { w: 1.5, why: 'node on the 1st/7th axis' } })
-  weights[l2] = weights[l2] ?? { w: 1, why: '2nd lord (addition to family)' }
-  const significators = Object.keys(weights) as Graha[]
-  const dashas = dashaHighlights(periods, weights, from, 15).sort((a, b) => a.start.getTime() - b.start.getTime())
-  const windows = doubleTransitWindows(chart, 7, significators, periods, from, 8)
+  const weights: Weights = {}
+  weigh(weights, l7, 3, '7th lord (marriage)')
+  weigh(weights, 'Venus', 2.5, 'Venus, karaka of marriage')
+  if (gender === 'female') weigh(weights, 'Jupiter', 2.5, 'Jupiter, karaka of the husband')
+  occ7.forEach((g) => weigh(weights, g, 2, 'placed in the 7th'))
+  weigh(weights, dk, 2, 'Darakaraka (spouse significator)')
+  if (d9.lagnaSign !== null) weigh(weights, SIGN_LORD[(d9.lagnaSign + 6) % 12], 1.5, 'D9 7th lord')
+  ;(['Rahu', 'Ketu'] as Graha[]).forEach((g) => { if ([1, 7].includes(pos(chart, g).house!)) weigh(weights, g, 1.5, 'node on the 1st-7th axis') })
+  weigh(weights, l2, 1, '2nd lord (addition to family)')
+  const timing = areaTiming(chart, 7, weights, from)
 
   const groups = [
     { title: '7th house and its lord (from lagna, Moon and Venus)', results: g1 },
@@ -336,7 +305,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
     { title: 'Upapada Lagna (Jaimini)', results: g4 },
     { title: 'Family, home and children', results: g5 },
   ]
-  const score = areaScore(groups.flatMap((g) => g.results))
+  const score = areaScore(groups.flatMap((g) => g.results), { median: 2.8, spread: 5.2 })
   const headline = `The 7th lord ${l7} in the ${h(p7.house!)}, ${gender === 'female' ? 'Jupiter and Venus' : 'Venus'} as karaka${gender === 'female' ? 's' : ''}, and a ${signName(s7)} 7th house shape your marriage story. ${tendency.label}.`
-  return { gender, score, headline, tendency, style: { love, arranged }, spouse, mangal, groups, vargas, dashas, windows, upapadaSign: ul, darakaraka: dk }
+  return { gender, score, headline, tendency, style: { love, arranged }, spouse, mangal, groups, vargas, ...timing, upapadaSign: ul, darakaraka: dk }
 }

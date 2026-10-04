@@ -3,7 +3,8 @@ import { FRIENDS, NAKSHATRAS, SIGN_LORD, houseFrom, type Graha } from './constan
 import { currentPeriods, vimshottari } from './dasha'
 import { marriageReport } from './marriage'
 import { signName, type VedicChart } from './sidereal'
-import { pos } from './techniques'
+import { ordinal } from '../astro/constants'
+import { pos } from './query'
 
 /* ---------------------------- Classical tables ---------------------------- */
 
@@ -78,8 +79,6 @@ function relation(a: Graha, b: Graha): 'friend' | 'neutral' | 'enemy' {
   if (r.enemies.includes(b)) return 'enemy'
   return 'neutral'
 }
-
-const ordinalN = (n: number) => n + (['th', 'st', 'nd', 'rd'][(n % 100 - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th')
 
 /** Count from nakshatra a to b, inclusive (1..27). */
 const count = (a: number, b: number) => ((b - a + 27) % 27) + 1
@@ -234,7 +233,7 @@ export function matchCharts(boy: VedicChart, girl: VedicChart, now = new Date())
   chart.push({ title: 'Venus–Mars chemistry', effect: attraction.length >= 2 ? 'supportive' : attraction.length ? 'mixed' : 'info', detail: attraction.length ? `Romantic and physical chemistry: ${attraction.join('; ')}.` : 'Venus and Mars are not in harmonious signs; attraction then rests on other factors (Yoni, Vashya).', rule: 'Mars of one in trine, sextile or opposition to Venus of the other' })
   const moonRel = houseFrom(bSign, gSign)
   const moonTone: Check['effect'] = !bhakootBad ? 'supportive' : bhakootCancel ? 'mixed' : 'challenging'
-  chart.push({ title: 'Moon-to-Moon emotional rhythm', effect: moonTone, detail: `Her Moon is ${ordinalN(moonRel)} from his: his ${SIGN_TEXT[signName(bSign)].keywords[0]} meets her ${SIGN_TEXT[signName(gSign)].keywords[0]}. ${moonTone === 'supportive' ? 'Emotional rhythms fit together easily.' : moonTone === 'mixed' ? 'Different emotional rhythms, softened by friendly Moon-sign lords.' : 'Different emotional rhythms that need conscious care.'}`, rule: 'Moon sign relationship (same basis as Bhakoot)' })
+  chart.push({ title: 'Moon-to-Moon emotional rhythm', effect: moonTone, detail: `Her Moon is ${ordinal(moonRel)} from his: his ${SIGN_TEXT[signName(bSign)].keywords[0]} meets her ${SIGN_TEXT[signName(gSign)].keywords[0]}. ${moonTone === 'supportive' ? 'Emotional rhythms fit together easily.' : moonTone === 'mixed' ? 'Different emotional rhythms, softened by friendly Moon-sign lords.' : 'Different emotional rhythms that need conscious care.'}`, rule: 'Moon sign relationship (same basis as Bhakoot)' })
   const bj = pos(boy, 'Jupiter').sign, gj = pos(girl, 'Jupiter').sign
   const jupBless = [houseFrom(bj, gSign), houseFrom(gj, bSign)].some((d) => [1, 5, 7, 9].includes(d))
   chart.push({ title: 'Jupiter’s blessing across charts', effect: jupBless ? 'supportive' : 'info', detail: jupBless ? 'One partner’s Jupiter aspects or joins the other’s Moon, bringing guidance, protection and goodwill in the relationship.' : 'No cross-Jupiter influence on the Moons.', rule: 'Jupiter of one partner in 1/5/7/9 from the other’s Moon' })

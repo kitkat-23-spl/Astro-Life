@@ -71,7 +71,7 @@ function Module({ index, title, blurb, lessons, done, startIndex, western }: { i
             <span className="lesson-idx">{western ? `${index}.${i + 1}` : `Lesson ${startIndex + i + 1}`}</span>
             <h3>{l.title}</h3>
             <p>{l.summary}</p>
-            <span className="small muted">{l.minutes} min read{done.has(l.slug) ? ' · ✓ Completed' : ''}</span>
+            <span className="small muted">{l.minutes} min read{done.has(l.slug) ? ' · Completed' : ''}</span>
           </Link>
         ))}
       </div>

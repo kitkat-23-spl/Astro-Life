@@ -3,7 +3,8 @@ import { careerReport } from '../career'
 import { marriageReport } from '../marriage'
 import { matchCharts } from '../matching'
 import { computeVedicChart } from '../sidereal'
-import { aspectedSigns, charaKarakas, upapada } from '../techniques'
+import { aspectedSigns } from '../query'
+import { charaKarakas, upapada } from '../techniques'
 
 const birth = { name: 'Einstein', date: '1879-03-14', time: '11:30', place: 'Ulm', latitude: 48.4, longitude: 10.0, timezone: 'UTC+0:40', houseSystem: 'placidus' as const }
 const chart = computeVedicChart(birth)
@@ -32,14 +33,14 @@ describe('techniques', () => {
 describe('career report', () => {
   const r = careerReport(chart, now)!
   it('finds the Dharma–Karmadhipati yoga (Jupiter–Saturn exchange)', () => {
-    const dk = r.groups.flatMap((g) => g.results).find((x) => x.id === 'c-dharma-karma')!
+    const dk = r.groups.flatMap((g) => g.results).find((x) => x.id === 'y-dharma-karma')!
     expect(dk.fired).toBe(true)
   })
   it('suggests ranked fields with reasons', () => {
     expect(r.fields.length).toBeGreaterThan(0)
     expect(r.fields[0].reasons.length).toBeGreaterThan(0)
     expect(r.modes).toHaveLength(5)
-    expect(r.vargas.map((v) => v.code)).toEqual(['D1', 'D10', 'D9', 'D2', 'D3', 'D5'])
+    expect(r.vargas.map((v) => v.code)).toEqual(['D1', 'D10', 'D9', 'D2', 'D3'])
   })
   it('returns null without a birth time', () => {
     expect(careerReport(computeVedicChart({ ...birth, time: null }), now)).toBeNull()

@@ -4,12 +4,12 @@ import type { BirthData } from '../astro/ephemeris'
 import BirthForm from '../components/BirthForm'
 import Basis from '../components/Basis'
 import { ScoreDial } from '../components/vedic/ReportParts'
-import SquareChart from '../components/vedic/SquareChart'
-import { itemsFor, lagnaFor, loadStyle } from '../components/vedic/chartItems'
+import { VargaSquare } from '../components/vedic/ChartPair'
 import { decodeBirth, encodeBirth } from '../lib/share'
+import { useVedicChart } from '../lib/useVedic'
 import { NAKSHATRAS, RASHI } from '../vedic/constants'
 import { matchCharts, type Check } from '../vedic/matching'
-import { computeVedicChart, signName, vargaChart, type VedicChart } from '../vedic/sidereal'
+import { signName, vargaChart, type VedicChart } from '../vedic/sidereal'
 
 export default function MatchPage() {
   const { hash } = useLocation()
@@ -32,19 +32,19 @@ export default function MatchPage() {
         <header className="page-head">
           <p className="eyebrow">Kundali matching</p>
           <h1>Compare two charts for marriage</h1>
-          <p className="lede">Enter both partners’ birth details. We compute the 36-point Ashtakoota Guna Milan, the ten South Indian poruthams, Mangal dosha on both sides and chart-level harmony, all by classical rules.</p>
+          <p className="lede">Enter both birth details to calculate the 36-point Ashtakoota Guna Milan, the ten South Indian poruthams, Mangal dosha for both partners and chart-level compatibility.</p>
         </header>
         <div className="match-forms">
           <section>
-            <h2>Boy / groom {boy && <span className="tag effect-supportive">✓ {boy.name || 'Saved'}</span>}</h2>
+            <h2>Boy / groom {boy && <span className="tag effect-supportive">{boy.name || 'Entered'}</span>}</h2>
             <BirthForm key="boy" initial={boy ?? parsed?.boy} submitLabel={boy ? 'Update groom’s details' : 'Use these details'} compact onSubmit={(b) => { setBoy(b); go(b, girl) }} />
           </section>
           <section>
-            <h2>Girl / bride {girl && <span className="tag effect-supportive">✓ {girl.name || 'Saved'}</span>}</h2>
+            <h2>Girl / bride {girl && <span className="tag effect-supportive">{girl.name || 'Entered'}</span>}</h2>
             <BirthForm key="girl" initial={girl ?? parsed?.girl} submitLabel={girl ? 'Update bride’s details' : 'Use these details'} compact onSubmit={(g) => { setGirl(g); go(boy, g) }} />
           </section>
         </div>
-        <p className="muted small center">The match opens automatically once both sets of details are entered. Everything is calculated in your browser.</p>
+        <p className="muted small center">The result opens when both sets of details are entered. Everything is calculated in your browser.</p>
       </div>
     )
   }
@@ -52,11 +52,10 @@ export default function MatchPage() {
 }
 
 function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; onEdit: () => void }) {
-  const bc = useMemo(() => computeVedicChart(boy), [boy])
-  const gc = useMemo(() => computeVedicChart(girl), [girl])
+  const bc = useVedicChart(boy)!
+  const gc = useVedicChart(girl)!
   const r = useMemo(() => matchCharts(bc, gc), [bc, gc])
   const pct = Math.round((r.total / 36) * 100)
-  const style = loadStyle()
   const bName = boy.name || 'Groom', gName = girl.name || 'Bride'
 
   return (
@@ -79,19 +78,18 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
         {[[bName, bc], [gName, gc]].map(([name, c]) => {
           const vc = c as VedicChart
           const moon = vc.grahas[1]
-          const d1 = vargaChart(vc, 1)
           return (
             <div key={name as string} className="card person">
               <h3>{name as string}</h3>
               <p className="small muted">Moon: {RASHI[signName(moon.sign)]} · {NAKSHATRAS[moon.nakshatra].name} pada {moon.pada}{vc.lagnaSign !== null ? ` · Lagna ${RASHI[signName(vc.lagnaSign)]}` : ''}</p>
-              <SquareChart style={style} lagnaSign={lagnaFor(d1).sign} lagnaIsMoon={lagnaFor(d1).moon} items={itemsFor(vc, d1)} title="D1 Rashi" compact />
+              <VargaSquare chart={vc} vc={vargaChart(vc, 1)} title="D1 Rashi" compact />
             </div>
           )
         })}
       </div>
 
       <h2 className="section-title">Ashtakoota Guna Milan (36 points)</h2>
-      <p className="small"><Link to="/learn/vedic-matching">How kundali matching works →</Link></p>
+      <p className="small"><Link to="/learn/vedic-matching">How kundali matching works</Link></p>
       <div className="card table-wrap">
         <table className="data-table koota-table">
           <thead><tr><th>Koota</th><th>Checks</th><th>{bName}</th><th>{gName}</th><th>Score</th></tr></thead>
@@ -110,7 +108,7 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
             <tr className="total"><td colSpan={4}><strong>Total</strong></td><td className="num"><strong>{r.total} / 36</strong></td></tr>
           </tbody>
         </table>
-        <p className="muted small">Traditional guidance: below 18 is not recommended, 18–24 acceptable, 25–32 very good, 33 and above excellent. Some koota tables vary slightly between regional schools.</p>
+        <p className="muted small">Traditional guidance: below 18 is not recommended, 18 to 24 is acceptable, 25 to 32 is very good, and 33 or more is excellent. Some koota tables vary slightly between regional schools.</p>
       </div>
 
       <h2 className="section-title">Doshas</h2>
@@ -121,20 +119,20 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
       <div className="porutham-grid">
         {r.poruthams.map((p) => (
           <div key={p.name} className={`card porutham ${p.pass ? 'pass' : 'fail'}`}>
-            <div className="porutham-head"><strong>{p.name}</strong><span className={p.pass ? 'pos' : 'neg'}>{p.pass ? '✓ Agrees' : '✗ Does not agree'}</span></div>
+            <div className="porutham-head"><strong>{p.name}</strong><span className={p.pass ? 'pos' : 'neg'}>{p.pass ? 'Agrees' : 'Does not agree'}</span></div>
             <p className="small muted">{p.detail}</p>
             {p.critical && <span className="tag">Critical in South Indian tradition</span>}
           </div>
         ))}
       </div>
 
-      <h2 className="section-title">Beyond the Moon: chart-level harmony</h2>
+      <h2 className="section-title">Chart-level compatibility</h2>
       <Checks items={r.chart} />
 
       <h2 className="section-title">Timing</h2>
       <Checks items={r.timing} />
 
-      <p className="muted small center disclaimer">Kundali matching is a traditional practice. Scores come from fixed classical tables and rules. They are not a verdict on a relationship, which depends on mutual respect, values and communication.</p>
+      <p className="muted small center disclaimer">Scores come from fixed classical tables. They are a traditional check, not a verdict on a relationship.</p>
     </div>
   )
 }

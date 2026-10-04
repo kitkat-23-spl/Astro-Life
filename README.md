@@ -1,27 +1,33 @@
-# Astro Life ✦
+# Astro Life
 
-**Your birth chart, clearly explained.** Astro Life is a free astrology site where anyone can:
+Astro Life is a free Vedic astrology site. Every reading comes from a fixed classical rule, and every card lists the planetary combinations that produced it.
 
-- enter birth details and get a **Vedic Janma Kundali** (default) in **North or South Indian square style**, with divisional charts **D1–D10**, yogas and doshas, Vimshottari dasha and Sade Sati;
-- open deep, rule-based **Career** and **Marriage** reports for one chart, combining D1–D10, Jaimini karakas, Upapada, yogas, dashas and Jupiter–Saturn double transits, with every rule checked and shown;
-- use **Match** (top navigation) to compare two charts: 36-point Ashtakoota Guna Milan, 10 South Indian poruthams, Mangal dosha on both sides, and chart-level harmony;
-- switch to a **Western tropical chart**: an interactive wheel with Big Three cards, element and modality balance, and trait meters;
-- read a **transparent, rule-based interpretation**, where every insight shows the exact rule that produced it ("Why am I seeing this?") and links to the lesson that teaches it;
-- **learn astrology** through a 19-lesson Jyotish course (foundations → planets → drishti, conjunctions and yogas → vargas, dashas and transits → career, marriage and matching, with real-life example charts) plus a 15-lesson Western track, from beginner to advanced, with worked examples (including a full synthesis of Einstein's chart), quizzes and saved progress;
-- **sign in with Google** (Supabase Auth) to save charts privately.
+- **Kundali**: North or South Indian charts, 19 divisional charts (D1 to D60), planet table, house lords, Vimshottari dasha to four levels and Sade Sati.
+- **Yogas**: a catalogue of 80+ classical yogas (Pancha Mahapurusha, Raja, Dhana, solar and lunar, Nabhasa, doshas). The Yogas tab shows the ones present and, on request, the ones checked and not present.
+- **Life-area reports**: Career, Marriage, Wealth, Education and Children. Each report scores its rules, lists every rule (fired or not), rates the relevant divisional charts and gives dasha and double-transit timing.
+- **Panchang**: tithi, vara, nakshatra, yoga, karana, lunar month, sunrise and moonrise, Rahu Kaal, Yamaganda, Gulika, Abhijit, Choghadiya and Hora for any place and date.
+- **Kundali matching**: 36-point Ashtakoota, ten South Indian poruthams, Mangal dosha for both partners and chart-level checks.
+- **Settings**: Lahiri, True Chitra, KP or Raman ayanamsa; mean or true nodes; 7 or 8 chara karakas; chart style.
+- **Western chart**: tropical wheel with aspects, as an alternative view.
+- **Learn**: a 19-lesson Jyotish course and a 15-lesson Western track with worked examples and quizzes.
+- **Google sign-in** (Supabase) to save charts privately.
 
-## How it works
+## Code layout
 
-| Layer | What it does |
+| Path | Contents |
 |---|---|
-| `src/astro/` | Chart maths. [Astronomy Engine](https://github.com/cosinekitty/astronomy) gives tropical geocentric positions (±1′). Luxon converts local birth time → UTC using historical time zones. Ascendant/MC come from sidereal time + obliquity, with Placidus / Whole Sign / Equal houses (Placidus falls back to Whole Sign at polar latitudes). Also covers retrogrades, dignities, the mean node, and aspects with orbs plus applying/separating. |
-| `src/vedic/` | Jyotish engine. Lahiri ayanamsa (ICRC definition + IAU 2006 precession + nutation), 9 grahas, whole-sign bhavas, dignities (exaltation, moolatrikona, own, friend/enemy), combustion, dig bala, 27 nakshatras and padas, vargas D1–D10, Vimshottari dasha/antardasha, and Parashari rules: house lords, Raja/Dhana/Gajakesari/Mahapurusha/Viparita/Parivartana/Neecha Bhanga/Kemadruma yogas, Mangal dosha, Kaal Sarp, Sade Sati, per-varga readings and life-area scores. |
-| `src/vedic/techniques.ts` | Parashari drishti, Jaimini chara karakas, arudha/Upapada, transits and double-transit windows. |
-| `src/vedic/career.ts`, `marriage.ts`, `matching.ts` | Exhaustive rulebooks. Every rule returns fired / not fired, effect, weight, detail and its classical source, and the UI can show the full checklist. |
-| `src/components/vedic/` | North Indian (diamond) and South Indian (fixed-sign grid) SVG charts. |
-| `src/interpret/` | Rules engine. Content tables (signs, planets, houses, aspect pairs) are combined by rules: Big Three, chart ruler, planet-in-sign-in-house, dignity, retrograde, aspects, stelliums, grand trines, T-squares, element/modality/hemisphere balance, nodes. Each `Insight` carries its `rule` string. |
-| `src/learn/` | Curriculum as structured data (no raw HTML), rendered safely. |
-| `src/lib/` | Supabase client, Google auth, geocoding (Open-Meteo, no API key), saved charts, shareable links. |
+| `src/astro/` | Ephemeris (Astronomy Engine), time zones (Luxon), ascendant and house systems. |
+| `src/vedic/sidereal.ts` | Ayanamsas, mean and true nodes, sidereal chart, dignities, nakshatras, divisional charts. |
+| `src/vedic/varga.ts`, `dasha.ts` | Divisional-chart rules (BPHS ch. 6) and multi-level Vimshottari. |
+| `src/vedic/query.ts` | Shared chart queries: lords, occupants, drishti, sambandha, dignity scores. |
+| `src/vedic/yogas.ts` | The yoga catalogue and Mangal dosha. |
+| `src/vedic/rules.ts` | Rule framework shared by all reports: rule results, scoring, evidence, divisional verdicts, timing. |
+| `src/vedic/career.ts`, `marriage.ts`, `wealth.ts`, `education.ts`, `children.ts` | Life-area reports. |
+| `src/vedic/matching.ts`, `panchang.ts` | Kundali matching and Panchang. |
+| `src/vedic/interpret.ts` | Kundali readings (planets, houses, vargas, dasha). |
+| `src/interpret/` | Western rules engine. |
+| `src/learn/` | Lessons as structured data. |
+| `src/lib/` | Supabase, auth, settings, geocoding, saved charts, share links. |
 
 Chart calculation runs **entirely in the browser**. The engine is verified in `src/astro/__tests__` against Einstein's published chart: Sun, Moon, Ascendant, all planets and Placidus cusps match Astrodienst to within an arcminute.
 
@@ -43,30 +49,23 @@ The site works fully without Supabase; sign-in and saving simply stay hidden unt
    - Configure the OAuth consent screen (app name "Astro Life", scopes: email, profile, openid).
 4. **Enable Google in Supabase**: *Authentication → Sign In / Providers → Google*, paste the Client ID and Secret. (The **secret stays in Supabase only**, never in this repo.)
 5. **Allow your site URL**: *Authentication → URL Configuration*:
-   - Site URL: your deployed URL (e.g. `https://astro-life.pages.dev`)
-   - Redirect URLs: `https://astro-life.pages.dev/**` (plus `http://localhost:5173/**` for development)
+   - Site URL: your deployed URL (e.g. `https://kitkat-23-spl.github.io/Astro-Life/`)
+   - Redirect URLs: `https://kitkat-23-spl.github.io/Astro-Life/**` (plus `http://localhost:5173/**` for development)
 6. **Add the public keys** from *Project Settings → API*: the Project URL and the **anon / publishable** key.
    - Local: copy `.env.example` → `.env`
    - GitHub Pages: repo *Settings → Secrets and variables → Actions → Variables*: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-   - Cloudflare Pages / Vercel: add the same two as environment variables.
 
-> ⚠️ Never use the `service_role` key in this app. The anon key is public by design; Row Level Security is what protects the data.
+> Never use the `service_role` key in this app. The anon key is public by design; Row Level Security is what protects the data.
 
 ## Free hosting
 
-| Option | Free URL | Notes |
-|---|---|---|
-| **Cloudflare Pages** (recommended) | `astro-life.pages.dev` | Connect the repo; build `npm run build`, output `dist`. `public/_headers` adds security headers and `_redirects` handles SPA routes. |
-| **Vercel** | `astrolife.vercel.app` | Import the repo; `vercel.json` sets rewrites and headers. |
-| **GitHub Pages** | `kitkat-23-spl.github.io/Astro-Life` | Already wired up: *Settings → Pages → Source: GitHub Actions*, then push to `main`. (Requires a public repo on the free plan.) |
-
-A custom domain such as `astrolife.app` can be added later on any of these.
+The site is deployed to **GitHub Pages** at `https://kitkat-23-spl.github.io/Astro-Life/` by `.github/workflows/deploy.yml` on every push to `main` (*Settings → Pages → Source: GitHub Actions*). Deep links work through `404.html` and `public/spa-redirect.js`. A custom domain can be added in the Pages settings.
 
 ## Security
 
 - **Row Level Security** on `charts`: users can only select, insert or delete their own rows. `anon` has no access, `user_id` defaults to `auth.uid()`, payload size is capped, and a trigger limits accounts to 100 charts.
 - **OAuth 2.0 + PKCE** via Supabase; no secrets in the frontend bundle.
-- **Content Security Policy** (injected at build): scripts only from this origin; network only to Supabase and the geocoder; `object-src 'none'`. Hosting headers add `frame-ancestors 'none'`, HSTS, `nosniff` and a strict referrer policy.
+- **Content Security Policy** (injected at build): scripts only from this origin; network only to Supabase and the geocoder; `object-src 'none'`. GitHub Pages serves everything over HTTPS; the CSP is delivered as a meta tag because Pages cannot set custom response headers.
 - **No HTML injection surface**: all content, including lessons, renders as React text; nothing uses `dangerouslySetInnerHTML`.
 - **Privacy**: birth data is computed locally, share links keep it in the `#fragment` (never sent to servers), and shared links are strictly validated. Users can delete individual charts or all of their data.
 - No ads, trackers or analytics.

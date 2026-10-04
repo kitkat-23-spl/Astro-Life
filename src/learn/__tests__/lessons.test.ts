@@ -21,7 +21,7 @@ describe('curriculum', () => {
   it('every insight links to an existing lesson', () => {
     const v = interpretVedic(computeVedicChart(birth))
     const w = interpret(computeChart(birth))
-    const all = [...v.core, ...v.grahas, ...v.lords, ...v.yogas, ...v.dashaInsights, ...Object.values(v.vargas).flat(), ...w.insights]
+    const all = [...v.core, ...v.grahas, ...v.lords, ...v.dashaInsights, ...Object.values(v.vargas).flat(), ...w.insights]
     for (const i of all) if (i.lesson) expect(lessonBySlug(i.lesson), i.lesson).toBeDefined()
     expect(careerReport(computeVedicChart(birth))).not.toBeNull()
   })
