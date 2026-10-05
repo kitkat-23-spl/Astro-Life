@@ -6,11 +6,12 @@ import { runningAge, varshaphal } from '../../../vedic/annual'
 import { periodChain } from '../../../vedic/dasha'
 import type { VedicReading } from '../../../vedic/interpret'
 import { REPORTS, buildReport } from '../../../vedic/reports'
+import { summarise } from '../../../vedic/rules'
 import type { VedicChart } from '../../../vedic/sidereal'
 import { monthlyOutlook, sadeSati } from '../../../vedic/transits'
 import { yogaTone } from '../../../vedic/yogas'
 import Cards from '../Cards'
-import { ConditionBar } from '../ReportParts'
+import { AreaVerdict } from '../ReportParts'
 import { fmtDate } from '../format'
 import type { Tab } from '../VedicView'
 
@@ -33,14 +34,12 @@ export default function OverviewTab({ chart, reading, hash, go }: { chart: Vedic
       {areas.length > 0 && (
         <>
           <h2 className="section-title first">Life areas</h2>
-          <p className="muted small">Classical conditions checked for each area, and how many apply. Each report explains its rules; counts are not comparable between areas.</p>
+          <p className="muted small">For each area: the overall lean of the classical rules, the strongest supporting factors (+) and the main caution (−). Open a report for every rule and how it is read.</p>
           <div className="area-grid">
             {areas.map((a) => a.report && (
               <Link key={a.key} className="card area-card" to={{ pathname: `/chart/${a.key}`, hash }}>
                 <span className="area-head"><strong>{a.title}</strong></span>
-                <ConditionBar c={a.report.conditions} />
-                <span className="area-counts small"><span className="pos">{a.report.conditions.supportive} supportive</span><span className="neg">{a.report.conditions.challenging} challenging</span><span className="muted">of {a.report.conditions.checked} checked</span></span>
-                <span className="muted small">{a.summary}</span>
+                <AreaVerdict s={summarise(a.report)} compact />
                 <span className="area-open">Open report</span>
               </Link>
             ))}

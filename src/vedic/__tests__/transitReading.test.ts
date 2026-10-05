@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { careerReport } from '../career'
 import { vimshottari } from '../dasha'
 import { pos } from '../query'
-import { countConditions } from '../rules'
+import { countConditions, summarise } from '../rules'
 import { computeVedicChart } from '../sidereal'
 import { houseLine, natalLink, slowTimeline, transitConjunctions, transitReadings } from '../transitReading'
 import { signPeriods } from '../transits'
@@ -18,6 +18,13 @@ describe('condition counts', () => {
     const c = r.conditions
     expect(c.supportive + c.mixed + c.challenging + c.notMet).toBe(c.checked)
     expect(countConditions(r.groups)).toEqual(c)
+  })
+  it('summarises a report in words with its strongest factors', () => {
+    const s = summarise(careerReport(chart, at)!)
+    expect(['Mostly supportive', 'Mixed', 'More challenging']).toContain(s.label)
+    expect(s.strengths.length).toBeLessThanOrEqual(2)
+    expect(s.cautions.length).toBeLessThanOrEqual(1)
+    if (s.leaning === 'supportive') expect(s.conditions.supportive).toBeGreaterThanOrEqual(2 * s.conditions.challenging)
   })
 })
 

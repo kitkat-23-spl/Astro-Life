@@ -378,7 +378,6 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .area-card:hover { border-color: var(--accent); }
 .area-head { display: flex; justify-content: space-between; align-items: baseline; }
 .area-head strong { font-family: var(--serif); font-size: 1.1rem; color: var(--ink); }
-.area-counts { display: flex; flex-wrap: wrap; gap: 0 10px; font-weight: 600; }
 .area-open { margin-top: auto; font-size: .84rem; font-weight: 600; color: var(--accent); }
 .varga-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 24px; align-items: start; }
 .varga-layout .vchart { max-width: 460px; }
@@ -394,9 +393,19 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .cond-good { background: var(--ok); }
 .cond-mixed { background: var(--gold); }
 .cond-bad { background: var(--err); }
-.cond-summary { margin: 0; width: 240px; display: flex; flex-direction: column; gap: 10px; }
-.cond-numbers { display: flex; flex-direction: column; gap: 2px; }
-.cond-numbers strong { font-family: var(--serif); font-size: 1.6rem; display: inline-block; min-width: 1.6em; }
+.area-verdict-box { display: flex; flex-direction: column; gap: 10px; width: 320px; }
+.area-verdict-box.compact { width: auto; gap: 8px; flex: 1; }
+.pill.lean { align-self: flex-start; font-size: .9rem; padding: 6px 14px; }
+.compact .pill.lean { font-size: .78rem; padding: 4px 10px; }
+.factors { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: .9rem; line-height: 1.35; }
+.compact .factors { font-size: .8rem; }
+.factors li { padding-left: 1.2em; position: relative; }
+.factors li::before { position: absolute; left: 0; font-weight: 800; }
+.factors li.plus::before { content: '+'; color: var(--ok); }
+.factors li.minus::before { content: '\2212'; color: var(--err); }
+.night .factors li { color: #e9e8ff; }
+.night .factors li.plus::before { color: #8ef0bd; }
+.night .factors li.minus::before { color: #ff9fae; }
 .night .cond-bar { background: rgb(255 255 255 / .15); }
 .night .pos { color: #8ef0bd; }
 .night .neg { color: #ff9fae; }
@@ -634,6 +643,7 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 @media (max-width: 900px) {
   .hero, .chart-hero, .chart-form-page, .report-head, .grid-2, .timing-grid, .match-forms, .settings-grid, .panchang-controls { grid-template-columns: 1fr; gap: 20px; }
   .report-head .dial { justify-self: center; }
+  .area-verdict-box { width: auto; }
   .tool-grid, .grid-3 { grid-template-columns: 1fr 1fr; }
   .hora-grid { grid-template-columns: repeat(3, 1fr); }
 }

@@ -82,6 +82,37 @@ export function countConditions(groups: RuleGroup[]): ConditionCount {
   }
 }
 
+export type Leaning = 'supportive' | 'mixed' | 'challenging'
+
+/** A plain-language reading of a report: its overall lean and the factors that matter most. */
+export interface AreaSummary {
+  leaning: Leaning
+  label: string
+  strengths: string[]
+  cautions: string[]
+  conditions: ConditionCount
+}
+
+/**
+ * Mostly supportive when supportive conditions outnumber challenging ones at
+ * least two to one; more challenging when challenging ones are as many or
+ * more; mixed otherwise. The strongest factors are the rules with the largest
+ * effect on either side.
+ */
+export function summarise(report: AreaReport): AreaSummary {
+  const fired = report.groups.flatMap((g) => g.results).filter((r) => r.fired)
+  const c = report.conditions
+  const leaning: Leaning = c.supportive >= 2 * c.challenging && c.supportive >= 3 ? 'supportive'
+    : c.challenging >= c.supportive && c.challenging >= 2 ? 'challenging' : 'mixed'
+  return {
+    leaning,
+    label: leaning === 'supportive' ? 'Mostly supportive' : leaning === 'challenging' ? 'More challenging' : 'Mixed',
+    strengths: fired.filter((r) => r.effect === 'supportive').sort((a, b) => b.weight - a.weight).slice(0, 2).map((r) => r.title),
+    cautions: fired.filter((r) => r.effect === 'challenging').sort((a, b) => a.weight - b.weight).slice(0, 1).map((r) => r.title),
+    conditions: c,
+  }
+}
+
 /** Generic rule: dignity and placement of a house lord. */
 export function lordRule(chart: VedicChart, house: number, group: string, idPrefix: string, note?: string, scale = 1): RuleResult {
   const lord = pos(chart, SIGN_LORD[(chart.lagnaSign! + house - 1) % 12]).graha

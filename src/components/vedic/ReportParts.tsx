@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import type { ConditionCount, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
+import type { AreaSummary, ConditionCount, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
 import { REPORTS } from '../../vedic/reports'
 import type { TransitWindow } from '../../vedic/transits'
 import { yogaTone, type YogaResult } from '../../vedic/yogas'
@@ -52,18 +52,23 @@ export function ConditionBar({ c }: { c: ConditionCount }) {
   )
 }
 
-/** The counts behind a report, in place of a score. */
-export function ConditionSummary({ c }: { c: ConditionCount }) {
+const LEAN_PILL = { supportive: 'good', mixed: 'mixed', challenging: 'challenge' } as const
+
+/** The overall lean of a report, its strongest supporting factors and its main caution. */
+export function AreaVerdict({ s, compact }: { s: AreaSummary; compact?: boolean }) {
+  const c = s.conditions
   return (
-    <figure className="cond-summary" aria-label={`${c.supportive} supportive, ${c.mixed} mixed and ${c.challenging} challenging conditions met, out of ${c.checked} checked`}>
-      <div className="cond-numbers">
-        <span><strong className="pos">{c.supportive}</strong> supportive</span>
-        <span><strong className="mixed">{c.mixed}</strong> mixed</span>
-        <span><strong className="neg">{c.challenging}</strong> challenging</span>
-      </div>
+    <div className={`area-verdict-box ${compact ? 'compact' : ''}`}>
+      <span className={`pill lean pill-${LEAN_PILL[s.leaning]}`}>{s.label}</span>
+      {(s.strengths.length > 0 || s.cautions.length > 0) && (
+        <ul className="factors">
+          {s.strengths.map((t) => <li key={t} className="plus">{t}</li>)}
+          {s.cautions.map((t) => <li key={t} className="minus">{t}</li>)}
+        </ul>
+      )}
       <ConditionBar c={c} />
-      <figcaption className="small">{c.checked - c.notMet} of {c.checked} classical conditions apply to this chart.</figcaption>
-    </figure>
+      <span className="small muted">{compact ? `${c.supportive} supportive · ${c.challenging} challenging · ${c.checked} rules` : `${c.supportive} supportive, ${c.mixed} mixed and ${c.challenging} challenging, of ${c.checked} classical rules`}</span>
+    </div>
   )
 }
 
@@ -72,8 +77,8 @@ export function MethodNote() {
   return (
     <section className="card method-note">
       <h2>How to read this report</h2>
-      <p className="small">Each condition is a rule from classical texts (Brihat Parashara Hora Shastra, Phaladeepika and the Jaimini Sutras), such as "the 10th lord is exalted" or "Jupiter aspects the 7th house". The counts above show how many of those rules apply to this chart, and every rule, including the ones that do not apply, is listed under All rules below.</p>
-      <p className="small">The texts say whether a condition is favourable; they do not say how much it matters, so the conditions are counted rather than turned into a single score. Counts are not comparable between reports, because each report checks a different set of rules, and they change with the birth time and the calculation settings.</p>
+      <p className="small">Each line in this report is a rule from classical texts (Brihat Parashara Hora Shastra, Phaladeepika and the Jaimini Sutras), such as "the 10th lord is exalted" or "Jupiter aspects the 7th house". Every rule, including the ones that do not apply, is listed under All rules below.</p>
+      <p className="small">The summary at the top reads the rules simply. It says <strong>mostly supportive</strong> when supportive rules outnumber challenging ones at least two to one, <strong>more challenging</strong> when challenging rules are as many or more, and <strong>mixed</strong> otherwise. The lines marked + and − are the rules with the largest effect on each side. The summary changes with the birth time and the calculation settings.</p>
       <p className="small">These are traditional indications. They have not been tested against real outcomes, and controlled studies of astrology have not found it to predict events. Use them for study and reflection, not for decisions.</p>
     </section>
   )

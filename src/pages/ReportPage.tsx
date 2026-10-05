@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import Basis from '../components/Basis'
 import Segmented from '../components/Segmented'
 import { ChartPair } from '../components/vedic/ChartPair'
-import { ConditionSummary, DashaTimeline, MethodNote, ReportNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
+import { AreaVerdict, DashaTimeline, MethodNote, ReportNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
 import { useSettings } from '../lib/settings'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
 import type { CareerReport } from '../vedic/career'
@@ -12,7 +12,7 @@ import { GRAHA_INFO, RASHI } from '../vedic/constants'
 import type { EducationReport } from '../vedic/education'
 import type { MarriageReport } from '../vedic/marriage'
 import { REPORTS, buildReport, type ReportKey } from '../vedic/reports'
-import type { AreaReport } from '../vedic/rules'
+import { summarise, type AreaReport } from '../vedic/rules'
 import { signName, vargaChart } from '../vedic/sidereal'
 import type { VargaN } from '../vedic/varga'
 import type { WealthReport } from '../vedic/wealth'
@@ -91,7 +91,7 @@ export default function ReportPage() {
           )}
           <p className="muted small">Uses {cfg.method}</p>
         </div>
-        <ConditionSummary c={report.conditions} />
+        <AreaVerdict s={summarise(report)} />
       </header>
 
       <MethodNote />
