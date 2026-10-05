@@ -40,9 +40,21 @@ export interface DashaHighlight {
 
 export interface VargaVerdict { code: string; name: string; focus: string; verdict: 'strong' | 'moderate' | 'weak'; detail: string }
 
+/**
+ * How many classical conditions a report checked and how many apply. Rules that
+ * only state a fact (effect 'info') are not counted as conditions.
+ */
+export interface ConditionCount {
+  checked: number
+  supportive: number
+  challenging: number
+  mixed: number
+  notMet: number
+}
+
 /** Fields every life-area report shares. */
 export interface AreaReport {
-  score: number
+  conditions: ConditionCount
   headline: string
   groups: RuleGroup[]
   vargas: VargaVerdict[]
@@ -58,14 +70,16 @@ export function rule(partial: Omit<RuleResult, 'fired' | 'effect' | 'weight' | '
 /** Effect implied by a weight. */
 export const effectOf = (w: number, strong = 1): Effect => (w >= strong ? 'supportive' : w < 0 ? 'challenging' : 'mixed')
 
-/**
- * Area score on a 0-100 scale where 50 is a typical chart. Each report passes
- * the median and spread of its raw rule total, measured over a sample of
- * charts, so scores are comparable between reports.
- */
-export function areaScore(results: RuleResult[], calib: { median: number; spread: number }): number {
-  const s = results.filter((r) => r.fired).reduce((a, r) => a + r.weight, 0)
-  return Math.max(5, Math.min(95, Math.round(50 + 40 * Math.tanh((s - calib.median) / calib.spread))))
+export function countConditions(groups: RuleGroup[]): ConditionCount {
+  const conds = groups.flatMap((g) => g.results).filter((r) => r.effect !== 'info')
+  const met = (e: Effect) => conds.filter((r) => r.fired && r.effect === e).length
+  return {
+    checked: conds.length,
+    supportive: met('supportive'),
+    challenging: met('challenging'),
+    mixed: met('mixed'),
+    notMet: conds.filter((r) => !r.fired).length,
+  }
 }
 
 /** Generic rule: dignity and placement of a house lord. */

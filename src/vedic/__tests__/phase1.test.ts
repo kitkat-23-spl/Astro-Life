@@ -74,7 +74,8 @@ describe('yoga catalogue', () => {
 describe('new reports', () => {
   it('builds the wealth report', () => {
     const r = wealthReport(chart, now)!
-    expect(r.score).toBeGreaterThanOrEqual(10)
+    expect(r.conditions.checked).toBeGreaterThan(10)
+    expect(r.conditions.supportive + r.conditions.mixed + r.conditions.challenging + r.conditions.notMet).toBe(r.conditions.checked)
     expect(r.sources.length).toBeGreaterThan(0)
     expect(r.groups).toHaveLength(4)
   })

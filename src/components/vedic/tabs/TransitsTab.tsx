@@ -2,23 +2,31 @@ import { DateTime } from 'luxon'
 import { useMemo, useState } from 'react'
 import { ordinal } from '../../../astro/constants'
 import { useSettings } from '../../../lib/settings'
-import { GRAHA_INFO } from '../../../vedic/constants'
+import { GRAHA_INFO, type Graha } from '../../../vedic/constants'
+import type { VedicReading } from '../../../vedic/interpret'
 import { vargaChart, type VedicChart } from '../../../vedic/sidereal'
-import { gochara, monthlyOutlook, sadeSati, transitEvents, transitPositions } from '../../../vedic/transits'
+import { slowTimeline, transitConjunctions, transitReadings, type TransitReading } from '../../../vedic/transitReading'
+import { monthlyOutlook, sadeSati, transitEvents, transitPositions } from '../../../vedic/transits'
+import Basis from '../../Basis'
+import { TONE_LABEL } from '../../InsightCard'
 import { ChartStyleToggle } from '../ChartPair'
+import { ConditionBar } from '../ReportParts'
 import SquareChart from '../SquareChart'
 import { itemsFor } from '../chartItems'
 import { fmtDate, rashiName } from '../format'
 
 const PHASE_LABEL = { first: 'First phase', peak: 'Peak phase', last: 'Last phase' }
 const PHASE_WHERE = { first: '12th from the Moon', peak: 'over the Moon', last: '2nd from the Moon' }
+const SLOW: Graha[] = ['Saturn', 'Jupiter', 'Rahu', 'Ketu', 'Mars']
 
-export default function TransitsTab({ chart }: { chart: VedicChart }) {
+export default function TransitsTab({ chart, reading }: { chart: VedicChart; reading: VedicReading }) {
   const { settings } = useSettings()
   const [date, setDate] = useState(() => DateTime.now().toISODate()!)
   const at = useMemo(() => DateTime.fromISO(date).set({ hour: 12 }).toJSDate(), [date])
   const positions = useMemo(() => transitPositions(chart, at), [chart, at])
-  const rows = useMemo(() => gochara(chart, at, positions), [chart, at, positions])
+  const readings = useMemo(() => transitReadings(chart, at, reading.dashas), [chart, at, reading.dashas])
+  const together = useMemo(() => transitConjunctions(chart, at), [chart, at])
+  const timeline = useMemo(() => slowTimeline(chart, at, 10), [chart, at])
   const outlook = useMemo(() => monthlyOutlook(chart, at, 12), [chart, at])
   const events = useMemo(() => transitEvents(chart, at, 12), [chart, at])
   const ss = useMemo(() => sadeSati(chart, at), [chart, at])
@@ -61,44 +69,66 @@ export default function TransitsTab({ chart }: { chart: VedicChart }) {
         </div>
       </div>
 
-      <h2 className="section-title">Transit scorecard</h2>
-      <div className="card table-wrap">
-        <table className="data-table">
-          <caption className="sr-only">Transits judged from the Moon with vedha and Ashtakavarga</caption>
-          <thead><tr><th>Planet</th><th>Sign</th><th>From Moon</th>{chart.lagnaSign !== null && <th>From lagna</th>}<th>Gochara</th><th>Vedha</th>{chart.lagnaSign !== null && <th>Bindus</th>}{chart.lagnaSign !== null && <th>SAV</th>}<th>Result</th></tr></thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.graha}>
-                <td>{r.graha}{r.retrograde && r.graha !== 'Rahu' && r.graha !== 'Ketu' ? ' (R)' : ''}</td>
-                <td>{rashiName(r.sign)}</td>
-                <td className="num">{r.fromMoon}</td>
-                {chart.lagnaSign !== null && <td className="num">{r.fromLagna}</td>}
-                <td>{r.favourable ? 'Favourable house' : 'Unfavourable house'}</td>
-                <td>{r.vedhaBy.length ? `Blocked by ${r.vedhaBy.join(', ')}` : ''}</td>
-                {chart.lagnaSign !== null && <td className="num">{r.bindus ?? ''}</td>}
-                {chart.lagnaSign !== null && <td className="num">{r.sav ?? ''}</td>}
-                <td className={r.verdict === 'favourable' ? 'pos' : r.verdict === 'unfavourable' ? 'neg' : ''}>{r.verdict[0].toUpperCase() + r.verdict.slice(1)}</td>
-              </tr>
+      <h2 className="section-title">What the transits mean for this chart</h2>
+      <p className="muted small">Each planet is read by the house it crosses from the lagna, the classical result from the natal Moon (Phaladeepika 26), where it sits and what it rules at birth, the natal planets it meets or aspects, its strength in the sign and the running dasha. These are traditional indications, not forecasts.</p>
+      <div className="insight-list">{readings.filter((r) => SLOW.includes(r.graha)).map((r) => <ReadingCard key={r.graha} r={r} />)}</div>
+      <h3 className="sub-h">Faster planets</h3>
+      <p className="muted small">The Sun, Venus and Mercury change sign every few weeks and the Moon every two to three days, so their effects are short.</p>
+      <div className="insight-list">{readings.filter((r) => !SLOW.includes(r.graha)).map((r) => <ReadingCard key={r.graha} r={r} />)}</div>
+
+      {together.length > 0 && (
+        <>
+          <h2 className="section-title">Planets together now</h2>
+          <div className="insight-list">
+            {together.map((c) => (
+              <article key={c.sign} className="insight card">
+                <header className="insight-head"><h3>{c.grahas.join(' and ')} in {rashiName(c.sign)}{c.house ? `, ${ordinal(c.house)} house` : ''}</h3></header>
+                <div className="insight-body">{c.lines.map((l) => <p key={l}>{l}</p>)}</div>
+              </article>
             ))}
-          </tbody>
-        </table>
-        <p className="muted small">Gochara: favourable houses from the natal Moon (Phaladeepika 26). A favourable transit is blocked (vedha) when another planet occupies its paired house, except between the Sun and Saturn or the Moon and Mercury. Bindus: the planet's own Ashtakavarga points in that sign (5 or more helps, 2 or fewer hurts).</p>
-      </div>
+          </div>
+        </>
+      )}
+
+      <h2 className="section-title">Saturn, Jupiter and Rahu: the next 10 years</h2>
+      <p className="muted small">The slow planets set the background of each period. Each row is a sign the planet will cross and the house it occupies for this chart; the reading is what that house covers and how the planet behaves there. "From Moon" is green where the classical texts count the transit as favourable.</p>
+      {(['Saturn', 'Jupiter', 'Rahu'] as const).map((g) => (
+        <section key={g} className="card table-wrap timeline-card">
+          <h3>{g === 'Rahu' ? 'Rahu and Ketu' : g}</h3>
+          <table className="data-table">
+            <thead><tr><th>Dates</th><th>Sign</th><th>House</th><th>From Moon</th><th>Reading</th></tr></thead>
+            <tbody>
+              {timeline[g].map((row) => (
+                <tr key={row.start.getTime()} className={row.start <= at && at < row.end ? 'selected' : ''}>
+                  <td className="num">{fmtDate(row.start)}<br />to {fmtDate(row.end)}</td>
+                  <td>{rashiName(row.sign)}{row.retrogradeReturn ? <span className="muted small"><br />retrograde return</span> : ''}</td>
+                  <td className="num">{row.house ?? ''}</td>
+                  <td className={row.favourableFromMoon ? 'pos' : 'neg'}>{row.fromMoon}</td>
+                  <td className="small">{row.text}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      ))}
 
       <h2 className="section-title">Next 12 months</h2>
       <div className="outlook card">
-        {outlook.map((m) => (
-          <div key={m.month.getTime()} className="outlook-row">
-            <span className="outlook-month">{m.month.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
-            <span className="bar-track"><span className={`bar-fill ${m.score >= 55 ? 'good' : m.score <= 45 ? 'bad' : ''}`} style={{ width: `${m.score}%` }} /></span>
-            <span className="num small">{m.score}</span>
-            <span className="muted small outlook-why">{m.good.length ? `Supportive: ${m.good.join(', ')}` : ''}{m.good.length && m.hard.length ? '. ' : ''}{m.hard.length ? `Difficult: ${m.hard.join(', ')}` : ''}</span>
-          </div>
-        ))}
-        <p className="muted small">Score for the middle of each month from the scorecard above, weighting Jupiter, Saturn and the nodes most. 50 is neutral.</p>
+        {outlook.map((m) => {
+          const c = { checked: m.good.length + m.mixed.length + m.hard.length, supportive: m.good.length, mixed: m.mixed.length, challenging: m.hard.length, notMet: 0 }
+          return (
+            <div key={m.month.getTime()} className="outlook-row">
+              <span className="outlook-month">{m.month.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</span>
+              <ConditionBar c={c} />
+              <span className="num small">{m.good.length}/{m.hard.length}</span>
+              <span className="muted small outlook-why">{m.good.length ? `Supportive: ${m.good.join(', ')}` : ''}{m.good.length && m.hard.length ? '. ' : ''}{m.hard.length ? `Difficult: ${m.hard.join(', ')}` : ''}</span>
+            </div>
+          )
+        })}
+        <p className="muted small">Each planet's transit in the middle of the month, judged from the natal Moon with vedha and Ashtakavarga: green supportive, gold mixed, red difficult. The numbers are supportive / difficult planets.</p>
       </div>
 
-      <h2 className="section-title">Upcoming changes</h2>
+      <h2 className="section-title">Retrograde periods and Mars</h2>
       <div className="card table-wrap">
         <table className="data-table">
           <thead><tr><th>Date</th><th>Event</th><th>From {ref}</th><th>From Moon</th></tr></thead>
@@ -106,15 +136,29 @@ export default function TransitsTab({ chart }: { chart: VedicChart }) {
             {events.map((e) => (
               <tr key={e.graha + e.kind + e.date.getTime()}>
                 <td className="num">{fmtDate(e.date)}</td>
-                <td>{e.kind === 'ingress' ? `${e.graha} enters ${rashiName(e.sign)}${e.graha === 'Rahu' ? ` (Ketu enters ${rashiName((e.sign + 6) % 12)})` : ''}` : `${e.graha} turns ${e.kind} in ${rashiName(e.sign)}`}</td>
+                <td>{e.kind === 'ingress' ? `${e.graha} enters ${rashiName(e.sign)}` : `${e.graha} turns ${e.kind} in ${rashiName(e.sign)}`}</td>
                 <td>{ordinal(e.fromLagna ?? e.fromMoon)} house</td>
                 <td>{ordinal(e.fromMoon)}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        <p className="muted small">Sign changes of Mars, Jupiter, Saturn and the nodes, and the retrograde and direct stations of Mercury to Saturn.</p>
+        <p className="muted small">Retrograde and direct stations of Mercury to Saturn, and Mars's sign changes, over the next 12 months.</p>
       </div>
     </>
+  )
+}
+
+function ReadingCard({ r }: { r: TransitReading }) {
+  return (
+    <article className={`insight card tone-${r.tone}`}>
+      <header className="insight-head">
+        <h3>{r.graha} in {rashiName(r.sign)}{r.fromLagna ? `, ${ordinal(r.fromLagna)} house` : `, ${ordinal(r.fromMoon)} from the Moon`}</h3>
+        <span className={`pill pill-${r.tone}`}>{TONE_LABEL[r.tone]}</span>
+      </header>
+      <p className="insight-sub">Until {fmtDate(r.until)}, then {rashiName(r.next.sign)}{r.next.house ? ` (${ordinal(r.next.house)} house)` : ''}</p>
+      <div className="insight-body">{r.lines.map((l) => <p key={l}>{l}</p>)}</div>
+      <Basis items={r.basis} />
+    </article>
   )
 }

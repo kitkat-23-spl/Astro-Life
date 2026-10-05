@@ -5,11 +5,12 @@ import { useSettings } from '../../../lib/settings'
 import { runningAge, varshaphal } from '../../../vedic/annual'
 import { periodChain } from '../../../vedic/dasha'
 import type { VedicReading } from '../../../vedic/interpret'
-import { REPORTS, buildReport, verdictOf } from '../../../vedic/reports'
+import { REPORTS, buildReport } from '../../../vedic/reports'
 import type { VedicChart } from '../../../vedic/sidereal'
 import { monthlyOutlook, sadeSati } from '../../../vedic/transits'
 import { yogaTone } from '../../../vedic/yogas'
 import Cards from '../Cards'
+import { ConditionBar } from '../ReportParts'
 import { fmtDate } from '../format'
 import type { Tab } from '../VedicView'
 
@@ -32,12 +33,13 @@ export default function OverviewTab({ chart, reading, hash, go }: { chart: Vedic
       {areas.length > 0 && (
         <>
           <h2 className="section-title first">Life areas</h2>
+          <p className="muted small">Classical conditions checked for each area, and how many apply. Each report explains its rules; counts are not comparable between areas.</p>
           <div className="area-grid">
             {areas.map((a) => a.report && (
-              <Link key={a.key} className={`card area-card ${a.report.score >= 60 ? 'hi' : a.report.score >= 40 ? 'mid' : 'lo'}`} to={{ pathname: `/chart/${a.key}`, hash }}>
-                <span className="area-head"><strong>{a.title}</strong><span className="area-score">{a.report.score}</span></span>
-                <span className="bar-track"><span className="bar-fill" style={{ width: `${a.report.score}%` }} /></span>
-                <span className="area-verdict">{verdictOf(a.report.score)}</span>
+              <Link key={a.key} className="card area-card" to={{ pathname: `/chart/${a.key}`, hash }}>
+                <span className="area-head"><strong>{a.title}</strong></span>
+                <ConditionBar c={a.report.conditions} />
+                <span className="area-counts small"><span className="pos">{a.report.conditions.supportive} supportive</span><span className="neg">{a.report.conditions.challenging} challenging</span><span className="muted">of {a.report.conditions.checked} checked</span></span>
                 <span className="muted small">{a.summary}</span>
                 <span className="area-open">Open report</span>
               </Link>
@@ -57,7 +59,7 @@ export default function OverviewTab({ chart, reading, hash, go }: { chart: Vedic
         )}
         <li>
           <span className="now-label">Transits</span>
-          <span>{month.score >= 55 ? 'Favourable month' : month.score <= 45 ? 'Demanding month' : 'Mixed month'} <span className="muted small">({month.score}/100{month.good.length ? `; supportive: ${month.good.join(', ')}` : ''})</span></span>
+          <span>{month.good.length} supportive, {month.hard.length} difficult transits this month <span className="muted small">{month.good.length ? `(supportive: ${month.good.join(', ')})` : ''}</span></span>
           <button className="linklike" onClick={() => go('transits')}>Transit details</button>
         </li>
         <li>

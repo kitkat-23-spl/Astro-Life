@@ -2,7 +2,7 @@ import { norm360 } from '../astro/constants'
 import { RASHI, SIGN_LORD, type Graha } from './constants'
 import { dignityPhrase, dignityScore, h, houseOf, lordOfHouse, occupants, placementScore, pos } from './query'
 import {
-  areaScore, areaTiming, aspectRule, effectOf, karakaRule, lordRule, occupantRule, rule, vargaVerdict, weigh,
+  countConditions, areaTiming, aspectRule, effectOf, karakaRule, lordRule, occupantRule, rule, vargaVerdict, weigh,
   type AreaReport, type RuleResult, type VargaVerdict, type Weights,
 } from './rules'
 import { signName, vargaChart, type VedicChart } from './sidereal'
@@ -138,5 +138,5 @@ export function childrenReport(chart: VedicChart, gender: Gender, now = new Date
   ]
   const p5 = pos(chart, l5)
   const headline = `The 5th lord ${l5} is ${dignityPhrase(p5.dignity)} in the ${h(p5.house!)}, and Jupiter is ${houseOf(chart, 'Jupiter', chart.lagnaSign) === 5 ? 'in the 5th' : `in the ${h(jup.house!)}`}.`
-  return { score: areaScore(groups.flatMap((g) => g.results), { median: 6.0, spread: 4.5 }), headline, groups, vargas, ...timing, sphutas, putrakaraka: pk }
+  return { conditions: countConditions(groups), headline, groups, vargas, ...timing, sphutas, putrakaraka: pk }
 }

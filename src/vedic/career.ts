@@ -4,7 +4,7 @@ import {
   lordOfHouse, occupants, pos,
 } from './query'
 import {
-  Evidence, areaScore, areaTiming, effectOf, rule, shadbalaNote, vargaVerdict, weigh, yogaRule,
+  Evidence, countConditions, areaTiming, effectOf, rule, shadbalaNote, vargaVerdict, weigh, yogaRule,
   type AreaReport, type RuleResult, type VargaVerdict, type Weights,
 } from './rules'
 import { signName, vargaChart, type VargaChart, type VedicChart } from './sidereal'
@@ -330,5 +330,5 @@ export function careerReport(chart: VedicChart, now = new Date(), yogas: YogaRes
   const headline = top
     ? `The strongest indications point to ${top.planet}-ruled fields (${top.fields.slice(0, 2).join(', ').toLowerCase()}). The 10th lord ${tenthLord} is in the ${h(tl.house!)}.`
     : `The 10th lord ${tenthLord} in the ${h(tl.house!)} shapes the career.`
-  return { score: areaScore(groups.flatMap((g) => g.results), { median: 11.3, spread: 6.2 }), headline, fields, modes, groups, vargas, ...timing }
+  return { conditions: countConditions(groups), headline, fields, modes, groups, vargas, ...timing }
 }

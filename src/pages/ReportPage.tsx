@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import Basis from '../components/Basis'
 import Segmented from '../components/Segmented'
 import { ChartPair } from '../components/vedic/ChartPair'
-import { DashaTimeline, ReportNav, RuleGroups, ScoreDial, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
+import { ConditionSummary, DashaTimeline, MethodNote, ReportNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
 import { useSettings } from '../lib/settings'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
 import type { CareerReport } from '../vedic/career'
@@ -91,8 +91,10 @@ export default function ReportPage() {
           )}
           <p className="muted small">Uses {cfg.method}</p>
         </div>
-        <ScoreDial value={report.score} label="Overall support" caption="50 is typical for this report" />
+        <ConditionSummary c={report.conditions} />
       </header>
+
+      <MethodNote />
 
       <ChartPair chart={chart} a={vargaChart(chart, 1)} b={vargaChart(chart, cfg.varga)} aTitle="D1 Rashi" bTitle={cfg.vargaTitle} />
 
@@ -118,7 +120,6 @@ export default function ReportPage() {
       <h2 className="section-title">All rules</h2>
       {cfg.lesson && <p className="small"><Link to={`/learn/${cfg.lesson}`}>How these rules work</Link></p>}
       <RuleGroups groups={report.groups} />
-      <p className="muted small center disclaimer">Traditional Jyotish indications produced by fixed rules. They describe tendencies, not certain events, and are not a substitute for professional advice.</p>
     </div>
   )
 }
@@ -141,7 +142,7 @@ function RankedPlanets({ items }: { items: { planet: keyof typeof GRAHA_INFO; sc
           <header>
             <span className="rank-num">{i + 1}</span>
             <h3>{f.planet} <span className="muted small">{GRAHA_INFO[f.planet].sanskrit}</span></h3>
-            <span className="tag">{f.score} pts</span>
+            <span className="tag">{f.reasons.length} {f.reasons.length === 1 ? 'indication' : 'indications'}</span>
           </header>
           <ul className="rank-list">{f.list.map((x) => <li key={x}>{x}</li>)}</ul>
           <Basis items={f.reasons} />
@@ -155,7 +156,7 @@ function CareerSection({ r }: { r: CareerReport }) {
   return (
     <>
       <h2 className="section-title">Suitable fields</h2>
-      <p className="muted">Each planet collects points from independent rules. The highest-scoring planets indicate the fields that suit the chart.</p>
+      <p className="muted">Independent classical rules each point to a planet. The planets named most often, and by the most important rules, indicate the fields that suit the chart. Every indication is listed.</p>
       <RankedPlanets items={r.fields.map((f) => ({ ...f, list: f.fields }))} />
       <h2 className="section-title">Mode of work</h2>
       <div className="card modes">
@@ -240,7 +241,7 @@ function EducationSection({ r }: { r: EducationReport }) {
   return (
     <>
       <h2 className="section-title">Subjects that suit the chart</h2>
-      <p className="muted">Planets connected with the 4th, 5th and 9th houses and with D24 collect points. The highest-scoring planets indicate the subjects that come most naturally.</p>
+      <p className="muted">Rules for the 4th, 5th and 9th houses and the D24 chart each point to a planet. The planets named most often indicate the subjects that come most naturally. Every indication is listed.</p>
       <RankedPlanets items={r.subjects.map((s) => ({ ...s, list: s.subjects }))} />
     </>
   )

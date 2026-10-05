@@ -4,7 +4,7 @@ import {
   aspectors, aspectsOnGraha, conjunctWith, describeLord, dignityPhrase, dignityScore, h, houseGroup, influencesHouse,
   isBenefic, linked, lordOfHouse, occupants, pos,
 } from './query'
-import { areaScore, areaTiming, rule, shadbalaNote, vargaVerdict, weigh, type AreaReport, type RuleResult, type VargaVerdict, type Weights } from './rules'
+import { countConditions, areaTiming, rule, shadbalaNote, vargaVerdict, weigh, type AreaReport, type RuleResult, type VargaVerdict, type Weights } from './rules'
 import { signName, vargaChart, type VedicChart } from './sidereal'
 import { charaKarakas, upapada } from './jaimini'
 import { mangalDosha, type MangalDosha } from './yogas'
@@ -307,7 +307,7 @@ export function marriageReport(chart: VedicChart, gender: Gender, now = new Date
     { title: 'Upapada Lagna (Jaimini)', results: g4 },
     { title: 'Family, home and children', results: g5 },
   ]
-  const score = areaScore(groups.flatMap((g) => g.results), { median: 3.1, spread: 5.4 })
+  const conditions = countConditions(groups)
   const headline = `The 7th lord ${l7} in the ${h(p7.house!)}, ${gender === 'female' ? 'Jupiter and Venus' : 'Venus'} as karaka${gender === 'female' ? 's' : ''}, and a ${signName(s7)} 7th house shape your marriage story. ${tendency.label}.`
-  return { gender, score, headline, tendency, style: { love, arranged }, spouse, mangal, groups, vargas, ...timing, upapadaSign: ul, darakaraka: dk }
+  return { gender, conditions, headline, tendency, style: { love, arranged }, spouse, mangal, groups, vargas, ...timing, upapadaSign: ul, darakaraka: dk }
 }

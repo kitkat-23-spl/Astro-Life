@@ -100,7 +100,7 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
         {tab === 'vargas' && <VargasTab chart={chart} reading={reading} />}
         {tab === 'ashtakavarga' && <AshtakavargaTab chart={chart} />}
         {tab === 'dasha' && <DashaTab chart={chart} reading={reading} />}
-        {tab === 'transits' && <TransitsTab chart={chart} />}
+        {tab === 'transits' && <TransitsTab chart={chart} reading={reading} />}
         {tab === 'special' && <SpecialTab chart={chart} />}
       </section>
       <p className="muted small center disclaimer">

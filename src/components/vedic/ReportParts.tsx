@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import type { DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
+import type { ConditionCount, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
 import { REPORTS } from '../../vedic/reports'
 import type { TransitWindow } from '../../vedic/transits'
 import { yogaTone, type YogaResult } from '../../vedic/yogas'
@@ -37,6 +37,45 @@ export function ScoreDial({ value, label, caption, max = 100 }: { value: number;
       </svg>
       <figcaption><strong>{label}</strong>{caption && <span className="muted small">{caption}</span>}</figcaption>
     </figure>
+  )
+}
+
+/** Stacked bar of the conditions checked: supportive, mixed, challenging and not present. */
+export function ConditionBar({ c }: { c: ConditionCount }) {
+  const pct = (n: number) => `${(n / Math.max(1, c.checked)) * 100}%`
+  return (
+    <span className="cond-bar" aria-hidden="true">
+      <span className="cond-good" style={{ width: pct(c.supportive) }} />
+      <span className="cond-mixed" style={{ width: pct(c.mixed) }} />
+      <span className="cond-bad" style={{ width: pct(c.challenging) }} />
+    </span>
+  )
+}
+
+/** The counts behind a report, in place of a score. */
+export function ConditionSummary({ c }: { c: ConditionCount }) {
+  return (
+    <figure className="cond-summary" aria-label={`${c.supportive} supportive, ${c.mixed} mixed and ${c.challenging} challenging conditions met, out of ${c.checked} checked`}>
+      <div className="cond-numbers">
+        <span><strong className="pos">{c.supportive}</strong> supportive</span>
+        <span><strong className="mixed">{c.mixed}</strong> mixed</span>
+        <span><strong className="neg">{c.challenging}</strong> challenging</span>
+      </div>
+      <ConditionBar c={c} />
+      <figcaption className="small">{c.checked - c.notMet} of {c.checked} classical conditions apply to this chart.</figcaption>
+    </figure>
+  )
+}
+
+/** Plain explanation of what the counts are and are not. */
+export function MethodNote() {
+  return (
+    <section className="card method-note">
+      <h2>How to read this report</h2>
+      <p className="small">Each condition is a rule from classical texts (Brihat Parashara Hora Shastra, Phaladeepika and the Jaimini Sutras), such as "the 10th lord is exalted" or "Jupiter aspects the 7th house". The counts above show how many of those rules apply to this chart, and every rule, including the ones that do not apply, is listed under All rules below.</p>
+      <p className="small">The texts say whether a condition is favourable; they do not say how much it matters, so the conditions are counted rather than turned into a single score. Counts are not comparable between reports, because each report checks a different set of rules, and they change with the birth time and the calculation settings.</p>
+      <p className="small">These are traditional indications. They have not been tested against real outcomes, and controlled studies of astrology have not found it to predict events. Use them for study and reflection, not for decisions.</p>
+    </section>
   )
 }
 

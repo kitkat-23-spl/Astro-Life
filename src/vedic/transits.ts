@@ -3,6 +3,7 @@
  * Ashtakavarga transit scorecard, a monthly outlook, upcoming sign changes
  * and stations, Sade Sati, and the double-transit rule used by reports.
  */
+import { norm360 } from '../astro/constants'
 import { GRAHAS, type Graha } from './constants'
 import type { Period } from './dasha'
 import { aspectedSigns, lordOfHouse, pos } from './query'
@@ -79,23 +80,15 @@ export function gochara(chart: VedicChart, at: Date, positions = transitPosition
   })
 }
 
-/** Weight of each planet in the monthly outlook: slow planets shape a month more than fast ones. */
-const OUTLOOK_WEIGHT: Partial<Record<Graha, number>> = { Sun: 0.5, Mars: 0.75, Mercury: 0.5, Venus: 0.5, Jupiter: 1.5, Saturn: 1.5, Rahu: 1, Ketu: 0.5 }
+export interface MonthOutlook { month: Date; good: Graha[]; mixed: Graha[]; hard: Graha[] }
 
-export interface MonthOutlook { month: Date; score: number; good: Graha[]; hard: Graha[] }
-
-/** Transit score for the middle of each month: 50 is neutral, higher is more favourable. */
+/** Transit results for the middle of each month (the Moon is left out: it changes sign every two days). */
 export function monthlyOutlook(chart: VedicChart, from: Date, months = 12): MonthOutlook[] {
-  const maxW = Object.values(OUTLOOK_WEIGHT).reduce((a, b) => a + b!, 0) * 2
   return Array.from({ length: months }, (_, i) => {
     const month = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth() + i, 15))
     const rows = gochara(chart, month).filter((r) => r.graha !== 'Moon')
-    const raw = rows.reduce((s, r) => s + r.score * OUTLOOK_WEIGHT[r.graha]!, 0)
-    return {
-      month, score: Math.round(50 + (raw / maxW) * 70),
-      good: rows.filter((r) => r.verdict === 'favourable').map((r) => r.graha),
-      hard: rows.filter((r) => r.verdict === 'unfavourable').map((r) => r.graha),
-    }
+    const by = (v: GocharaRow['verdict']) => rows.filter((r) => r.verdict === v).map((r) => r.graha)
+    return { month, good: by('favourable'), mixed: by('mixed'), hard: by('unfavourable') }
   })
 }
 
@@ -104,9 +97,6 @@ export function monthlyOutlook(chart: VedicChart, from: Date, months = 12): Mont
 /* ------------------------------------------------------------------ */
 
 export interface TransitEvent { date: Date; graha: Graha; kind: 'ingress' | 'retrograde' | 'direct'; sign: number; fromLagna: number | null; fromMoon: number }
-
-const INGRESS_PLANETS: Graha[] = ['Mars', 'Jupiter', 'Saturn', 'Rahu']
-const STATION_PLANETS: Graha[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
 
 function refine(f: (t: number) => boolean, a: number, b: number): Date {
   // f(a) is false, f(b) is true; narrow to within ten minutes.
@@ -118,8 +108,45 @@ function refine(f: (t: number) => boolean, a: number, b: number): Date {
   return new Date(b)
 }
 
+const STATION_PLANETS: Graha[] = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
+
+/** Sampling step that cannot skip a whole sign for each planet. */
+const STEP_DAYS: Record<Graha, number> = { Moon: 0.25, Sun: 2, Mercury: 1, Venus: 1, Mars: 2, Jupiter: 5, Saturn: 5, Rahu: 5, Ketu: 5 }
+
+export interface SignPeriod { graha: Graha; sign: number; start: Date; end: Date; retrogradeReturn: boolean }
+
+/**
+ * The signs a planet occupies between two dates, with exact entry and exit
+ * times. The first period starts when the planet entered its current sign.
+ */
+export function signPeriods(chart: VedicChart, g: Graha, from: Date, until: Date): SignPeriod[] {
+  const step = STEP_DAYS[g] * DAY
+  const signAt = (t: number) => Math.floor(siderealLongitude(g, new Date(t), chart.settings) / 30)
+  const first = signAt(from.getTime())
+  let t0 = from.getTime()
+  const backLimit = t0 - 3 * 365.25 * DAY
+  while (t0 > backLimit && signAt(t0 - step) === first) t0 -= step
+  const start = t0 > backLimit ? refine((x) => signAt(x) === first, t0 - step, t0) : new Date(t0)
+  // A sign entered while moving backwards is a retrograde return (the nodes always move backwards).
+  const backwards = (t: number) => g !== 'Rahu' && g !== 'Ketu' && norm360(siderealLongitude(g, new Date(t + DAY / 2), chart.settings) - siderealLongitude(g, new Date(t - DAY / 2), chart.settings)) > 180
+  const out: SignPeriod[] = [{ graha: g, sign: first, start, end: until, retrogradeReturn: false }]
+  let prev = first
+  // Scan past the window so the last period gets its real end (Saturn stays up to about 2.7 years in a sign).
+  for (let t = from.getTime() + step; t <= until.getTime() + 3 * 365.25 * DAY; t += step) {
+    const s = signAt(t)
+    if (s === prev) continue
+    const date = refine((x) => signAt(x) === s, t - step, t)
+    out[out.length - 1].end = date
+    if (date > until) break
+    out.push({ graha: g, sign: s, start: date, end: until, retrogradeReturn: backwards(date.getTime()) })
+    prev = s
+  }
+  return out
+}
+
+/** Mars sign changes and the retrograde and direct stations of Mercury to Saturn. */
 export function transitEvents(chart: VedicChart, from: Date, months = 12): TransitEvent[] {
-  const end = from.getTime() + months * 30.44 * DAY
+  const end = new Date(from.getTime() + months * 30.44 * DAY)
   const moonSign = pos(chart, 'Moon').sign
   const rel = (sign: number) => ({
     fromLagna: chart.lagnaSign === null ? null : ((sign - chart.lagnaSign + 12) % 12) + 1,
@@ -127,21 +154,11 @@ export function transitEvents(chart: VedicChart, from: Date, months = 12): Trans
   })
   const lon = (g: Graha, t: number) => siderealLongitude(g, new Date(t), chart.settings)
   const speed = (g: Graha, t: number) => { let d = lon(g, t + DAY / 2) - lon(g, t - DAY / 2); if (d > 180) d -= 360; if (d < -180) d += 360; return d }
-  const out: TransitEvent[] = []
-  for (const g of INGRESS_PLANETS) {
-    let prev = Math.floor(lon(g, from.getTime()) / 30)
-    for (let t = from.getTime() + DAY; t <= end; t += DAY) {
-      const s = Math.floor(lon(g, t) / 30)
-      if (s !== prev) {
-        const date = refine((x) => Math.floor(lon(g, x) / 30) === s, t - DAY, t)
-        out.push({ date, graha: g, kind: 'ingress', sign: s, ...rel(s) })
-        prev = s
-      }
-    }
-  }
+  const out: TransitEvent[] = signPeriods(chart, 'Mars', from, end).slice(1)
+    .map((p) => ({ date: p.start, graha: 'Mars' as Graha, kind: 'ingress' as const, sign: p.sign, ...rel(p.sign) }))
   for (const g of STATION_PLANETS) {
     let prevRetro = speed(g, from.getTime()) < 0
-    for (let t = from.getTime() + DAY; t <= end; t += DAY) {
+    for (let t = from.getTime() + DAY; t <= end.getTime(); t += DAY) {
       const retro = speed(g, t) < 0
       if (retro !== prevRetro) {
         const date = refine((x) => (speed(g, x) < 0) === retro, t - DAY, t)

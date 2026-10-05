@@ -26,5 +26,3 @@ export function buildReport(key: ReportKey, chart: VedicChart, gender: Gender, y
     case 'children': return childrenReport(chart, gender, now)
   }
 }
-
-export const verdictOf = (score: number) => (score >= 60 ? 'Above typical' : score >= 40 ? 'Typical' : 'Below typical')

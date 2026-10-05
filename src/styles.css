@@ -378,11 +378,7 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .area-card:hover { border-color: var(--accent); }
 .area-head { display: flex; justify-content: space-between; align-items: baseline; }
 .area-head strong { font-family: var(--serif); font-size: 1.1rem; color: var(--ink); }
-.area-score { font-family: var(--serif); font-size: 1.4rem; font-weight: 700; color: var(--ink); }
-.area-verdict { font-weight: 700; font-size: .86rem; }
-.area-card.hi .area-verdict { color: var(--ok); } .area-card.hi .bar-fill { background: var(--ok); }
-.area-card.mid .area-verdict { color: var(--warn); } .area-card.mid .bar-fill { background: var(--warn); }
-.area-card.lo .area-verdict { color: var(--err); } .area-card.lo .bar-fill { background: var(--err); }
+.area-counts { display: flex; flex-wrap: wrap; gap: 0 10px; font-weight: 600; }
 .area-open { margin-top: auto; font-size: .84rem; font-weight: 600; color: var(--accent); }
 .varga-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 24px; align-items: start; }
 .varga-layout .vchart { max-width: 460px; }
@@ -391,6 +387,24 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .varga-thumb { background: none; border: 2px solid transparent; border-radius: 12px; padding: 4px; cursor: pointer; color: inherit; }
 .varga-thumb.active { border-color: var(--accent); }
 .varga-thumb:hover { border-color: var(--line); }
+
+/* Condition counts */
+.cond-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+.cond-bar > span { display: block; height: 100%; }
+.cond-good { background: var(--ok); }
+.cond-mixed { background: var(--gold); }
+.cond-bad { background: var(--err); }
+.cond-summary { margin: 0; width: 240px; display: flex; flex-direction: column; gap: 10px; }
+.cond-numbers { display: flex; flex-direction: column; gap: 2px; }
+.cond-numbers strong { font-family: var(--serif); font-size: 1.6rem; display: inline-block; min-width: 1.6em; }
+.night .cond-bar { background: rgb(255 255 255 / .15); }
+.night .pos { color: #8ef0bd; }
+.night .neg { color: #ff9fae; }
+.mixed { color: var(--gold); font-weight: 600; }
+.method-note { margin-bottom: 24px; }
+.method-note p:last-child { margin-bottom: 0; }
+.timeline-card { margin-bottom: 16px; }
+.timeline-card td:first-child { white-space: nowrap; }
 
 /* Kundali tabs */
 .subnav { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
