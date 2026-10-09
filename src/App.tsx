@@ -61,7 +61,7 @@ export default function App() {
       </main>
       <footer className="site-footer">
         <div className="container footer-inner">
-          <span>© {new Date().getFullYear()} Astro Life. Rule-based Jyotish, calculated in your browser.</span>
+          <span>© {new Date().getFullYear()} Astro Life</span>
           <nav aria-label="Footer">
             <Link to="/chart">Kundali</Link>
             <Link to="/panchang">Panchang</Link>

@@ -25,7 +25,6 @@ export default function SettingsPage() {
   return (
     <div className="settings-page">
       <header className="page-head">
-        <p className="eyebrow">Settings</p>
         <h1>Calculation settings</h1>
         <p className="lede">These settings apply to every chart, report and Panchang on this device. Shared chart links carry only birth details, so each person sees the chart with their own settings.</p>
       </header>

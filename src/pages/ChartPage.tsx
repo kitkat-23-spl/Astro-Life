@@ -37,7 +37,6 @@ export default function ChartPage() {
     return (
       <div className="chart-form-page">
         <div className="form-intro">
-          <p className="eyebrow">Kundali</p>
           <h1>Birth details</h1>
           <p className="lede">The birth time and place set the lagna and houses. A time from a birth certificate is best.</p>
           {hash.length > 1 && !birth && <p className="error">This chart link is invalid or incomplete. Enter the details again.</p>}

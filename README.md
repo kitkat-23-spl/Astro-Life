@@ -60,23 +60,37 @@ The site works fully without Supabase; sign-in and saving simply stay hidden unt
    - Configure the OAuth consent screen (app name "Astro Life", scopes: email, profile, openid).
 4. **Enable Google in Supabase**: *Authentication → Sign In / Providers → Google*, paste the Client ID and Secret. (The **secret stays in Supabase only**, never in this repo.)
 5. **Allow your site URL**: *Authentication → URL Configuration*:
-   - Site URL: your deployed URL (e.g. `https://kitkat-23-spl.github.io/Astro-Life/`)
-   - Redirect URLs: `https://kitkat-23-spl.github.io/Astro-Life/**` (plus `http://localhost:5173/**` for development)
+   - Site URL: your deployed URL (e.g. `https://astrolife.pages.dev`)
+   - Redirect URLs: `https://astrolife.pages.dev/**` and `https://kitkat-23-spl.github.io/Astro-Life/**` (plus `http://localhost:5173/**` for development)
 6. **Add the public keys** from *Project Settings → API*: the Project URL and the **anon / publishable** key.
    - Local: copy `.env.example` → `.env`
-   - GitHub Pages: repo *Settings → Secrets and variables → Actions → Variables*: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - Cloudflare Pages: project *Settings → Variables and Secrets*: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - GitHub Pages: repo *Settings → Secrets and variables → Actions → Variables*: the same two names
 
 > Never use the `service_role` key in this app. The anon key is public by design; Row Level Security is what protects the data.
 
 ## Free hosting
 
-The site is deployed to **GitHub Pages** at `https://kitkat-23-spl.github.io/Astro-Life/` by `.github/workflows/deploy.yml` on every push to `main` (*Settings → Pages → Source: GitHub Actions*). Deep links work through `404.html` and `public/spa-redirect.js`. A custom domain can be added in the Pages settings.
+**Cloudflare Pages (main site).** Free, with unlimited bandwidth, a global CDN, HTTPS and real response headers.
+
+1. Sign in at <https://dash.cloudflare.com> → *Workers & Pages → Create → Pages → Connect to Git* and pick this repository.
+2. Project name: `astrolife` (the site becomes `https://astrolife.pages.dev`). Production branch: `main`.
+3. Build settings: framework preset *None*, build command `npm run build`, output directory `dist`.
+4. Environment variables (Production): `NODE_VERSION` = `22`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+5. Deploy. Every push to `main` redeploys, and pull requests get preview URLs.
+6. In Supabase *Authentication → URL Configuration*, set the Site URL to the new address and add `https://astrolife.pages.dev/**` to the Redirect URLs.
+
+Without a `404.html`, Cloudflare Pages serves `index.html` for unknown paths, so deep links work. `public/_headers` adds the security headers.
+
+A custom domain (for example a `.com` or `.in`, about ₹500 to ₹1,000 a year) can be added later under the Pages project's *Custom domains*; Cloudflare issues the certificate.
+
+**GitHub Pages (backup).** `.github/workflows/deploy.yml` also publishes `https://kitkat-23-spl.github.io/Astro-Life/` on every push to `main`. Deep links work through `404.html` and `public/spa-redirect.js`.
 
 ## Security
 
 - **Row Level Security** on `charts`: users can only select, insert or delete their own rows. `anon` has no access, `user_id` defaults to `auth.uid()`, payload size is capped, and a trigger limits accounts to 100 charts.
 - **OAuth 2.0 + PKCE** via Supabase; no secrets in the frontend bundle.
-- **Content Security Policy** (injected at build): scripts only from this origin; network only to Supabase and the geocoder; `object-src 'none'`. GitHub Pages serves everything over HTTPS; the CSP is delivered as a meta tag because Pages cannot set custom response headers.
+- **Content Security Policy** (injected at build): scripts only from this origin; network only to Supabase and the geocoder; `object-src 'none'`. It is delivered as a meta tag so it works on both hosts; on Cloudflare Pages `public/_headers` adds frame, MIME-sniffing, referrer, permissions and HSTS headers.
 - **No HTML injection surface**: all content, including lessons, renders as React text; nothing uses `dangerouslySetInnerHTML`.
 - **Privacy**: birth data is computed locally, share links keep it in the `#fragment` (never sent to servers), and shared links are strictly validated. Users can delete individual charts or all of their data.
 - No ads, trackers or analytics.

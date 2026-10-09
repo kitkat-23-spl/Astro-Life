@@ -7,7 +7,6 @@ import { GRAHA_INFO } from '../vedic/constants'
 import { computePanchang } from '../vedic/panchang'
 import { DEFAULT_PLACE } from '../vedic/settings'
 import { computeVedicChart, signName } from '../vedic/sidereal'
-import { YOGAS } from '../vedic/yogas'
 
 const TOOLS: { to: string; title: string; text: string }[] = [
   { to: '/chart', title: 'Kundali', text: 'D1 to D60 vargas, Shadbala, Ashtakavarga, four dasha systems, transits, KP cusps and the annual chart.' },
@@ -15,7 +14,6 @@ const TOOLS: { to: string; title: string; text: string }[] = [
   { to: '/match', title: 'Kundali matching', text: '36-point Ashtakoota, ten South Indian poruthams and Mangal dosha for both partners.' },
   { to: '/panchang', title: 'Panchang', text: 'Tithi, nakshatra, yoga, karana, Rahu Kaal, Choghadiya and Hora for any place and date.' },
   { to: '/learn', title: 'Learn Jyotish', text: 'A 19-lesson course from signs and houses to yogas, dashas and transits, with worked examples.' },
-  { to: '/settings', title: 'Settings', text: 'Choose the ayanamsa, mean or true nodes, the karaka scheme and North or South Indian charts.' },
 ]
 
 export default function HomePage() {
@@ -46,21 +44,11 @@ export default function HomePage() {
     <div className="home">
       <section className="hero night">
         <div className="hero-text">
-          <p className="eyebrow">Vedic astrology, calculated in your browser</p>
           <h1>Kundali, Panchang and matching, with every rule shown.</h1>
-          <p className="lede">
-            Enter birth details for a North or South Indian kundali with 19 divisional charts, Vimshottari dasha and {YOGAS.length} classical yogas.
-            Each reading lists the planetary combinations behind it.
-          </p>
           <div className="hero-cta">
             <Link to="/chart" className="btn primary">Create a kundali</Link>
             <Link to="/panchang" className="btn ghost">Today's Panchang</Link>
           </div>
-          <ul className="trust-list">
-            <li>Lahiri, KP, Raman or True Chitra ayanamsa</li>
-            <li>Birth data stays on your device</li>
-            <li>Rules cite their classical source</li>
-          </ul>
         </div>
         <div className="hero-wheel">
           <SquareChart style={settings.chartStyle} lagnaSign={now.lagnaSign!} items={items} title="Sky now" subtitle={`${place.label} · Moon in ${signName(now.grahas[1].sign)}`} />
@@ -93,15 +81,6 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
-
-      <section className="how card">
-        <h2>How readings are made</h2>
-        <ol className="steps">
-          <li><strong>Positions.</strong> Planet positions come from the open-source Astronomy Engine, converted to the sidereal zodiac with the ayanamsa you choose. Historical time zones are applied automatically.</li>
-          <li><strong>Rules.</strong> Each reading is a fixed rule from Parashari, Jaimini or Phaladeepika practice: house lordship, dignity, aspects, yogas, divisional charts and dashas. No AI writes or judges your chart.</li>
-          <li><strong>Evidence.</strong> Every card lists the combinations that triggered it, and reports also show the rules that did not apply.</li>
-        </ol>
-      </section>
     </div>
   )
 }

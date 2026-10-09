@@ -30,21 +30,19 @@ export default function MatchPage() {
     return (
       <div>
         <header className="page-head">
-          <p className="eyebrow">Kundali matching</p>
           <h1>Compare two charts for marriage</h1>
-          <p className="lede">Enter both birth details to calculate the 36-point Ashtakoota Guna Milan, the ten South Indian poruthams, Mangal dosha for both partners and chart-level compatibility.</p>
+          <p className="lede">Enter both partners' birth details. The result opens once both are entered.</p>
         </header>
         <div className="match-forms">
           <section>
             <h2>Boy / groom {boy && <span className="tag effect-supportive">{boy.name || 'Entered'}</span>}</h2>
-            <BirthForm key="boy" initial={boy ?? parsed?.boy} submitLabel={boy ? 'Update groom’s details' : 'Use these details'} compact onSubmit={(b) => { setBoy(b); go(b, girl) }} />
+            <BirthForm key="boy" initial={boy ?? parsed?.boy} submitLabel={boy ? 'Update groom’s details' : 'Use these details'} onSubmit={(b) => { setBoy(b); go(b, girl) }} />
           </section>
           <section>
             <h2>Girl / bride {girl && <span className="tag effect-supportive">{girl.name || 'Entered'}</span>}</h2>
-            <BirthForm key="girl" initial={girl ?? parsed?.girl} submitLabel={girl ? 'Update bride’s details' : 'Use these details'} compact onSubmit={(g) => { setGirl(g); go(boy, g) }} />
+            <BirthForm key="girl" initial={girl ?? parsed?.girl} submitLabel={girl ? 'Update bride’s details' : 'Use these details'} onSubmit={(g) => { setGirl(g); go(boy, g) }} />
           </section>
         </div>
-        <p className="muted small center">The result opens when both sets of details are entered. Everything is calculated in your browser.</p>
       </div>
     )
   }

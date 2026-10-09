@@ -8,13 +8,12 @@ interface Props {
   initial?: Partial<BirthData>
   onSubmit: (b: BirthData) => void
   submitLabel?: string
-  compact?: boolean
 }
 
 const MIN_DATE = '1800-01-01'
 const MAX_DATE = '2100-12-31'
 
-export default function BirthForm({ initial, onSubmit, submitLabel = 'Reveal my chart', compact }: Props) {
+export default function BirthForm({ initial, onSubmit, submitLabel = 'Show chart' }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [date, setDate] = useState(initial?.date ?? '')
   const [time, setTime] = useState(initial?.time ?? '')
@@ -84,7 +83,6 @@ export default function BirthForm({ initial, onSubmit, submitLabel = 'Reveal my 
 
       {error && <p className="error" role="alert">{error}</p>}
       <button className="btn primary block" type="submit">{submitLabel}</button>
-      {!compact && <p className="muted small center">Calculated privately in your browser. Nothing is stored unless you choose to save it.</p>}
     </form>
   )
 }

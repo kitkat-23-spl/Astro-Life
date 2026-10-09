@@ -224,7 +224,7 @@ input:disabled { opacity: .5; }
 .night .b3 { background: rgb(255 255 255 / .07); border-color: rgb(255 255 255 / .16); }
 .night .b3-sign { color: #fff; }
 .night .b3-label { color: #b7b6dc; }
-.night .summary-list, .night .trust-list li { color: #d4d4f2; }
+.night .summary-list { color: #d4d4f2; }
 .night .progress-bar { background: rgb(255 255 255 / .15); }
 .night .tag.effect-supportive { background: rgb(99 211 155 / .2); color: #8ef0bd; }
 
@@ -235,8 +235,6 @@ input:disabled { opacity: .5; }
 .hero h1 { font-size: clamp(2.1rem, 4.6vw, 3.3rem); line-height: 1.1; }
 .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin: 24px 0; }
 .hero-wheel { max-width: 460px; width: 100%; justify-self: center; }
-.trust-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: .9rem; }
-.trust-list li::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #7ee2b0; margin-right: 8px; vertical-align: middle; }
 .today-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 .today-head h2 { font-size: 1.2rem; margin: 0 0 12px; }
 .today-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin: 0; }
@@ -246,10 +244,6 @@ input:disabled { opacity: .5; }
 .tool-card { display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: var(--ink-2); transition: border-color .15s; }
 .tool-card strong { font-family: var(--serif); font-size: 1.15rem; color: var(--ink); }
 .tool-card:hover { border-color: var(--accent); }
-.how { margin-top: 32px; }
-.steps { padding-left: 1.2em; margin: 0; }
-.steps li { margin-bottom: .6em; color: var(--ink-2); }
-.steps strong { color: var(--ink); }
 
 /* ------------------------------------------------------------------ */
 /* Chart form and Western wheel                                         */

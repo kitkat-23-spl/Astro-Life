@@ -2,9 +2,7 @@ export default function PrivacyPage() {
   return (
     <article className="lesson">
       <header>
-        <p className="eyebrow">Trust</p>
         <h1>Privacy &amp; security</h1>
-        <p className="lede">Birth details are personal. Here is exactly how Astro Life handles them.</p>
       </header>
       <h2>Your chart is calculated on your device</h2>
       <p>All astronomical and astrological calculations run in your browser. Your birth date and time are never sent to our servers to generate a chart.</p>
