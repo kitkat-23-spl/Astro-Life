@@ -95,6 +95,8 @@ export default function ReportPage() {
         <AreaVerdict s={summarise(report)} />
       </header>
 
+      {meta.key === 'career' && <CareerSummary r={report as CareerReport} />}
+
       <MethodNote />
 
       <ChartPair chart={chart} a={vargaChart(chart, 1)} b={vargaChart(chart, cfg.varga)} aTitle="D1 Rashi" bTitle={cfg.vargaTitle} />
@@ -162,36 +164,42 @@ const STRENGTH: Record<ModeStrength, { label: string; pill: string }> = {
 
 const periodLabel = (p: ModePeriod) => `${p.ad ? `${p.md} / ${p.ad}` : `${p.md} mahadasha`}, ${fmtRange(p.start, p.end)}${p.now ? ' (running now)' : ''}`
 
-function CareerSection({ r }: { r: CareerReport }) {
+/** The conclusion first: what to focus on, how to work and when. */
+function CareerSummary({ r }: { r: CareerReport }) {
   const now = new Date()
   const v = r.modeVerdict
   const bestModes = r.modes.filter((m) => v.best.includes(m.label))
   const peaks = r.dashas.filter((d) => d.end > now).sort((a, b) => b.score - a.score).slice(0, 2).sort((a, b) => a.start.getTime() - b.start.getTime())
-  const modes = [...r.modes].sort((a, b) => b.reasons.length - a.reasons.length)
   const [f1, f2] = r.fields
   return (
+    <section className="card in-short">
+      <h2>In short</h2>
+      <dl className="short-list">
+        <div>
+          <dt>What to focus on</dt>
+          <dd>{f1 ? <>{f1.planet}-ruled work: {f1.fields.slice(0, 3).join('; ')}.{f2 && <> Next, {f2.planet}-ruled work: {f2.fields.slice(0, 2).join('; ')}.</>}</> : 'No planet stands out; see the rules below.'}</dd>
+        </div>
+        <div>
+          <dt>How to work</dt>
+          <dd>{v.text}{v.least.length > 0 && <> Least indicated: {v.least.join(', ').toLowerCase()}.</>}</dd>
+        </div>
+        <div>
+          <dt>When</dt>
+          <dd>
+            {peaks.length > 0 && <>The strongest career periods ahead: {peaks.map((d) => `${d.md} / ${d.ad} (${fmtRange(d.start, d.end)})`).join(' and ')}. </>}
+            {v.strength !== 'weak' && v.strength !== 'none' && bestModes.map((m) => m.periods.length > 0 && <span key={m.label}>For {m.label.toLowerCase()}, the dashas of {m.planets.join(' and ')}: {m.periods.slice(0, 2).map(periodLabel).join('; ')}. </span>)}
+          </dd>
+        </div>
+      </dl>
+      <p className="muted small">Read from the rules on this page. A dasha brings forward what its planet promises in the birth chart; it does not add a promise that is not there.</p>
+    </section>
+  )
+}
+
+function CareerSection({ r }: { r: CareerReport }) {
+  const modes = [...r.modes].sort((a, b) => b.reasons.length - a.reasons.length)
+  return (
     <>
-      <section className="card in-short">
-        <h2>In short</h2>
-        <dl className="short-list">
-          <div>
-            <dt>What to focus on</dt>
-            <dd>{f1 ? <>{f1.planet}-ruled work: {f1.fields.slice(0, 3).join('; ').toLowerCase()}.{f2 && <> Next, {f2.planet}-ruled work: {f2.fields.slice(0, 2).join('; ').toLowerCase()}.</>}</> : 'No planet stands out; see the rules below.'}</dd>
-          </div>
-          <div>
-            <dt>How to work</dt>
-            <dd>{v.text}{v.least.length > 0 && <> Least indicated: {v.least.join(', ').toLowerCase()}.</>}</dd>
-          </div>
-          <div>
-            <dt>When</dt>
-            <dd>
-              {peaks.length > 0 && <>The strongest career periods ahead: {peaks.map((d) => `${d.md} / ${d.ad} (${fmtRange(d.start, d.end)})`).join(' and ')}. </>}
-              {v.strength !== 'weak' && v.strength !== 'none' && bestModes.map((m) => m.periods.length > 0 && <span key={m.label}>For {m.label.toLowerCase()}, the dashas of {m.planets.join(' and ')}: {m.periods.slice(0, 2).map(periodLabel).join('; ')}. </span>)}
-            </dd>
-          </div>
-        </dl>
-        <p className="muted small">Read from the rules on this page. A dasha brings forward what its planet promises in the birth chart; it does not add a promise that is not there.</p>
-      </section>
 
       <h2 className="section-title">Suitable fields</h2>
       <p className="muted">Independent classical rules each point to a planet. The planets named most often, and by the most important rules, indicate the fields that suit the chart. Every indication is listed.</p>

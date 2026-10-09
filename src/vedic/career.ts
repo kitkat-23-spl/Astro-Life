@@ -387,7 +387,7 @@ function verdictOf(modes: ModeScore[]): ModeVerdict {
   const strength = modeStrength(top)
   const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0]).toLowerCase()
   const text = top >= 2
-    ? `${best.length > 1 ? `${list(best)} are` : `${list(best)} is`} the clearest fit, with ${top} of its 5 indicators${best.length > 1 ? ' each' : ''} (${strength}).`
+    ? `${best.length > 1 ? `${list(best)} are` : `${list(best)} is`} the clearest fit, with ${top} of ${best.length > 1 ? 'their' : 'its'} 5 indicators${best.length > 1 ? ' each' : ''} (a ${strength === 'strong' ? 'clear' : 'moderate'} lean).`
     : 'No way of working stands out: none has more than one of its five indicators. Let the fields and the timing guide the choice more than the mode.'
   return { best, least, strength, text: text.charAt(0).toUpperCase() + text.slice(1) }
 }
