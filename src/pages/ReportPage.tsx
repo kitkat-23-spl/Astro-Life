@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import Basis from '../components/Basis'
 import Segmented from '../components/Segmented'
 import { ChartPair } from '../components/vedic/ChartPair'
-import { AreaVerdict, DashaTimeline, MethodNote, ReportNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
+import { AreaVerdict, DashaTimeline, MethodNote, ChartNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
 import { useSettings } from '../lib/settings'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
 import type { CareerReport } from '../vedic/career'
@@ -77,7 +77,7 @@ export default function ReportPage() {
 
   return (
     <div className="report">
-      <ReportNav hash={hash} />
+      <ChartNav hash={hash} />
       <header className="report-head night">
         <div>
           <p className="eyebrow">{meta.title} report</p>

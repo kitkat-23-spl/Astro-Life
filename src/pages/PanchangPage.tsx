@@ -3,7 +3,10 @@ import { useMemo, useState } from 'react'
 import PlaceSearch from '../components/PlaceSearch'
 import type { Place } from '../lib/geocode'
 import { useSettings } from '../lib/settings'
-import { GRAHA_INFO } from '../vedic/constants'
+import Term from '../components/Term'
+import type { GlossaryKey } from '../lib/glossary'
+import { GRAHA_INFO, NAKSHATRAS } from '../vedic/constants'
+import { dayChecks } from '../vedic/muhurta'
 import { computePanchang, type Limb, type Span } from '../vedic/panchang'
 import { AYANAMSA_LABEL, DEFAULT_PLACE } from '../vedic/settings'
 
@@ -14,6 +17,14 @@ export default function PanchangPage() {
   const active = place ?? { id: 0, name: saved.label, ...saved }
   const today = DateTime.now().setZone(active.timezone).toISODate()!
   const [date, setDate] = useState(today)
+  const [birthStar, setBirthStar] = useState<number | null>(() => {
+    try { const v = localStorage.getItem('astrolife.birthStar'); return v === null ? null : Number(v) } catch { return null }
+  })
+  const chooseStar = (v: string) => {
+    const n = v === '' ? null : Number(v)
+    setBirthStar(n)
+    try { if (n === null) localStorage.removeItem('astrolife.birthStar'); else localStorage.setItem('astrolife.birthStar', String(n)) } catch { /* storage unavailable */ }
+  }
 
   const choose = (p: Place | null) => {
     setPlace(p)
@@ -60,8 +71,8 @@ export default function PanchangPage() {
 
       {'error' in result ? <p className="error">{result.error}</p> : (() => {
         const p = result.p
-        const limb = (label: string, l: Limb, extra?: string) => (
-          <tr><th scope="row">{label}</th><td><strong>{l.name}</strong>{extra ? ` ${extra}` : ''}</td><td className="muted">{l.ends ? `until ${tDay(l.ends)}, then ${l.next}` : 'all day'}</td></tr>
+        const limb = (label: string, l: Limb, extra?: string, k?: GlossaryKey) => (
+          <tr><th scope="row">{k ? <Term k={k}>{label}</Term> : label}</th><td><strong>{l.name}</strong>{extra ? ` ${extra}` : ''}</td><td className="muted">{l.ends ? `until ${tDay(l.ends)}, then ${l.next}` : 'all day'}</td></tr>
         )
         const period = (s: Span, bad = true) => (
           <tr className={bad ? 'neg' : 'pos'}><th scope="row">{s.name}</th><td>{t(s.start)} to {t(s.end)}</td></tr>
@@ -71,14 +82,14 @@ export default function PanchangPage() {
           <>
             <div className="grid-2 section-gap">
               <section className="card">
-                <h2>Five limbs</h2>
+                <h2><Term k="panchang">Five limbs</Term></h2>
                 <table className="data-table panchang-table">
                   <tbody>
-                    {limb('Tithi', p.tithi, `(${p.tithi.paksha} paksha)`)}
+                    {limb('Tithi', p.tithi, `(${p.tithi.paksha} paksha)`, 'tithi')}
                     <tr><th scope="row">Vara</th><td><strong>{p.vara.name}</strong></td><td className="muted">lord {p.vara.lord}</td></tr>
-                    {limb('Nakshatra', p.nakshatra, `pada ${p.nakshatra.pada}`)}
-                    {limb('Yoga', p.yoga, p.yoga.auspicious ? '' : '(avoided for new work)')}
-                    {limb('Karana', p.karana)}
+                    {limb('Nakshatra', p.nakshatra, `pada ${p.nakshatra.pada}`, 'nakshatra')}
+                    {limb('Yoga', p.yoga, p.yoga.auspicious ? '' : '(avoided for new work)', 'pyoga')}
+                    {limb('Karana', p.karana, undefined, 'karana')}
                   </tbody>
                 </table>
                 <p className="muted small">Values at sunrise. The Hindu day runs from sunrise to the next sunrise.</p>
@@ -99,9 +110,11 @@ export default function PanchangPage() {
               </section>
             </div>
 
+            <DayQuality checks={dayChecks(p, birthStar)} birthStar={birthStar} onStar={chooseStar} />
+
             <div className="grid-2 section-gap">
               <section className="card">
-                <h2>Periods to avoid</h2>
+                <h2><Term k="rahukaal">Periods to avoid</Term></h2>
                 <table className="data-table panchang-table"><tbody>
                   {period(p.periods.rahuKaal)}
                   {period(p.periods.yamaganda)}
@@ -110,13 +123,13 @@ export default function PanchangPage() {
                 <p className="muted small">Each is one-eighth of the daytime, in a fixed order by weekday.</p>
               </section>
               <section className="card">
-                <h2>Auspicious period</h2>
+                <h2><Term k="abhijit">Auspicious period</Term></h2>
                 <table className="data-table panchang-table"><tbody>{period(p.periods.abhijit, false)}</tbody></table>
                 <p className="muted small">The 8th of the 15 daytime muhurtas, around local noon. Traditionally not used on Wednesdays.</p>
               </section>
             </div>
 
-            <h2 className="section-title">Choghadiya</h2>
+            <h2 className="section-title"><Term k="choghadiya">Choghadiya</Term></h2>
             <div className="grid-2">
               {(['day', 'night'] as const).map((k) => (
                 <section key={k} className="card">
@@ -133,7 +146,7 @@ export default function PanchangPage() {
             </div>
             <p className="muted small">Amrit, Shubh and Labh are favourable; Char is neutral; Udveg, Kaal and Rog are unfavourable.</p>
 
-            <h2 className="section-title">Hora</h2>
+            <h2 className="section-title"><Term k="hora">Hora</Term></h2>
             <div className="card">
               <ol className="hora-grid">
                 {p.horas.map((h) => (
@@ -149,5 +162,38 @@ export default function PanchangPage() {
         )
       })()}
     </div>
+  )
+}
+
+const EFFECT_LABEL = { good: 'Favourable', mixed: 'Caution', bad: 'Avoid', info: 'Note' } as const
+const EFFECT_PILL = { good: 'good', mixed: 'mixed', bad: 'challenge', info: 'info' } as const
+
+/** Classical muhurta checks for the day, with an optional birth star for Taara. */
+function DayQuality({ checks, birthStar, onStar }: { checks: ReturnType<typeof dayChecks>; birthStar: number | null; onStar: (v: string) => void }) {
+  const good = checks.filter((c) => c.effect === 'good').length
+  const bad = checks.filter((c) => c.effect === 'bad').length
+  return (
+    <section className="card section-gap day-quality">
+      <div className="dq-head">
+        <h2><Term k="muhurta">Is today good for starting something?</Term></h2>
+        <p className="small muted">{good} favourable and {bad} unfavourable factors from the classical muhurta rules.</p>
+      </div>
+      <label className="dq-star small">
+        <Term k="taara">Your birth star</Term>
+        <select value={birthStar ?? ''} onChange={(e) => onStar(e.target.value)}>
+          <option value="">Not set</option>
+          {NAKSHATRAS.map((n, i) => <option key={n.name} value={i}>{n.name}</option>)}
+        </select>
+      </label>
+      <ul className="dq-list">
+        {checks.map((c) => (
+          <li key={c.id}>
+            <span className={`pill pill-${EFFECT_PILL[c.effect]}`}>{EFFECT_LABEL[c.effect]}</span>
+            <div><strong>{c.title}</strong><p className="small muted">{c.detail}</p></div>
+          </li>
+        ))}
+      </ul>
+      <p className="muted small">After K.S. Charak's summary of the muhurta texts. Check the Rahu Kaal and Choghadiya below for the hour, and treat these as traditional guidance.</p>
+    </section>
   )
 }

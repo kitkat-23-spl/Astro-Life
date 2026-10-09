@@ -3,6 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { BirthData } from '../astro/ephemeris'
 import BirthForm from '../components/BirthForm'
 import Basis from '../components/Basis'
+import Term from '../components/Term'
+import type { GlossaryKey } from '../lib/glossary'
 import { ScoreDial } from '../components/vedic/ReportParts'
 import { VargaSquare } from '../components/vedic/ChartPair'
 import { decodeBirth, encodeBirth } from '../lib/share'
@@ -86,7 +88,7 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
         })}
       </div>
 
-      <h2 className="section-title">Ashtakoota Guna Milan (36 points)</h2>
+      <h2 className="section-title"><Term k="ashtakoota">Ashtakoota Guna Milan (36 points)</Term></h2>
       <p className="small"><Link to="/learn/vedic-matching">How kundali matching works</Link></p>
       <div className="card table-wrap">
         <table className="data-table koota-table">
@@ -94,7 +96,7 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
           <tbody>
             {r.kootas.map((k) => (
               <tr key={k.name}>
-                <td><strong>{k.name}</strong></td>
+                <td><strong>{KOOTA_TERM[k.name] ? <Term k={KOOTA_TERM[k.name]!}>{k.name}</Term> : k.name}</strong></td>
                 <td className="small">{k.meaning}{k.note && <div className="muted">{k.note}</div>}</td>
                 <td>{k.boy}</td>
                 <td>{k.girl}</td>
@@ -106,14 +108,14 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
             <tr className="total"><td colSpan={4}><strong>Total</strong></td><td className="num"><strong>{r.total} / 36</strong></td></tr>
           </tbody>
         </table>
-        <p className="muted small">Traditional guidance: below 18 is not recommended, 18 to 24 is acceptable, 25 to 32 is very good, and 33 or more is excellent. Some koota tables vary slightly between regional schools.</p>
+        <p className="muted small">Traditional guidance: below 18 is not recommended, 18 to 24 is acceptable, 25 to 32 is very good, and 33 or more is excellent. Tables follow K.S. Charak's Elements of Vedic Astrology; some regional schools differ slightly.</p>
       </div>
 
-      <h2 className="section-title">Doshas</h2>
+      <h2 className="section-title"><Term k="mangal">Doshas</Term></h2>
       <Checks items={[...r.doshas, r.mangal.verdict]} />
       <p className="small muted">Mangal dosha: {bName}: {r.mangal.boy}. {gName}: {r.mangal.girl}.</p>
 
-      <h2 className="section-title">South Indian poruthams (Dashakoota): {r.poruthamPass} / 10</h2>
+      <h2 className="section-title"><Term k="porutham">South Indian poruthams (Dashakoota): {r.poruthamPass} / 10</Term></h2>
       <div className="porutham-grid">
         {r.poruthams.map((p) => (
           <div key={p.name} className={`card porutham ${p.pass ? 'pass' : 'fail'}`}>
@@ -134,6 +136,8 @@ function MatchResult({ boy, girl, onEdit }: { boy: BirthData; girl: BirthData; o
     </div>
   )
 }
+
+const KOOTA_TERM: Record<string, GlossaryKey> = { Nadi: 'naadi', Bhakoot: 'bhakoota', Tara: 'taara' }
 
 function Checks({ items }: { items: Check[] }) {
   return (

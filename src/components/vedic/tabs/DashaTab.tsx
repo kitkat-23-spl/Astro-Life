@@ -11,6 +11,7 @@ import type { VedicChart } from '../../../vedic/sidereal'
 import Segmented from '../../Segmented'
 import Cards from '../Cards'
 import { fmtDate, fmtRange } from '../format'
+import Term from '../../Term'
 
 const SYSTEMS: [DashaSystem, string][] = [['vimshottari', 'Vimshottari'], ['yogini', 'Yogini'], ['ashtottari', 'Ashtottari'], ['chara', 'Chara (Jaimini)']]
 const ABOUT: Record<DashaSystem, string> = {
@@ -75,7 +76,7 @@ function Vimshottari({ chart, reading, now }: { chart: VedicChart; reading: Vedi
     <>
       <div className="grid-2 section-gap">
         <section className="card">
-          <h2>Running periods</h2>
+          <h2><Term k="dasha">Running periods</Term></h2>
           <ol className="chain">
             {chain.map((p) => (
               <li key={p.level}>
@@ -85,7 +86,7 @@ function Vimshottari({ chart, reading, now }: { chart: VedicChart; reading: Vedi
               </li>
             ))}
           </ol>
-          <h3 className="sub-h">Next antardashas</h3>
+          <h3 className="sub-h"><Term k="antardasha">Next antardashas</Term></h3>
           <ul className="upcoming">
             {upcoming.map((p) => <li key={p.start.getTime()}><strong>{p.path.join(' / ')}</strong> <span className="muted small">from {fmtDate(p.start)}</span></li>)}
           </ul>
@@ -140,7 +141,7 @@ function Generic({ chart, periods, now }: { chart: VedicChart; periods: DashaPer
     <>
       <div className="grid-2 section-gap">
         <section className="card">
-          <h2>Running periods</h2>
+          <h2><Term k="dasha">Running periods</Term></h2>
           <ol className="chain">
             {md && <li><span className="muted small">Mahadasha</span><strong>{label(md)}</strong><span className="muted small">{fmtDate(md.start)} to {fmtDate(md.end)}</span></li>}
             {ad && <li><span className="muted small">Antardasha</span><strong>{label(ad)}</strong><span className="muted small">{fmtDate(ad.start)} to {fmtDate(ad.end)}</span></li>}

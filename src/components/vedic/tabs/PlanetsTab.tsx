@@ -5,6 +5,7 @@ import { signName, type VedicChart } from '../../../vedic/sidereal'
 import { avastha, shadbala, vimsopaka } from '../../../vedic/strength'
 import Cards from '../Cards'
 import { fmtDeg } from '../format'
+import Term from '../../Term'
 
 const n1 = (x: number) => x.toFixed(1)
 
@@ -37,7 +38,7 @@ export default function PlanetsTab({ chart, reading }: { chart: VedicChart; read
         </table>
       </div>
 
-      <h2 className="section-title">Strength and states</h2>
+      <h2 className="section-title"><Term k="shadbala">Strength and states</Term></h2>
       {sb ? (
         <div className="card table-wrap">
           <table className="data-table">
@@ -77,7 +78,7 @@ export default function PlanetsTab({ chart, reading }: { chart: VedicChart; read
         </div>
       ) : <p className="muted">Shadbala needs a birth time.</p>}
 
-      <h2 className="section-title">Planet by planet</h2>
+      <h2 className="section-title"><Term k="dignity">Planet by planet</Term></h2>
       <Cards items={reading.grahas} list />
     </>
   )

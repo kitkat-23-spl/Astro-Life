@@ -6,6 +6,7 @@ import type { VedicChart } from '../../../vedic/sidereal'
 import { pushkara, sensitivePoints, specialPoints, yogiPoints } from '../../../vedic/special'
 import SudarshanChakra from '../SudarshanChakra'
 import { fmtLon, rashiName } from '../format'
+import Term from '../../Term'
 
 const houseFromLagna = (chart: VedicChart, sign: number) => (chart.lagnaSign === null ? null : ((sign - chart.lagnaSign + 12) % 12) + 1)
 
@@ -21,19 +22,19 @@ export default function SpecialTab({ chart }: { chart: VedicChart }) {
       <div className="varga-layout">
         <SudarshanChakra chart={chart} />
         <div className="card">
-          <h2>Sudarshan Chakra</h2>
+          <h2><Term k="sudarshan">Sudarshan Chakra</Term></h2>
           <p className="small">The same planets read from three references: the lagna (body and circumstances), the Moon (mind) and the Sun (soul and authority). A house that is strong in all three rings gives reliable results; the Sudarshan dasha moves one house per year in all three rings at once.</p>
-          <h3 className="sub-h">Yogi and Avayogi</h3>
+          <h3 className="sub-h"><Term k="yogi">Yogi and Avayogi</Term></h3>
           <p className="small">Yogi point {fmtLon(yogi.yogi)} ({nakOf(yogi.yogi)}). <strong>Yogi planet: {yogi.yogiPlanet}</strong>, which brings fortune in its periods; duplicate Yogi (sign lord): {yogi.duplicateYogi}.</p>
           <p className="small">Avayogi point {fmtLon(yogi.avayogi)} ({nakOf(yogi.avayogi)}). <strong>Avayogi planet: {yogi.avayogiPlanet}</strong>, which brings obstacles in its periods.</p>
-          <h3 className="sub-h">Pushkara</h3>
+          <h3 className="sub-h"><Term k="pushkara">Pushkara</Term></h3>
           <p className="small">{push.length ? push.map((p) => `${p.g} is in a Pushkara ${p.navamsa && p.bhaga ? 'navamsa and bhaga' : p.navamsa ? 'navamsa' : 'bhaga'}`).join('. ') + '. These degrees strengthen and protect the planet.' : 'No planet is in a Pushkara navamsa or Pushkara bhaga.'}</p>
         </div>
       </div>
 
       {sp.length > 0 && (
         <>
-          <h2 className="section-title">Special lagnas</h2>
+          <h2 className="section-title"><Term k="indu">Special lagnas</Term></h2>
           <div className="card table-wrap">
             <table className="data-table">
               <thead><tr><th>Lagna</th><th>Position</th><th>House</th><th>Sign lord</th><th>Used for</th></tr></thead>
@@ -55,7 +56,7 @@ export default function SpecialTab({ chart }: { chart: VedicChart }) {
 
       {chart.lagnaSign !== null && (
         <>
-          <h2 className="section-title">Arudhas (padas)</h2>
+          <h2 className="section-title"><Term k="arudha">Arudhas (padas)</Term></h2>
           <div className="card table-wrap">
             <table className="data-table">
               <thead><tr><th>House</th><th>Arudha</th><th>Sign</th><th>House from lagna</th><th>Occupants</th></tr></thead>
@@ -79,7 +80,7 @@ export default function SpecialTab({ chart }: { chart: VedicChart }) {
         </>
       )}
 
-      <h2 className="section-title">Sensitive points</h2>
+      <h2 className="section-title"><Term k="special">Sensitive points</Term></h2>
       <div className="card table-wrap">
         <table className="data-table">
           <thead><tr><th>Point</th><th>Counted from</th><th>Position</th><th>Lord</th></tr></thead>

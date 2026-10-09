@@ -3,6 +3,7 @@
  * point (bindu) in a sign when that sign is at one of the listed distances
  * from each of eight reference points (the seven planets and the lagna).
  */
+import { ordinal } from '../astro/constants'
 import { SEVEN, type Graha } from './constants'
 import { pos } from './query'
 import type { VedicChart } from './sidereal'
@@ -74,3 +75,58 @@ export function ashtakavarga(chart: VedicChart): Ashtakavarga | null {
 
 /** SAV by house from the lagna (index 0 = 1st house). */
 export const savByHouse = (chart: VedicChart, av: Ashtakavarga) => Array.from({ length: 12 }, (_, i) => av.sav[(chart.lagnaSign! + i) % 12])
+
+/** Classical meaning of the bindus in a planet's own table when it transits there (Charak, ch. XXX). */
+export const BINDU_MEANING = [
+  'Humiliation, illness and danger; malefic transits here are decidedly hard.',
+  'Illness, hardship and aimless effort.',
+  'Mental strain, trouble with authority, losses to theft.',
+  'Physical and mental discomfort.',
+  'Mixed: good and bad in equal measure.',
+  'Learning, wealth, children and good things.',
+  'Good character, success over opponents, wealth, vehicles and renown.',
+  'Honours and great good fortune.',
+  'Royal grace and glory.',
+]
+
+export interface SavReading { id: string; text: string; tone: 'good' | 'mixed' | 'challenge' }
+
+/** Observations from the Sarvashtakavarga by house (Charak, ch. XXX). */
+export function savReadings(chart: VedicChart, av: Ashtakavarga): SavReading[] {
+  const b = savByHouse(chart, av)
+  const H = (n: number) => b[n - 1]
+  const out: SavReading[] = []
+  const health = H(1) > 28 && H(8) > 28
+  out.push({ id: 'health', tone: health ? 'good' : H(1) < 28 && H(8) < 28 ? 'challenge' : 'mixed', text: `1st house ${H(1)} and 8th house ${H(8)}: ${health ? 'both above the average of 28, which the texts read as good health and stamina' : H(1) < 28 && H(8) < 28 ? 'both below the average of 28, so health needs steadier care' : 'one above and one below average'}.` })
+  out.push({ id: '11-10', tone: H(11) > H(10) ? 'good' : 'mixed', text: `11th ${H(11)} against 10th ${H(10)}: ${H(11) > H(10) ? 'more in the 11th, so gains come with less effort' : 'the 10th is not exceeded by the 11th, so gains follow hard work'}.` })
+  out.push({ id: '12-11', tone: H(12) > H(11) ? 'mixed' : 'good', text: `12th ${H(12)} against 11th ${H(11)}: ${H(12) > H(11) ? 'more in the 12th, so spending can outrun income, or income comes from abroad' : 'income exceeds expenses'}.` })
+  out.push({ id: '2-12', tone: H(2) > H(12) ? 'good' : 'mixed', text: `2nd ${H(2)} against 12th ${H(12)}: ${H(2) > H(12) ? 'more in the 2nd, so the stress is on saving' : 'more in the 12th, so the stress is on spending and enjoyment'}.` })
+  if (H(6) >= 30) out.push({ id: '6', tone: 'mixed', text: `A strong 6th house (${H(6)}): struggle and competition are prominent, and health needs attention.` })
+  if (H(5) > H(10) && H(11) < 28) out.push({ id: '5-10', tone: 'mixed', text: `5th (${H(5)}) above 10th (${H(10)}) with a weak 11th (${H(11)}): Col. A.K. Gaur observed setbacks in career here. The author calls this a matter for research.` })
+  const jumps = b.map((n, i) => [i + 1, n - b[(i + 11) % 12]] as const).filter(([, d]) => Math.abs(d) >= 8)
+  for (const [h, d] of jumps) out.push({ id: `jump-${h}`, tone: d > 0 ? 'good' : 'challenge', text: `A jump of ${d > 0 ? '+' : ''}${d} bindus into the ${ordinal(h)} house: a marked ${d > 0 ? 'rise' : 'fall'} as planets move into it.` })
+  return out
+}
+
+/** Kakshya lords in order through each sign (3°45′ each). */
+export const KAKSHYA_ORDER: Ref[] = ['Saturn', 'Jupiter', 'Mars', 'Sun', 'Venus', 'Mercury', 'Moon', 'Lagna']
+
+export interface KakshyaRow { graha: Graha; sign: number; kakshya: number; lord: Ref; bindu: boolean }
+
+/**
+ * Daily use of Ashtakavarga (Charak, ch. XXX): a transiting planet does well in
+ * a kakshya whose lord contributed a bindu to that sign in the planet's own table.
+ */
+export function kakshyaCheck(chart: VedicChart, positions: { graha: Graha; lon: number }[]): { rows: KakshyaRow[]; count: number; verdict: string } | null {
+  if (chart.lagnaSign === null) return null
+  const refSign = (r: Ref) => (r === 'Lagna' ? chart.lagnaSign! : pos(chart, r).sign)
+  const rows = positions.filter((p) => SEVEN.includes(p.graha)).map((p) => {
+    const sign = Math.floor(p.lon / 30), k = Math.floor((p.lon % 30) / 3.75)
+    const lord = KAKSHYA_ORDER[k]
+    const bindu = TABLE[p.graha]![lord].includes(((sign - refSign(lord) + 12) % 12) + 1)
+    return { graha: p.graha, sign, kakshya: k + 1, lord, bindu }
+  })
+  const count = rows.filter((r) => r.bindu).length
+  const verdict = count >= 6 ? 'Excellent' : count === 5 ? 'Very good' : count === 4 ? 'Good (the borderline)' : count === 3 ? 'Average, with some difficulties' : 'Difficult; go carefully'
+  return { rows, count, verdict }
+}

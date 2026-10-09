@@ -63,7 +63,7 @@ describe('yoga catalogue', () => {
     for (let i = 0; i < 40; i++) {
       const c = computeVedicChart({ ...birth, date: `19${50 + (i % 40)}-0${1 + (i % 9)}-1${i % 10}`, time: `${String(i % 24).padStart(2, '0')}:15` })
       const ys = evaluateYogas(c)
-      expect(ys.filter((y) => y.def.id.startsWith('sankhya-') && y.present)).toHaveLength(1)
+      expect(ys.filter((y) => y.def.id.startsWith('sankhya-') && (y.present || y.supersededBy))).toHaveLength(1)
     }
   })
   it('computes Mangal dosha from lagna, Moon and Venus', () => {

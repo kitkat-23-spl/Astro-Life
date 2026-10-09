@@ -83,12 +83,19 @@ export function linked(chart: VedicChart, a: Graha, b: Graha): string | null {
   return null
 }
 
-/** Classical sambandha: conjunction, sign exchange or mutual aspect. */
-export function sambandha(chart: VedicChart, a: Graha, b: Graha): 'conjunction' | 'sign exchange' | 'mutual aspect' | null {
+/**
+ * Classical sambandha (Charak, ch. XXI): conjunction, sign exchange, mutual
+ * aspect, or one planet in the other's sign and aspected by it.
+ */
+export function sambandha(chart: VedicChart, a: Graha, b: Graha): string | null {
   const assoc = associated(chart, a, b)
   if (assoc) return assoc === 'exchange' ? 'sign exchange' : 'conjunction'
   if (a === b) return null
-  return aspectsOnGraha(chart, b).includes(a) && aspectsOnGraha(chart, a).includes(b) ? 'mutual aspect' : null
+  const aOnB = aspectsOnGraha(chart, b).includes(a), bOnA = aspectsOnGraha(chart, a).includes(b)
+  if (aOnB && bOnA) return 'mutual aspect'
+  if (SIGN_LORD[pos(chart, a).sign] === b && bOnA) return `${a} in ${b}'s sign, aspected by ${b}`
+  if (SIGN_LORD[pos(chart, b).sign] === a && aOnB) return `${b} in ${a}'s sign, aspected by ${a}`
+  return null
 }
 
 /** Jaimini rashi drishti: movable signs aspect fixed signs (except the adjacent one), fixed aspect movable (except the adjacent one), dual signs aspect each other. */

@@ -14,6 +14,7 @@ import Cards from '../Cards'
 import { AreaVerdict } from '../ReportParts'
 import { fmtDate } from '../format'
 import type { Tab } from '../VedicView'
+import Term from '../../Term'
 
 /** A summary of the chart. Each item links to the tab or page with the full detail. */
 export default function OverviewTab({ chart, reading, hash, go }: { chart: VedicChart; reading: VedicReading; hash: string; go: (t: Tab) => void }) {
@@ -33,7 +34,7 @@ export default function OverviewTab({ chart, reading, hash, go }: { chart: Vedic
     <>
       {areas.length > 0 && (
         <>
-          <h2 className="section-title first">Life areas</h2>
+          <h2 className="section-title first"><Term k="lean">Life areas</Term></h2>
           <p className="muted small">For each area: the overall lean of the classical rules, the strongest supporting factors (+) and the main caution (−). Open a report for every rule and how it is read.</p>
           <div className="area-grid">
             {areas.map((a) => a.report && (
@@ -78,7 +79,7 @@ export default function OverviewTab({ chart, reading, hash, go }: { chart: Vedic
       <h2 className="section-title">Foundations</h2>
       <Cards items={reading.core} />
 
-      <h2 className="section-title">Main yogas</h2>
+      <h2 className="section-title"><Term k="yoga">Main yogas</Term></h2>
       {yogas.length ? (
         <ul className="chip-list">
           {yogas.map((y) => <li key={y.def.id}><button className="chip" onClick={() => go('yogas')}>{y.def.name}</button></li>)}

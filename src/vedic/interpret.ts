@@ -7,6 +7,7 @@ import { signName, vargaChart, type GrahaPos, type VargaChart, type VedicChart, 
 import { VARGAS, vargaSign, type VargaInfo } from './varga'
 import { shadbala } from './strength'
 import { evaluateYogas, type YogaResult } from './yogas'
+import { grahaLines, lordLines, type ClassicalLine } from './classical'
 
 export interface VInsight {
   id: string
@@ -18,6 +19,8 @@ export interface VInsight {
   basis?: string[]
   lesson?: string
   tone?: 'good' | 'mixed' | 'challenge'
+  /** Classical indications from the book tables, shown under the reading. */
+  classical?: ClassicalLine[]
 }
 
 export interface VedicReading {
@@ -113,6 +116,7 @@ function grahaInsight(chart: VedicChart, g: GrahaPos, d9: VargaChart): VInsight 
     title: `${g.graha} in ${RASHI[signName(g.sign)]}${g.house ? `, ${h(g.house)}` : ''}`,
     subtitle: `${deg} ${signName(g.sign)}${g.retrograde ? ' · retrograde' : ''} · ${nk.name} ${g.pada}`,
     body, rule: basis.join(' + '), basis, lesson: 'vedic-planets-in-houses', tone,
+    classical: grahaLines(chart, g.graha),
   }
 }
 
@@ -140,6 +144,7 @@ function lordInsight(chart: VedicChart, hse: number): VInsight {
     title: `${ordinal(hse)} lord ${lord} in the ${h(to)}`,
     subtitle: `${from.name} to ${dest.name} · ${from.short} to ${dest.short}`,
     body, rule, lesson: 'vedic-grahas-bhavas', tone,
+    classical: lordLines(chart, hse),
   }
 }
 

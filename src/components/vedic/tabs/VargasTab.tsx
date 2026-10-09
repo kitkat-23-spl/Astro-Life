@@ -4,6 +4,7 @@ import type { VedicChart } from '../../../vedic/sidereal'
 import { VARGAS, VARGA_BY_N, type VargaN } from '../../../vedic/varga'
 import Cards from '../Cards'
 import { VargaSquare } from '../ChartPair'
+import Term from '../../Term'
 
 export default function VargasTab({ chart, reading }: { chart: VedicChart; reading: VedicReading }) {
   const [varga, setVarga] = useState<VargaN>(9)
@@ -26,7 +27,7 @@ export default function VargasTab({ chart, reading }: { chart: VedicChart; readi
         </div>
         <div><Cards items={reading.vargas[varga]} list /></div>
       </div>
-      <h2 className="section-title">All divisional charts</h2>
+      <h2 className="section-title"><Term k="varga">All divisional charts</Term></h2>
       <div className="varga-grid">
         {VARGAS.map((v) => (
           <button key={v.n} className={`varga-thumb ${varga === v.n ? 'active' : ''}`} onClick={() => { setVarga(v.n); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>

@@ -162,6 +162,110 @@ function yearChartRules(natal: VedicChart, v: Varshaphal): RuleResult[] {
     detail: [`The Moon in the year chart shows peace of mind through the year. ${moonW < 0 ? 'In the 6th, 8th or 12th it points to worry and fatigue.' : moonW > 0 ? 'Waxing and well placed, it supports a settled mind.' : 'Its placement is moderate.'}`],
     rule: 'House and phase of the Moon in the year chart',
   }))
+  out.push(...tajikaYearRules(natal, v, group))
+  return out
+}
+
+const strongIn = (c: VedicChart, g: Graha) => { const d = pos(c, g).dignity; return d === 'exalted' || d === 'own' || d === 'moolatrikona' }
+
+/** Reading rules for the annual chart against the birth chart (Charak, ch. XXV). */
+function tajikaYearRules(natal: VedicChart, v: Varshaphal, group: string): RuleResult[] {
+  const c = v.chart, L = c.lagnaSign!
+  const out: RuleResult[] = []
+  const src = 'Charak XXV (Tajika)'
+
+  // Dwijanma: the birth lagna rises again.
+  const dwi = L === natal.lagnaSign
+  const intens: string[] = [], eases: string[] = []
+  if (dwi) {
+    if (Math.abs((c.lagna! % 30) - (natal.lagna! % 30)) <= 1) intens.push('the year lagna is within 1° of the birth lagna')
+    if (pos(c, 'Moon').nakshatra === pos(natal, 'Moon').nakshatra) intens.push('the birth nakshatra recurs')
+    if (pos(c, 'Moon').house === 6 && pos(c, 'Jupiter').house === 8) intens.push('the Moon is in the 6th and Jupiter in the 8th')
+    if ([SIGN_LORD[L], v.muntha.lord, v.yearLord].every((g) => strongIn(c, g) || dignityScore(pos(c, g).dignity) >= 1)) eases.push('the lagna lord, muntha lord and year lord are strong')
+    if ((['Moon', 'Jupiter'] as Graha[]).every((g) => !DUSTHANA.includes(pos(c, g).house!) && pos(c, g).dignity !== 'debilitated')) eases.push('the Moon and Jupiter are well placed')
+  }
+  const dw = -1.5 - 0.5 * intens.length + 0.6 * eases.length
+  out.push(rule({
+    id: 'y-dwijanma', group, chart: 'Varshaphal + D1', fired: dwi,
+    title: 'Dwijanma year: the birth lagna rises again',
+    effect: dw < 0 ? 'challenging' : 'mixed', weight: Math.min(0, dw),
+    detail: [
+      'A year in which the birth lagna sign rises again is counted sensitive in Tajika.',
+      ...(intens.length ? [`Made stronger because ${intens.join('; ')}.`] : []),
+      ...(eases.length ? [`Eased because ${eases.join('; ')}.`] : []),
+    ],
+    rule: `${src}: Dwijanma`,
+  }))
+
+  const l1 = SIGN_LORD[natal.lagnaSign!]
+  const p1 = pos(c, l1)
+  const w1 = DUSTHANA.includes(p1.house!) ? -1 : [1, 4, 5, 7, 9, 10, 11].includes(p1.house!) ? 1 : 0
+  out.push(rule({
+    id: 'y-natal-l1', group, chart: 'Varshaphal + D1', title: `Birth lagna lord ${l1} in the ${h(p1.house!)} of the year chart`,
+    effect: w1 > 0 ? 'supportive' : w1 < 0 ? 'challenging' : 'mixed', weight: w1,
+    detail: [w1 > 0 ? 'A well placed birth lagna lord gives a comfortable year.' : w1 < 0 ? 'The birth lagna lord in the 6th, 8th or 12th of the year chart points to a harder year.' : 'A moderate placement.'],
+    rule: `${src}: natal lagna lord in the annual chart`,
+  }))
+
+  const kendraNatal = natal.grahas.filter((g) => g.house !== null && [1, 4, 7, 10].includes(g.house) && pos(c, g.graha).house === 1).map((g) => g.graha)
+  const mal = kendraNatal.filter((g) => !isBenefic(g)), ben = kendraNatal.filter(isBenefic)
+  out.push(rule({
+    id: 'y-kendra-to-lagna', group, chart: 'Varshaphal + D1', fired: kendraNatal.length > 0,
+    title: kendraNatal.length ? `Natal kendra planets in the year lagna: ${kendraNatal.join(', ')}` : 'Natal kendra planets in the year lagna',
+    effect: mal.length && !ben.length ? 'challenging' : ben.length && !mal.length ? 'supportive' : 'mixed', weight: ben.length - mal.length,
+    detail: ['A planet that occupies a kendra at birth and the lagna of the year chart brings its nature to the fore: malefics adverse, benefics good.'],
+    rule: `${src}: natal kendra planets rising in the annual chart`,
+  }))
+  return out
+}
+
+/** Area-specific Tajika rules (Charak, ch. XXV). */
+function tajikaAreaRules(natal: VedicChart, v: Varshaphal, areaId: string, group: string, p: string): RuleResult[] {
+  const c = v.chart, L = c.lagnaSign!
+  const src = 'Charak XXV (Tajika)'
+  const out: RuleResult[] = []
+  const MAL: Graha[] = ['Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu']
+  const at = (g: Graha) => pos(c, g).house!
+  const occ = (n: number) => c.grahas.filter((g) => g.house === n).map((g) => g.graha)
+  const benOn = (g: Graha) => [...c.grahas.filter((x) => x.sign === pos(c, g).sign && x.graha !== g).map((x) => x.graha)].some(isBenefic)
+  const push = (id: string, fired: boolean, title: string, effect: Effect, weight: number, detail: string) =>
+    out.push(rule({ id: `${p}-tj-${id}`, group, chart: 'Varshaphal', fired, title, effect, weight, detail: [detail], rule: src }))
+
+  if (areaId === 'money') {
+    const m2 = occ(2).filter((g) => MAL.includes(g))
+    push('mal2', m2.length > 0 && L % 3 === 0, `Malefics in the 2nd with a movable year lagna${m2.length ? `: ${m2.join(', ')}` : ''}`, 'challenging', -1, 'Malefics in the 2nd of the year chart, especially with a movable lagna, point to loss of money.')
+    const weak11 = occ(11).filter((g) => pos(c, g).dignity === 'debilitated' || pos(c, g).combust)
+    push('weak11', weak11.length > 0, `Weak planet in the 11th${weak11.length ? `: ${weak11.join(', ')}` : ''}`, 'challenging', -1, 'A weak (debilitated or combust) planet in the 11th points to loss of wealth.')
+  }
+  if (areaId === 'learning') {
+    push('jup-yl', v.yearLord === 'Jupiter' && [5, 11].includes(at('Jupiter')), 'Year lord Jupiter in the 5th or 11th', 'supportive', 1.5, 'The texts link this with the birth of a child during the year.')
+    push('jup-rising', pos(natal, 'Jupiter').sign === L, 'The natal Jupiter sign rises in the year chart', 'supportive', 1, 'With a supporting natal dasha, this too points to a child.')
+    const l1 = SIGN_LORD[L], l5 = SIGN_LORD[(L + 4) % 12]
+    push('l1l5', at(l1) === 5 && at(l5) === 5 && strongIn(c, l1), 'Strong lagna lord with the 5th lord in the 5th', 'supportive', 1, 'A strong lagna lord together with the 5th lord in the 5th indicates childbirth.')
+    push('mars5', at('Mars') === 5 && pos(c, 'Mars').retrograde, 'Retrograde Mars in the 5th', 'challenging', -1, 'Retrograde Mars in the 5th is adverse for children.')
+  }
+  if (areaId === 'health') {
+    const dir12 = occ(12).filter((g) => MAL.includes(g) && !pos(c, g).retrograde), retro2 = occ(2).filter((g) => MAL.includes(g) && pos(c, g).retrograde)
+    push('hem', dir12.length > 0 && retro2.length > 0, 'A direct malefic in the 12th and a retrograde one in the 2nd', 'challenging', -1.5, 'Two malefics closing in on the lagna from both sides: health needs care.')
+    push('sat-rising', pos(natal, 'Saturn').sign === L && [1, 4, 7, 10].includes(at('Saturn')), 'The natal Saturn sign rises, with an inimical Saturn aspect', 'challenging', -1, 'Saturn aspecting its own birth sign as the year lagna by an inimical Tajika aspect is adverse for health.')
+    push('yl8', at(v.yearLord) === 8 && pos(c, 'Mars').sign === pos(c, v.yearLord).sign && v.yearLord !== 'Mars', 'Year lord in the 8th with Mars', 'challenging', -1, 'The year lord joined with Mars in the 8th is adverse for health.')
+    const l1n = SIGN_LORD[natal.lagnaSign!]
+    push('l1-8', at(l1n) === 8 && pos(c, l1n).combust, `Combust birth lagna lord ${l1n} in the 8th`, 'challenging', -1, 'A combust birth lagna lord in the 8th of the year chart needs care.')
+    const s8 = (L + 7) % 12
+    push('natal-lagna-8', s8 === natal.lagnaSign && c.grahas.some((g) => g.sign === s8 && MAL.includes(g.graha)), 'A malefic on the birth lagna sign, now the 8th', 'challenging', -1, 'The birth lagna sign falls in the 8th of the year chart with a malefic in it.')
+  }
+  if (areaId === 'partner') {
+    const l5 = SIGN_LORD[(L + 4) % 12]
+    push('l5in7', at(l5) === 7 && (strongIn(c, l5) || dignityScore(pos(c, l5).dignity) >= 1), `Strong 5th lord ${l5} in the 7th`, 'supportive', 1, 'A strong 5th lord in the 7th of the year chart points to marriage, if the birth chart promises it.')
+  }
+  if (areaId === 'career') {
+    push('sun10', at('Sun') === 10, 'The Sun in the 10th of the year chart', 'supportive', strongIn(c, 'Sun') ? 1.5 : 1, `Highly auspicious for work${strongIn(c, 'Sun') ? '; a strong Sun restores lost status' : ''}.`)
+    push('sun11', at('Sun') === 11 && strongIn(c, 'Sun'), 'A strong Sun in the 11th', 'supportive', 1, 'Favour from authority.')
+    const m10 = occ(10).filter((g) => MAL.includes(g) && strongIn(c, g) && benOn(g))
+    push('mal10', m10.length > 0, `Strong malefics in the 10th with benefic support${m10.length ? `: ${m10.join(', ')}` : ''}`, 'supportive', 1, 'Malefics do well in the 10th when strong and under benefic influence.')
+    const aff10 = occ(10).filter((g) => (g === 'Mars' || g === 'Saturn') && !strongIn(c, g) && !benOn(g))
+    push('aff10', aff10.length > 0, `Afflicted ${aff10.join(' and ') || 'Mars or Saturn'} in the 10th`, 'challenging', -1, 'An afflicted Mars or Saturn in the 10th of the year chart brings strain.')
+  }
   return out
 }
 
@@ -326,6 +430,7 @@ function areaRules(natal: VedicChart, v: Varshaphal, a: AreaDef, slices: DashaSl
       }))
     }
   }
+  out.push(...tajikaAreaRules(natal, v, a.id, group, p))
   return out
 }
 

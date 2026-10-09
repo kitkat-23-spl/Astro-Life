@@ -273,3 +273,21 @@ export function doubleTransitWindows(
   }
   return out
 }
+
+/** Nakshatras counted from the birth star that malefic transits disturb (Charak, ch. XXIX). */
+const SENSITIVE_STARS: Record<number, string> = { 1: 'Janma (the birth star)', 10: 'Karma (10th from the birth star)', 19: 'Adhana (19th from the birth star)', 3: 'Vipat (3rd)', 5: 'Pratyari (5th)', 7: 'Vadha (7th)', 22: 'Vainashika (22nd)' }
+
+export interface StarTransit { graha: Graha; nakshatra: number; count: number; name: string }
+
+/** Malefics (Sun, Mars, Saturn, Rahu, Ketu) now crossing a sensitive nakshatra from the birth star. */
+export function sensitiveStarTransits(chart: VedicChart, positions: TransitPos[]): StarTransit[] {
+  const birth = pos(chart, 'Moon').nakshatra
+  return positions
+    .filter((p) => (['Sun', 'Mars', 'Saturn', 'Rahu', 'Ketu'] as Graha[]).includes(p.graha))
+    .map((p) => {
+      const nk = Math.floor(p.lon / (360 / 27)) % 27
+      const count = ((nk - birth + 27) % 27) + 1
+      return { graha: p.graha, nakshatra: nk, count, name: SENSITIVE_STARS[count] }
+    })
+    .filter((x) => x.name)
+}

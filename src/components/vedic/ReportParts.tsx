@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import type { AreaSummary, ConditionCount, Effect, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
 import { REPORTS } from '../../vedic/reports'
 import type { TransitWindow } from '../../vedic/transits'
@@ -12,13 +12,44 @@ import { TONE_LABEL } from '../InsightCard'
 const EFFECT_LABEL = { supportive: 'Supportive', challenging: 'Needs care', mixed: 'Mixed', info: 'Note' } as const
 const EFFECT_PILL = { supportive: 'good', challenging: 'challenge', mixed: 'mixed', info: 'info' } as const
 
-/** Navigation between the kundali overview and every life-area report, keeping the chart in the URL. */
-export function ReportNav({ hash }: { hash: string }) {
+interface NavItem { label: string; path: string; tab?: string }
+interface NavGroup { label: string; items: NavItem[] }
+
+/** Chart sections, grouped so a reader sees four choices first and the detail only when needed. */
+const CHART_GROUPS: NavGroup[] = [
+  { label: 'Summary', items: [{ label: 'Overview', path: '/chart' }] },
+  { label: 'Life areas', items: REPORTS.map((r) => ({ label: r.title, path: `/chart/${r.key}` })) },
+  { label: 'Timing', items: [{ label: 'Dasha periods', path: '/chart', tab: 'dasha' }, { label: 'Transits now', path: '/chart', tab: 'transits' }, { label: 'Year ahead', path: '/chart/annual' }] },
+  {
+    label: 'Chart details',
+    items: [
+      { label: 'Planets', path: '/chart', tab: 'planets' }, { label: 'Houses', path: '/chart', tab: 'houses' }, { label: 'Yogas', path: '/chart', tab: 'yogas' },
+      { label: 'Divisional charts', path: '/chart', tab: 'vargas' }, { label: 'Ashtakavarga', path: '/chart', tab: 'ashtakavarga' }, { label: 'Special points', path: '/chart', tab: 'special' },
+    ],
+  },
+]
+
+/** One navigation for every chart page: four groups, with the active group's sections underneath. Keeps the chart in the URL. */
+export function ChartNav({ hash }: { hash: string }) {
+  const { pathname, search } = useLocation()
+  const tab = new URLSearchParams(search).get('tab')
+  const isActive = (i: NavItem) => i.path === pathname && (i.tab ?? null) === (i.path === '/chart' ? tab : null)
+  const current = CHART_GROUPS.find((g) => g.items.some(isActive)) ?? CHART_GROUPS[0]
+  const to = (i: NavItem) => ({ pathname: i.path, search: i.tab ? `?tab=${i.tab}` : '', hash })
   return (
-    <nav className="report-nav" aria-label="Chart sections">
-      <NavLink to={{ pathname: '/chart', hash }} end>Kundali</NavLink>
-      <NavLink to={{ pathname: '/chart/annual', hash }}>Annual</NavLink>
-      {REPORTS.map((r) => <NavLink key={r.key} to={{ pathname: `/chart/${r.key}`, hash }}>{r.title}</NavLink>)}
+    <nav className="chart-nav" aria-label="Chart sections">
+      <div className="chart-nav-groups">
+        {CHART_GROUPS.map((g) => (
+          <Link key={g.label} to={to(g.items[0])} className={g === current ? 'active' : ''} aria-current={g === current ? 'true' : undefined}>{g.label}</Link>
+        ))}
+      </div>
+      {current.items.length > 1 && (
+        <div className="chart-nav-items">
+          {current.items.map((i) => (
+            <Link key={i.label} to={to(i)} className={isActive(i) ? 'active' : ''} aria-current={isActive(i) ? 'page' : undefined}>{i.label}</Link>
+          ))}
+        </div>
+      )}
     </nav>
   )
 }
@@ -177,9 +208,10 @@ export function YogaCard({ y }: { y: YogaResult }) {
     <article className={`insight card yoga-card ${tone ? `tone-${tone}` : 'not-fired'}`}>
       <header className="insight-head">
         <h3>{y.def.name}</h3>
-        {tone ? <span className={`pill pill-${tone}`}>{TONE_LABEL[tone]}</span> : <span className="pill">{y.checked ? 'Not present' : 'Needs birth time'}</span>}
+        {tone ? <span className={`pill pill-${tone}`}>{TONE_LABEL[tone]}</span> : <span className="pill">{y.supersededBy ? 'Overridden' : y.checked ? 'Not present' : 'Needs birth time'}</span>}
       </header>
       {y.present && <p className="insight-body">{y.def.result}</p>}
+      {y.supersededBy && <p className="small muted">Formed, but {y.supersededBy} takes precedence when Nabhasa yogas overlap (Charak XX).</p>}
       {y.matches.map((m, i) => (
         <div key={i}>
           <Basis items={m.basis} />

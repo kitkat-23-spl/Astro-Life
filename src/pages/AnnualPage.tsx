@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ordinal } from '../astro/constants'
 import Segmented from '../components/Segmented'
+import Term from '../components/Term'
 import { ChartStyleToggle, VargaSquare } from '../components/vedic/ChartPair'
-import { AreaVerdict, EffectPill, ReportNav, RuleGroups } from '../components/vedic/ReportParts'
+import { AreaVerdict, EffectPill, ChartNav, RuleGroups } from '../components/vedic/ReportParts'
 import { fmtDate, fmtDateTime, fmtLon, rashiName } from '../components/vedic/format'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
 import { runningAge, tithiPravesh } from '../vedic/annual'
@@ -28,7 +29,7 @@ export default function AnnualPage() {
 
   return (
     <div className="report">
-      <ReportNav hash={hash} />
+      <ChartNav hash={hash} />
       <header className="report-head night">
         <div>
           <p className="eyebrow">Annual chart</p>
@@ -94,21 +95,21 @@ function Varshaphal({ natal, age, hash }: { natal: VedicChart; age: number; hash
       <div className="varga-layout">
         <ChartBox chart={v.chart} title="Varshaphal" subtitle={`Lagna ${rashiName(v.chart.lagnaSign!)}`} />
         <div className="card">
-          <h2>The year at a glance</h2>
+          <h2><Term k="varshaphal">The year at a glance</Term></h2>
           <table className="data-table panchang-table">
             <tbody>
               <tr><th scope="row">Begins</th><td>{fmtDateTime(v.start, zone)}</td></tr>
               <tr><th scope="row">Ends</th><td>{fmtDateTime(v.end, zone)}</td></tr>
               <tr><th scope="row">Year lagna</th><td>{rashiName(v.chart.lagnaSign!)} ({v.dayChart ? 'day' : 'night'} chart)</td></tr>
-              <tr><th scope="row">Muntha</th><td>{rashiName(v.muntha.sign)}, {ordinal(v.muntha.house)} house, lord {v.muntha.lord}</td></tr>
-              <tr><th scope="row">Year lord</th><td><strong>{v.yearLord}</strong></td></tr>
+              <tr><th scope="row"><Term k="muntha">Muntha</Term></th><td>{rashiName(v.muntha.sign)}, {ordinal(v.muntha.house)} house, lord {v.muntha.lord}</td></tr>
+              <tr><th scope="row"><Term k="yearlord">Year lord</Term></th><td><strong>{v.yearLord}</strong></td></tr>
             </tbody>
           </table>
           <AreaVerdict s={r.summary} />
         </div>
       </div>
 
-      <h2 className="section-title">Areas of life this year</h2>
+      <h2 className="section-title"><Term k="lean">Areas of life this year</Term></h2>
       <p className="muted small">Each area is read from its house in the year chart (lord, occupants and aspects), its saham, the natal dasha lords that rule or occupy it, and Saturn, Jupiter and Rahu when they cross or aspect it during the year.</p>
       <div className="year-area-grid">
         {r.areas.map((a) => (
@@ -120,7 +121,7 @@ function Varshaphal({ natal, age, hash }: { natal: VedicChart; age: number; hash
         ))}
       </div>
 
-      <h2 className="section-title">Month by month</h2>
+      <h2 className="section-title"><Term k="mudda">Month by month</Term></h2>
       <div className="card table-wrap">
         <table className="data-table">
           <thead><tr><th>Dates</th><th>Mudda period</th><th>Focus</th><th>Reading</th></tr></thead>
@@ -167,7 +168,7 @@ function Varshaphal({ natal, age, hash }: { natal: VedicChart; age: number; hash
           <p className="muted small">The year lord is the strongest of the five (Pancha-vargiya bala) that aspects the year lagna by Tajika aspect (Tajika Neelakanthi).</p>
         </section>
         <section className="card table-wrap">
-          <h2>Sahams</h2>
+          <h2><Term k="saham">Sahams</Term></h2>
           <table className="data-table small">
             <thead><tr><th>Saham</th><th>Position</th><th>House</th><th>About</th></tr></thead>
             <tbody>

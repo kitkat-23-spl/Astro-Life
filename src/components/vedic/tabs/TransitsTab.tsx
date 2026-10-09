@@ -6,7 +6,9 @@ import { GRAHA_INFO, type Graha } from '../../../vedic/constants'
 import type { VedicReading } from '../../../vedic/interpret'
 import { vargaChart, type VedicChart } from '../../../vedic/sidereal'
 import { slowTimeline, transitConjunctions, transitReadings, type TransitReading } from '../../../vedic/transitReading'
-import { monthlyOutlook, sadeSati, transitEvents, transitPositions } from '../../../vedic/transits'
+import { monthlyOutlook, sadeSati, sensitiveStarTransits, transitEvents, transitPositions } from '../../../vedic/transits'
+import { NAKSHATRAS } from '../../../vedic/constants'
+import Term from '../../Term'
 import Basis from '../../Basis'
 import { TONE_LABEL } from '../../InsightCard'
 import { ChartStyleToggle } from '../ChartPair'
@@ -30,6 +32,7 @@ export default function TransitsTab({ chart, reading }: { chart: VedicChart; rea
   const outlook = useMemo(() => monthlyOutlook(chart, at, 12), [chart, at])
   const events = useMemo(() => transitEvents(chart, at, 12), [chart, at])
   const ss = useMemo(() => sadeSati(chart, at), [chart, at])
+  const stars = useMemo(() => sensitiveStarTransits(chart, positions), [chart, positions])
 
   const lagnaSign = chart.lagnaSign ?? chart.grahas[1].sign
   const items = [
@@ -52,7 +55,7 @@ export default function TransitsTab({ chart, reading }: { chart: VedicChart; rea
           <p className="muted small center">Natal planets in black; transiting planets in blue.</p>
         </div>
         <div className="card">
-          <h2>Sade Sati</h2>
+          <h2><Term k="sadesati">Sade Sati</Term></h2>
           <p className="big-verdict">{ss.active ? `Running: ${PHASE_LABEL[ss.active.phase].toLowerCase()}` : 'Not running'}</p>
           <p className="small">Saturn is {ordinal(ss.saturnFromMoon)} from the natal Moon.{ss.saturnFromMoon === 8 ? ' This is Ashtama Shani, a demanding transit.' : ss.saturnFromMoon === 4 ? ' This is Kantaka Shani, a demanding transit for home and peace of mind.' : ''}</p>
           {ss.cycle.length > 0 && (
@@ -69,8 +72,9 @@ export default function TransitsTab({ chart, reading }: { chart: VedicChart; rea
         </div>
       </div>
 
-      <h2 className="section-title">What the transits mean for this chart</h2>
+      <h2 className="section-title"><Term k="gochara">What the transits mean for this chart</Term></h2>
       <p className="muted small">Each planet is read by the house it crosses from the lagna, the classical result from the natal Moon (Phaladeepika 26), where it sits and what it rules at birth, the natal planets it meets or aspects, its strength in the sign and the running dasha. These are traditional indications, not forecasts.</p>
+      <p className="muted small">When a transit shows its effect within a sign: the Sun and Mars on entering it, Jupiter and Venus in the middle, the Moon and Saturn in the last third, Mercury and Rahu throughout (Charak XXIX).</p>
       <div className="insight-list">{readings.filter((r) => SLOW.includes(r.graha)).map((r) => <ReadingCard key={r.graha} r={r} />)}</div>
       <h3 className="sub-h">Faster planets</h3>
       <p className="muted small">The Sun, Venus and Mercury change sign every few weeks and the Moon every two to three days, so their effects are short.</p>
@@ -86,6 +90,18 @@ export default function TransitsTab({ chart, reading }: { chart: VedicChart; rea
                 <div className="insight-body">{c.lines.map((l) => <p key={l}>{l}</p>)}</div>
               </article>
             ))}
+          </div>
+        </>
+      )}
+
+      {stars.length > 0 && (
+        <>
+          <h2 className="section-title"><Term k="nakshatra">Sensitive birth-star transits</Term></h2>
+          <div className="card">
+            <ul className="upcoming">
+              {stars.map((s) => <li key={s.graha}><strong>{s.graha}</strong> in {NAKSHATRAS[s.nakshatra].name}: <span className="muted">{s.name}</span></li>)}
+            </ul>
+            <p className="muted small">Malefic planets crossing the birth star, its 3rd, 5th, 7th, 10th, 19th or 22nd nakshatra are traditionally a time to go carefully (Charak XXIX).</p>
           </div>
         </>
       )}

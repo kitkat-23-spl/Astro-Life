@@ -26,10 +26,11 @@ function vashyaOf(lon: number): VashyaGroup {
   }
 }
 const VASHYA_ORDER: VashyaGroup[] = ['Chatushpada', 'Manava', 'Jalachara', 'Vanachara', 'Keeta']
-const VASHYA_TABLE = [ // boy (row) × girl (col)
-  [2, 1, 1, 0.5, 1],
+/** Charak, Elements of Vedic Astrology, table XXVII-2, as boy (row) × girl (col). A Vanachara (Simha) girl scores only with a Vanachara boy. */
+const VASHYA_TABLE = [
+  [2, 1, 1, 0, 1],
   [1, 2, 0.5, 0, 1],
-  [1, 0.5, 2, 1, 1],
+  [1, 0.5, 2, 0, 1],
   [0.5, 0, 1, 2, 0],
   [1, 1, 1, 0, 2],
 ]
@@ -37,28 +38,30 @@ const VASHYA_TABLE = [ // boy (row) × girl (col)
 const YONI_ANIMALS = ['Horse', 'Elephant', 'Sheep', 'Serpent', 'Dog', 'Cat', 'Rat', 'Cow', 'Buffalo', 'Tiger', 'Deer', 'Monkey', 'Mongoose', 'Lion']
 /** Yoni animal index for each of the 27 nakshatras. */
 const NAK_YONI = [0, 1, 2, 3, 3, 4, 5, 2, 5, 6, 6, 7, 8, 9, 8, 9, 10, 10, 4, 11, 12, 11, 13, 0, 13, 7, 1]
-const YONI_TABLE = [
-  [4, 2, 2, 3, 2, 2, 2, 1, 0, 1, 3, 3, 2, 1],
-  [2, 4, 3, 3, 2, 2, 2, 2, 3, 1, 2, 3, 2, 0],
-  [2, 3, 4, 2, 1, 2, 1, 3, 3, 1, 2, 0, 3, 1],
-  [3, 3, 2, 4, 2, 1, 1, 1, 1, 2, 2, 2, 0, 2],
-  [2, 2, 1, 2, 4, 2, 1, 2, 2, 1, 0, 2, 1, 1],
-  [2, 2, 2, 1, 2, 4, 0, 2, 2, 1, 3, 3, 2, 1],
-  [2, 2, 1, 1, 1, 0, 4, 2, 2, 2, 2, 2, 1, 2],
-  [1, 2, 3, 1, 2, 2, 2, 4, 3, 0, 3, 2, 2, 1],
-  [0, 3, 3, 1, 2, 2, 2, 3, 4, 1, 2, 2, 2, 1],
-  [1, 1, 1, 2, 1, 1, 2, 0, 1, 4, 1, 1, 2, 1],
-  [3, 2, 2, 2, 0, 3, 2, 3, 2, 1, 4, 2, 2, 1],
-  [3, 3, 0, 2, 2, 3, 2, 2, 2, 1, 2, 4, 3, 2],
-  [2, 2, 3, 0, 1, 2, 1, 2, 2, 2, 2, 3, 4, 2],
-  [1, 0, 1, 2, 1, 1, 2, 1, 1, 1, 1, 2, 2, 4],
+/** Charak, table XXVII-4 (symmetric): same yoni 4, friendly 3, neutral 2, inimical 1, sworn enemies 0. */
+export const YONI_TABLE = [
+  [4, 2, 3, 2, 2, 3, 3, 2, 0, 1, 3, 2, 2, 1],
+  [2, 4, 3, 2, 2, 3, 2, 3, 3, 1, 3, 2, 2, 0],
+  [3, 3, 4, 2, 2, 3, 2, 3, 3, 1, 3, 0, 2, 1],
+  [2, 2, 2, 4, 2, 1, 1, 2, 2, 2, 2, 1, 0, 2],
+  [2, 2, 2, 2, 4, 1, 1, 2, 2, 2, 0, 2, 2, 2],
+  [3, 3, 3, 1, 1, 4, 0, 3, 3, 2, 3, 2, 2, 2],
+  [3, 2, 2, 1, 1, 0, 4, 3, 3, 2, 3, 2, 1, 2],
+  [2, 3, 3, 2, 2, 3, 3, 4, 3, 0, 3, 2, 2, 1],
+  [0, 3, 3, 2, 2, 3, 3, 3, 4, 1, 3, 2, 2, 1],
+  [1, 1, 1, 2, 2, 2, 2, 0, 1, 4, 1, 2, 2, 3],
+  [3, 3, 3, 2, 0, 3, 3, 3, 3, 1, 4, 2, 2, 1],
+  [2, 2, 0, 1, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2],
+  [2, 2, 2, 0, 2, 2, 1, 2, 2, 2, 2, 2, 4, 2],
+  [1, 0, 1, 2, 2, 2, 2, 1, 1, 3, 1, 2, 2, 4],
 ]
 
 /** Gana: 0 Deva, 1 Manushya, 2 Rakshasa. */
 const NAK_GANA = [0, 1, 2, 1, 0, 1, 0, 0, 2, 2, 1, 1, 0, 2, 0, 2, 0, 2, 2, 1, 1, 0, 2, 2, 1, 1, 0]
 const GANA_NAME = ['Deva', 'Manushya', 'Rakshasa']
-const GANA_TABLE = [ // boy × girl
-  [6, 6, 1],
+/** Charak, table XXVII-6, as boy (row) × girl (col). */
+const GANA_TABLE = [
+  [6, 6, 0],
   [5, 6, 0],
   [1, 0, 6],
 ]
@@ -152,8 +155,16 @@ export function matchCharts(boy: VedicChart, girl: VedicChart, now = new Date())
   const dist = houseFrom(gSign, bSign), back = houseFrom(bSign, gSign)
   const pair = [dist, back].sort((a, b) => a - b).join('/')
   const bhakootBad = ['2/12', '5/9', '6/8'].includes(pair)
-  const bhakootCancel = bhakootBad && (bLord === gLord || (relation(bLord, gLord) === 'friend' && relation(gLord, bLord) === 'friend'))
-  kootas.push({ name: 'Bhakoot', max: 7, score: bhakootBad ? 0 : 7, boy: signName(bSign), girl: signName(gSign), meaning: 'Emotional bond, family welfare and prosperity', note: `Moon signs are ${pair} from each other${bhakootBad ? (bhakootCancel ? ' (dosha cancelled: Moon-sign lords are the same or mutual friends)' : ' (Bhakoot dosha)') : ''}` })
+  const friendlyLords = bLord === gLord || (relation(bLord, gLord) === 'friend' && relation(gLord, bLord) === 'friend')
+  // Charak (b159): a 6/8 pair is mild when the 6th is counted from an even sign (or the 8th from an odd one), since the lords are then friendly;
+  // a 2/12 pair is much eased by friendly lords. The book gives no relief for 5/9.
+  const sixth = dist === 6 ? gSign : back === 6 ? bSign : -1
+  const bhakootRelief = !bhakootBad ? null
+    : pair === '6/8' && sixth >= 0 && sixth % 2 === 1 ? 'the 6/8 pair counts from an even sign, so the Moon-sign lords are friendly'
+      : pair === '2/12' && friendlyLords ? 'the Moon-sign lords are friendly'
+        : null
+  const bhakootCancel = bhakootRelief !== null
+  kootas.push({ name: 'Bhakoot', max: 7, score: bhakootBad ? 0 : 7, boy: signName(bSign), girl: signName(gSign), meaning: 'Emotional bond, family welfare and prosperity', note: `Moon signs are ${pair} from each other${bhakootBad ? (bhakootCancel ? ` (dosha eased: ${bhakootRelief})` : ' (Bhakoot dosha)') : bSign === gSign && bNak !== gNak ? ' (same sign, different nakshatras: favourable)' : ''}` })
 
   // 8. Nadi
   const bn = nadiOf(bNak), gn = nadiOf(gNak)
@@ -173,7 +184,7 @@ export function matchCharts(boy: VedicChart, girl: VedicChart, now = new Date())
   // Doshas.
   const doshas: Check[] = [
     { title: nadiBad ? (nadiCancel.length ? 'Nadi dosha: cancelled' : 'Nadi dosha present') : 'No Nadi dosha', effect: nadiBad ? (nadiCancel.length ? 'mixed' : 'challenging') : 'supportive', detail: nadiBad ? `Both are ${NADI_NAME[bn]} nadi. Traditionally the most serious dosha, associated with health and progeny.${nadiCancel.length ? ` Classical cancellations apply: ${nadiCancel.join('; ')}.` : ''}` : 'Different nadis: good for health and children.', rule: 'Same nadi = 0/8 points' },
-    { title: bhakootBad ? (bhakootCancel ? 'Bhakoot dosha: cancelled' : 'Bhakoot dosha present') : 'No Bhakoot dosha', effect: bhakootBad ? (bhakootCancel ? 'mixed' : 'challenging') : 'supportive', detail: bhakootBad ? `Moon signs ${pair} apart: ${pair === '6/8' ? 'friction and health concerns' : pair === '2/12' ? 'financial strain' : 'differences over children and values'} are traditionally indicated.${bhakootCancel ? ' Cancelled because the Moon-sign lords are the same or mutual friends.' : ''}` : 'Moon signs are in a harmonious relationship.', rule: '2/12, 5/9 or 6/8 Moon signs = Bhakoot dosha' },
+    { title: bhakootBad ? (bhakootCancel ? 'Bhakoot dosha: eased' : 'Bhakoot dosha present') : 'No Bhakoot dosha', effect: bhakootBad ? (bhakootCancel ? 'mixed' : 'challenging') : 'supportive', detail: bhakootBad ? `Moon signs ${pair} apart: ${pair === '6/8' ? 'friction between the partners' : pair === '2/12' ? 'financial strain' : 'differences over children'} is traditionally indicated.${bhakootCancel ? ` Eased because ${bhakootRelief}.` : ''}` : 'Moon signs are in a harmonious relationship.', rule: '2/12, 5/9 or 6/8 Moon signs = Bhakoot dosha' },
     { title: GANA_TABLE[bg][gg] <= 1 ? 'Gana dosha present' : 'No Gana dosha', effect: GANA_TABLE[bg][gg] <= 1 ? 'challenging' : 'supportive', detail: GANA_TABLE[bg][gg] <= 1 ? `${GANA_NAME[bg]} and ${GANA_NAME[gg]} temperaments differ strongly; conscious adjustment is needed.${maitri >= 4 ? ' Largely offset by good Graha Maitri.' : ''}` : 'Temperaments are compatible.', rule: 'Gana score of 0 or 1' },
   ]
 
@@ -203,13 +214,22 @@ export function matchCharts(boy: VedicChart, girl: VedicChart, now = new Date())
     return r.mangal.status === 'none' ? 'none' : r.mangal.status === 'cancelled' ? `cancelled (${r.mangal.cancellations[0]})` : `present (from ${r.mangal.checks.filter((x) => x.present).map((x) => x.from).join(', ')})`
   }
   const bHas = (bmr?.mangal.status ?? 'none') === 'present', gHas = (gmr?.mangal.status ?? 'none') === 'present'
+  // Charak (b153): a one-sided Mars dosha is balanced when the other chart has another malefic (Sun, Saturn, Rahu or Ketu) in the 1st, 4th, 7th, 8th or 12th from its lagna or Moon.
+  const balancer = (c: VedicChart) => {
+    const refs = [pos(c, 'Moon').sign, ...(c.lagnaSign !== null ? [c.lagnaSign] : [])]
+    return (['Sun', 'Saturn', 'Rahu', 'Ketu'] as Graha[]).find((g) => refs.some((r) => [1, 4, 7, 8, 12].includes(houseFrom(r, pos(c, g).sign))))
+  }
+  const other = bHas && !gHas ? balancer(girl) : gHas && !bHas ? balancer(boy) : undefined
+  const balanced = bHas === gHas || other !== undefined
   const mangal = {
     boy: mdesc(bmr, boy), girl: mdesc(gmr, girl),
     verdict: {
-      title: bHas === gHas ? (bHas ? 'Mangal dosha on both sides: balanced' : 'No uncancelled Mangal dosha on either side') : 'Mangal dosha on one side only',
-      effect: (bHas === gHas ? 'supportive' : 'challenging') as Check['effect'],
-      detail: bHas === gHas ? 'Traditionally, when both or neither partner has Mangal dosha, it is considered matched.' : 'Traditionally a Manglik is matched with a Manglik. Many cancellation rules exist, and the effect weakens with age; weigh it alongside the rest of the chart.',
-      rule: 'Mars in 1/2/4/7/8/12 from lagna, Moon or Venus, after cancellations',
+      title: bHas === gHas ? (bHas ? 'Mangal dosha on both sides: balanced' : 'No uncancelled Mangal dosha on either side') : other ? `Mangal dosha on one side, balanced by ${other} in the other chart` : 'Mangal dosha on one side only',
+      effect: (balanced ? 'supportive' : 'challenging') as Check['effect'],
+      detail: bHas === gHas ? 'Traditionally, when both or neither partner has Mangal dosha, it is considered matched.'
+        : other ? `${other} occupies a Mangal-dosha house (1st, 4th, 7th, 8th or 12th from the lagna or Moon) in the other partner's chart, which the classical texts accept as a balance.`
+          : 'Traditionally a Manglik is matched with a Manglik, or with a chart that has another malefic in the same houses. The effect is said to weaken with age; weigh it alongside the rest of the chart.',
+      rule: 'Mars in 1/2/4/7/8/12 from lagna, Moon or Venus, after cancellations; balanced by the partner\'s Mars or another malefic in the same houses (Charak, ch. XXVII)',
     },
   }
 

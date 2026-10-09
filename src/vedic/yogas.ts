@@ -6,7 +6,7 @@
 import { ordinal } from '../astro/constants'
 import { DUSTHANA, EXALTATION, KENDRA, SEVEN, SIGN_LORD, UPACHAYA, houseFrom, type Graha } from './constants'
 import {
-  GOOD_DIGNITY, aspectsOnGraha, conjunctWith, dignityPhrase, dignityScore, h, houseOf, housesRuledBy, isBenefic,
+  GOOD_DIGNITY, aspectedSigns, aspectsOnGraha, conjunctWith, dignityPhrase, dignityScore, h, houseOf, housesRuledBy, isBenefic,
   lordOfHouse, occupants, pos, rashiDrishti, sambandha,
 } from './query'
 import { signName, type VedicChart } from './sidereal'
@@ -38,6 +38,8 @@ export interface YogaResult {
   present: boolean
   /** False when the yoga needs a birth time that is missing. */
   checked: boolean
+  /** Formed, but overridden by another Nabhasa yoga (Charak, ch. XX). */
+  supersededBy?: string
 }
 
 export const YOGA_GROUPS: YogaGroup[] = ['Pancha Mahapurusha', 'Raja', 'Dhana', 'Solar', 'Lunar', 'Other', 'Doshas and afflictions', 'Nabhasa']
@@ -57,6 +59,12 @@ const lagnaLordSound = (chart: VedicChart) => {
   return p.dignity !== 'debilitated' && !DUSTHANA.includes(p.house!)
 }
 const one = (ok: boolean, basis: string[], note?: string): YogaMatch[] => (ok ? [{ basis, note }] : [])
+const HARD: Graha[] = ['Mars', 'Saturn']
+/** Tone of a yoga formed by the given planets: benefics good, malefics adverse, both mixed (Charak, ch. XXII). */
+const formedBy = (gs: Graha[]): YogaTone | undefined => gs.every((g) => HARD.includes(g)) ? 'challenge' : gs.some((g) => HARD.includes(g)) ? 'mixed' : undefined
+const formedNote = (gs: Graha[]) => gs.every((g) => HARD.includes(g)) ? 'Formed only by malefics, which the texts read as adverse.' : gs.some((g) => HARD.includes(g)) ? 'Formed by both benefics and malefics: a mixed result.' : undefined
+/** Lords of the 2nd or 7th (marakas) joined with or aspecting a planet. */
+const marakaOn = (c: VedicChart, g: Graha) => [lordOfHouse(c, 2), lordOfHouse(c, 7)].filter((m) => m !== g && (conjunctWith(c, g).includes(m) || aspectsOnGraha(c, g).includes(m)))
 const seat = (chart: VedicChart, g: Graha) => `${g} in the ${h(fromLagna(chart, g))}`
 
 /* ------------------------------------------------------------------ */
@@ -75,7 +83,12 @@ const mahapurusha: YogaDef[] = MAHAPURUSHA.map(([g, name, result]) => ({
   id: `mp-${name.toLowerCase()}`, name: `${name} yoga`, group: 'Pancha Mahapurusha', tone: 'good', needsTime: true,
   definition: `${g} in its own, moolatrikona or exaltation sign in a kendra (1st, 4th, 7th or 10th) from the lagna.`,
   result, source: 'BPHS 75',
-  check: (c) => one(KENDRA.includes(fromLagna(c, g)) && strong(c, g), [`${g} ${dignityPhrase(pos(c, g).dignity)}`, seat(c, g)]),
+  check: (c) => {
+    if (!(KENDRA.includes(fromLagna(c, g)) && strong(c, g))) return []
+    // Charak (ch. XXII): full results only when the Sun and Moon are also strong; otherwise ordinary results in its dasha.
+    const weak = (['Sun', 'Moon'] as Graha[]).filter((l) => pos(c, l).dignity === 'debilitated' || DUSTHANA.includes(fromLagna(c, l)))
+    return [{ basis: [`${g} ${dignityPhrase(pos(c, g).dignity)}`, seat(c, g)], note: weak.length ? `${weak.join(' and ')} ${weak.length > 1 ? 'are' : 'is'} weak, so the texts expect only modest results, mainly in ${g}'s dasha.` : undefined, tone: weak.length ? 'mixed' : undefined }]
+  },
 }))
 
 /* ------------------------------------------------------------------ */
@@ -94,20 +107,20 @@ const solar: YogaDef[] = [
   {
     id: 'vesi', name: 'Vesi yoga', group: 'Solar', tone: 'good', needsTime: false,
     definition: 'A planet other than the Moon, Rahu or Ketu in the 2nd from the Sun, with the 12th from the Sun empty of them.',
-    result: 'Truthful, balanced and industrious; steady fortune. The nature of the planet colours the result.', source: 'BPHS 37',
-    check: (c) => { const s = aroundSun(c); return one(s.second.length > 0 && !s.twelfth.length, [`${s.second.join(', ')} in the 2nd from the Sun`]) },
+    result: 'Truthful, balanced and industrious; steady fortune. Formed by benefics: eloquent and wealthy. By malefics: hardship and poor company.', source: 'BPHS 37; Charak XXII',
+    check: (c) => { const s = aroundSun(c); return s.second.length > 0 && !s.twelfth.length ? [{ basis: [`${s.second.join(', ')} in the 2nd from the Sun`], note: formedNote(s.second), tone: formedBy(s.second) }] : [] },
   },
   {
     id: 'vasi', name: 'Vasi yoga', group: 'Solar', tone: 'good', needsTime: false,
     definition: 'A planet other than the Moon, Rahu or Ketu in the 12th from the Sun, with the 2nd from the Sun empty of them.',
-    result: 'Charitable, skilful and well regarded; the 12th-side planet shapes how resources are spent.', source: 'BPHS 37',
-    check: (c) => { const s = aroundSun(c); return one(s.twelfth.length > 0 && !s.second.length, [`${s.twelfth.join(', ')} in the 12th from the Sun`]) },
+    result: 'Learned, eloquent, charitable, good memory. Formed by benefics: intelligent and wealthy. By malefics: harsh and unwise.', source: 'BPHS 37; Charak XXII',
+    check: (c) => { const s = aroundSun(c); return s.twelfth.length > 0 && !s.second.length ? [{ basis: [`${s.twelfth.join(', ')} in the 12th from the Sun`], note: formedNote(s.twelfth), tone: formedBy(s.twelfth) }] : [] },
   },
   {
     id: 'ubhayachari', name: 'Ubhayachari yoga', group: 'Solar', tone: 'good', needsTime: false,
     definition: 'Planets other than the Moon, Rahu or Ketu on both sides of the Sun (2nd and 12th from it).',
-    result: 'Eloquent, capable and prosperous; status comparable to a ruler in classical terms.', source: 'BPHS 37',
-    check: (c) => { const s = aroundSun(c); return one(s.second.length > 0 && s.twelfth.length > 0, [`${s.second.join(', ')} in the 2nd from the Sun`, `${s.twelfth.join(', ')} in the 12th from the Sun`]) },
+    result: 'Strong, able to carry great responsibility, learned and prosperous. Formed by malefics: hardship and ill health.', source: 'BPHS 37; Charak XXII',
+    check: (c) => { const s = aroundSun(c); const all = [...s.second, ...s.twelfth]; return s.second.length > 0 && s.twelfth.length > 0 ? [{ basis: [`${s.second.join(', ')} in the 2nd from the Sun`, `${s.twelfth.join(', ')} in the 12th from the Sun`], note: formedNote(all), tone: formedBy(all) }] : [] },
   },
   {
     id: 'budhaditya', name: 'Budhaditya yoga', group: 'Solar', tone: 'good', needsTime: false,
@@ -131,7 +144,10 @@ function aroundMoon(c: VedicChart) {
 function adhi(c: VedicChart, ref: number, label: string): YogaMatch[] {
   const placed = BENEFICS.filter((g) => [6, 7, 8].includes(houseOf(c, g, ref)))
   if (placed.length < 2) return []
-  return [{ basis: placed.map((g) => `${g} ${ordinal(houseOf(c, g, ref))} from the ${label}`), note: placed.length === 3 ? 'All three benefics take part: the full form of the yoga.' : 'Two of the three benefics take part: a partial form.' }]
+  const spoil = MALEFICS.filter((g) => [6, 7, 8].includes(houseOf(c, g, ref)))
+  const notes = [placed.length === 3 ? 'All three benefics take part: the full form of the yoga.' : 'Two of the three benefics take part: a partial form (the book asks for all three).']
+  if (spoil.length) notes.push(`${spoil.join(' and ')} also ${spoil.length > 1 ? 'occupy' : 'occupies'} these houses, which spoils the yoga.`)
+  return [{ basis: placed.map((g) => `${g} ${ordinal(houseOf(c, g, ref))} from the ${label}`), note: notes.join(' '), tone: spoil.length ? 'mixed' : undefined }]
 }
 
 const lunar: YogaDef[] = [
@@ -139,43 +155,57 @@ const lunar: YogaDef[] = [
     id: 'sunapha', name: 'Sunapha yoga', group: 'Lunar', tone: 'good', needsTime: false,
     definition: 'A planet other than the Sun, Rahu or Ketu in the 2nd from the Moon, with the 12th from the Moon empty of them.',
     result: 'Self-earned wealth, intelligence and a good name built by one\'s own effort.', source: 'BPHS 38',
-    check: (c) => { const m = aroundMoon(c); return one(m.second.length > 0 && !m.twelfth.length, [`${m.second.join(', ')} in the 2nd from the Moon`]) },
+    check: (c) => { const m = aroundMoon(c); return m.second.length > 0 && !m.twelfth.length ? [{ basis: [`${m.second.join(', ')} in the 2nd from the Moon`], note: formedNote(m.second), tone: formedBy(m.second) === 'challenge' ? 'mixed' : undefined }] : [] },
   },
   {
     id: 'anapha', name: 'Anapha yoga', group: 'Lunar', tone: 'good', needsTime: false,
     definition: 'A planet other than the Sun, Rahu or Ketu in the 12th from the Moon, with the 2nd from the Moon empty of them.',
     result: 'Good health, dignified manners and comfort; at ease with solitude in later life.', source: 'BPHS 38',
-    check: (c) => { const m = aroundMoon(c); return one(m.twelfth.length > 0 && !m.second.length, [`${m.twelfth.join(', ')} in the 12th from the Moon`]) },
+    check: (c) => { const m = aroundMoon(c); return m.twelfth.length > 0 && !m.second.length ? [{ basis: [`${m.twelfth.join(', ')} in the 12th from the Moon`], note: formedNote(m.twelfth), tone: formedBy(m.twelfth) === 'challenge' ? 'mixed' : undefined }] : [] },
   },
   {
     id: 'durdhara', name: 'Durdhara yoga', group: 'Lunar', tone: 'good', needsTime: false,
     definition: 'Planets other than the Sun, Rahu or Ketu in both the 2nd and the 12th from the Moon.',
-    result: 'Resources, generosity and emotional stability; enjoys comforts and supports others.', source: 'BPHS 38',
-    check: (c) => { const m = aroundMoon(c); return one(m.second.length > 0 && m.twelfth.length > 0, [`${m.second.join(', ')} in the 2nd from the Moon`, `${m.twelfth.join(', ')} in the 12th from the Moon`]) },
+    result: 'Resources, generosity and emotional stability when benefics form it. Malefics on both sides of the Moon constrict it instead.', source: 'BPHS 38; Charak XXII',
+    check: (c) => {
+      const m = aroundMoon(c), all = [...m.second, ...m.twelfth]
+      return m.second.length > 0 && m.twelfth.length > 0 ? [{ basis: [`${m.second.join(', ')} in the 2nd from the Moon`, `${m.twelfth.join(', ')} in the 12th from the Moon`], note: all.every((g) => HARD.includes(g)) ? 'Formed by malefics, which hem in the Moon: adverse (Charak).' : formedNote(all), tone: formedBy(all) }] : []
+    },
   },
   {
     id: 'kemadruma', name: 'Kemadruma yoga', group: 'Lunar', tone: 'challenge', needsTime: false,
-    definition: 'No planet other than the Sun, Rahu or Ketu in the 2nd or 12th from the Moon. Cancelled by a planet in a kendra from the lagna or Moon, or a planet with the Moon.',
-    result: 'Periods of feeling unsupported and uneven finances. In practice it is usually cancelled.', source: 'BPHS 38',
+    definition: 'No planet other than the Sun, Rahu or Ketu in the 2nd or 12th from the Moon. Cancelled by planets in kendras from the lagna or the Moon, by all planets aspecting the Moon, or by a strong Moon in a kendra with benefic influence.',
+    result: 'Periods of feeling unsupported and uneven finances; it weakens raja yogas. In practice it is usually cancelled.', source: 'BPHS 38; Charak XXII',
     check: (c) => {
       const m = aroundMoon(c)
       if (m.second.length || m.twelfth.length) return []
       const moon = pos(c, 'Moon').sign
-      const cancel = TARA.filter((g) => inKendraFrom(c, g, moon) || (c.lagnaSign !== null && KENDRA.includes(fromLagna(c, g))))
+      const reasons: string[] = []
+      const inKendra = TARA.filter((g) => inKendraFrom(c, g, moon) || (c.lagnaSign !== null && KENDRA.includes(fromLagna(c, g))))
+      if (inKendra.length) reasons.push(`${inKendra.join(', ')} in a kendra from the lagna or Moon`)
+      const onMoon = aspectsOnGraha(c, 'Moon')
+      if ((['Sun', ...TARA] as Graha[]).every((g) => onMoon.includes(g))) reasons.push('all planets aspect the Moon')
+      const mo = pos(c, 'Moon')
+      if (c.lagnaSign !== null && KENDRA.includes(mo.house!) && mo.dignity !== 'debilitated' && BENEFICS.some((g) => onMoon.includes(g) || conjunctWith(c, 'Moon').includes(g))) reasons.push('the Moon is in a kendra with a benefic joining or aspecting it')
       return [{
         basis: ['2nd and 12th from the Moon empty'],
-        note: cancel.length ? `Cancelled: ${cancel.join(', ')} in a kendra from the lagna or Moon.` : 'No cancellation found.',
-        tone: cancel.length ? 'mixed' : 'challenge',
+        note: reasons.length ? `Cancelled: ${reasons.join('; ')}.` : 'No cancellation found.',
+        tone: reasons.length ? 'mixed' : 'challenge',
       }]
     },
   },
   {
     id: 'gajakesari', name: 'Gajakesari yoga', group: 'Lunar', tone: 'good', needsTime: false,
-    definition: 'Jupiter in a kendra from the Moon, not debilitated or combust.',
+    definition: 'Jupiter in a kendra from the Moon, not debilitated or combust. Full results need benefic influence on Jupiter and a Moon that is neither debilitated nor combust.',
     result: 'Intelligence, a lasting reputation, generosity and the ability to overcome opponents.', source: 'BPHS 36',
     check: (c) => {
-      const j = pos(c, 'Jupiter')
-      return one(KENDRA.includes(fromMoon(c, 'Jupiter')) && j.dignity !== 'debilitated' && !j.combust, [`Jupiter ${ordinal(fromMoon(c, 'Jupiter'))} from the Moon`, `Jupiter ${dignityPhrase(j.dignity)}`])
+      const j = pos(c, 'Jupiter'), mo = pos(c, 'Moon')
+      if (!KENDRA.includes(fromMoon(c, 'Jupiter')) || j.dignity === 'debilitated' || j.combust) return []
+      const missing: string[] = []
+      if (mo.dignity === 'debilitated') missing.push('the Moon is debilitated')
+      if (mo.combust) missing.push('the Moon is combust')
+      if (![...conjunctWith(c, 'Jupiter'), ...aspectsOnGraha(c, 'Jupiter')].some((x) => BENEFICS.includes(x) || x === 'Moon')) missing.push('no benefic joins or aspects Jupiter')
+      return [{ basis: [`Jupiter ${ordinal(fromMoon(c, 'Jupiter'))} from the Moon`, `Jupiter ${dignityPhrase(j.dignity)}`], note: missing.length ? `A weak form: ${missing.join('; ')} (Charak).` : undefined, tone: missing.length ? 'mixed' : undefined }]
     },
   },
   {
@@ -198,7 +228,9 @@ const lunar: YogaDef[] = [
       const n = fromMoon(c, 'Jupiter')
       if (![6, 8, 12].includes(n)) return []
       const cancelled = c.lagnaSign !== null && KENDRA.includes(fromLagna(c, 'Jupiter'))
-      return [{ basis: [`Jupiter ${ordinal(n)} from the Moon`], note: cancelled ? 'Cancelled: Jupiter is in a kendra from the lagna.' : undefined, tone: cancelled ? 'mixed' : undefined }]
+      const bothStrong = strong(c, 'Jupiter') && strong(c, 'Moon')
+      const note = cancelled ? 'Cancelled: Jupiter is in a kendra from the lagna.' : bothStrong ? 'Softened: the Moon and Jupiter are both in their own or exaltation signs (Charak).' : undefined
+      return [{ basis: [`Jupiter ${ordinal(n)} from the Moon`], note, tone: cancelled || bothStrong ? 'mixed' : undefined }]
     },
   },
   {
@@ -249,16 +281,17 @@ function lordPairs(c: VedicChart, as: number[], bs: number[]): YogaMatch[] {
 function viparita(c: VedicChart, house: number): YogaMatch[] {
   const l = lordOfHouse(c, house)
   const at = fromLagna(c, l)
-  return one(DUSTHANA.includes(at), [`${ordinal(house)} lord ${l}`, `in the ${h(at)}`])
+  // Charak (ch. XXI, XXII): the lord must sit in one of the other two dusthanas, not its own house.
+  return one(DUSTHANA.includes(at) && at !== house, [`${ordinal(house)} lord ${l}`, `in the ${h(at)}`])
 }
 
-function exchanges(c: VedicChart, kind: 'maha' | 'khala' | 'dainya'): YogaMatch[] {
+function exchanges(c: VedicChart, kind: 'maha' | 'khala' | 'dainya' | 'viparita'): YogaMatch[] {
   const out: YogaMatch[] = []
   for (let i = 0; i < SEVEN.length; i++) for (let j = i + 1; j < SEVEN.length; j++) {
     const a = SEVEN[i], b = SEVEN[j]
     if (sambandha(c, a, b) !== 'sign exchange') continue
     const hs = [fromLagna(c, a), fromLagna(c, b)]
-    const k = hs.some((x) => DUSTHANA.includes(x)) ? 'dainya' : hs.includes(3) ? 'khala' : 'maha'
+    const k = hs.every((x) => DUSTHANA.includes(x)) ? 'viparita' : hs.some((x) => DUSTHANA.includes(x)) ? 'dainya' : hs.includes(3) ? 'khala' : 'maha'
     if (k === kind) out.push({ basis: [`${a} in the ${h(hs[0])}`, `${b} in the ${h(hs[1])}`, 'sign exchange'] })
   }
   return out
@@ -277,6 +310,12 @@ function neechaBhanga(c: VedicChart): YogaMatch[] {
     const exLord = SIGN_LORD[EXALTATION[g]!.sign]
     if (exLord !== disp && kendraAny(exLord)) reasons.push(`${exLord}, lord of its exaltation sign, in a kendra`)
     if (vargaSign(9, p.lon) === EXALTATION[g]!.sign) reasons.push('exalted in the navamsa')
+    const near = [...conjunctWith(c, g), ...aspectsOnGraha(c, g)]
+    if (disp !== g && near.includes(disp)) reasons.push(`joined or aspected by its dispositor ${disp}`)
+    if (exLord !== g && exLord !== disp && near.includes(exLord)) reasons.push(`joined or aspected by ${exLord}, lord of its exaltation sign`)
+    if (sambandha(c, g, disp) === 'sign exchange') reasons.push(`exchanges signs with ${disp}`)
+    const otherNeecha = SEVEN.find((o) => o !== g && pos(c, o).dignity === 'debilitated' && aspectsOnGraha(c, g).includes(o) && aspectsOnGraha(c, o).includes(g))
+    if (otherNeecha) reasons.push(`mutual aspect with the debilitated ${otherNeecha}`)
     if (reasons.length) out.push({ basis: [`${g} debilitated`, ...reasons] })
   }
   return out
@@ -285,7 +324,7 @@ function neechaBhanga(c: VedicChart): YogaMatch[] {
 const raja: YogaDef[] = [
   {
     id: 'raja', name: 'Raja yoga', group: 'Raja', tone: 'good', needsTime: true,
-    definition: 'A kendra lord (1, 4, 7, 10) and a trikona lord (1, 5, 9) joined by conjunction, sign exchange or mutual aspect.',
+    definition: 'A kendra lord (1, 4, 7, 10) and a trikona lord (1, 5, 9) related by conjunction, sign exchange, mutual aspect, or one in the other\'s sign aspected by it.',
     result: 'Rise in status, authority and recognition, delivered mainly in the dashas of the planets involved.', source: 'BPHS 39',
     check: (c) => lordPairs(c, [1, 4, 7, 10], [1, 5, 9]),
   },
@@ -324,23 +363,23 @@ const raja: YogaDef[] = [
   },
   {
     id: 'neecha-bhanga', name: 'Neecha Bhanga Raja yoga', group: 'Raja', tone: 'good', needsTime: false,
-    definition: 'A debilitated planet whose debilitation is cancelled: its dispositor or exaltation-sign lord in a kendra from the lagna or Moon, or the planet exalted in the navamsa.',
-    result: 'An early weakness that turns into strength; rise from modest beginnings.', source: 'PD 7',
+    definition: 'A debilitated planet whose debilitation is cancelled: its dispositor or exaltation-sign lord in a kendra from the lagna or Moon, or joining or aspecting it; an exchange with its dispositor; mutual aspect with another debilitated planet; or exaltation in the navamsa.',
+    result: 'An early weakness that turns into strength; rise from modest beginnings.', source: 'PD 7; Charak XXII',
     check: neechaBhanga,
   },
   {
     id: 'harsha', name: 'Harsha yoga', group: 'Raja', tone: 'good', needsTime: true,
-    definition: 'The 6th lord in the 6th, 8th or 12th house.', result: 'Good health, victory over opponents and success through adversity.', source: 'PD 6',
+    definition: 'The 6th lord in the 8th or 12th house.', result: 'Rise in status, fame and money in its dasha; victory over opponents.', source: 'Charak XXI; PD 6',
     check: (c) => viparita(c, 6),
   },
   {
     id: 'sarala', name: 'Sarala yoga', group: 'Raja', tone: 'good', needsTime: true,
-    definition: 'The 8th lord in the 6th, 8th or 12th house.', result: 'Long life, fearlessness and resilience in crises.', source: 'PD 6',
+    definition: 'The 8th lord in the 6th or 12th house.', result: 'Rise in status, fame and money in its dasha; resilience in crises.', source: 'Charak XXI; PD 6',
     check: (c) => viparita(c, 8),
   },
   {
     id: 'vimala', name: 'Vimala yoga', group: 'Raja', tone: 'good', needsTime: true,
-    definition: 'The 12th lord in the 6th, 8th or 12th house.', result: 'Frugality, independence and good conduct; expenses kept under control.', source: 'PD 6',
+    definition: 'The 12th lord in the 6th or 8th house.', result: 'Rise in status, fame and money in its dasha; expenses kept under control.', source: 'Charak XXI; PD 6',
     check: (c) => viparita(c, 12),
   },
   {
@@ -357,9 +396,47 @@ const raja: YogaDef[] = [
   },
   {
     id: 'dainya-parivartana', name: 'Dainya yoga', group: 'Doshas and afflictions', tone: 'mixed', needsTime: true,
-    definition: 'A sign exchange involving the 6th, 8th or 12th house.',
+    definition: 'A sign exchange between a dusthana (6th, 8th or 12th) and any other house.',
     result: 'Early struggles in the matters of the houses involved, improving as the native matures.', source: 'PD 6',
     check: (c) => exchanges(c, 'dainya'),
+  },
+  {
+    id: 'viparita-parivartana', name: 'Vipareeta exchange', group: 'Raja', tone: 'good', needsTime: true,
+    definition: 'Two dusthana lords (of the 6th, 8th and 12th) in each other\'s signs.',
+    result: 'Prosperity and a rise in status after difficulties; adverse houses cancel each other.', source: 'Charak XXI',
+    check: (c) => exchanges(c, 'viparita'),
+  },
+  {
+    id: 'raja-parashara', name: 'Raja yoga (Parashara\'s special combinations)', group: 'Raja', tone: 'good', needsTime: true,
+    definition: 'Any of: the 5th and 9th lords together or in mutual aspect; the 4th and 10th lords exchanging signs with the 5th or 9th lord joining or aspecting; the 5th lord with the lagna or 9th lord in the 1st, 4th or 10th; Jupiter and Venus together in the 9th or with the 5th lord; Venus in the lagna aspected by the Moon and Jupiter; the 10th lord exalted or in its own sign aspecting the lagna.',
+    result: 'High status; in modern terms, senior government or institutional positions.', source: 'BPHS; Charak XXI',
+    check: (c) => {
+      const out: YogaMatch[] = []
+      const L = (n: number) => lordOfHouse(c, n)
+      const link59 = L(5) !== L(9) && sambandha(c, L(5), L(9))
+      if (link59 && (link59 === 'conjunction' || link59 === 'mutual aspect')) out.push({ basis: [`5th lord ${L(5)} and 9th lord ${L(9)}: ${link59}`] })
+      if (sambandha(c, L(4), L(10)) === 'sign exchange' && [L(5), L(9)].some((g) => g !== L(4) && g !== L(10) && (conjunctWith(c, L(4)).includes(g) || aspectsOnGraha(c, L(4)).includes(g) || conjunctWith(c, L(10)).includes(g) || aspectsOnGraha(c, L(10)).includes(g))))
+        out.push({ basis: [`4th lord ${L(4)} and 10th lord ${L(10)} exchange signs`, 'the 5th or 9th lord joins or aspects them'] })
+      const l5 = L(5)
+      if ([1, 4, 10].includes(fromLagna(c, l5)) && [L(1), L(9)].some((g) => g !== l5 && conjunctWith(c, l5).includes(g))) out.push({ basis: [`5th lord ${l5} with the lagna or 9th lord`, seat(c, l5)] })
+      if (pos(c, 'Jupiter').sign === pos(c, 'Venus').sign && (fromLagna(c, 'Jupiter') === 9 || conjunctWith(c, 'Jupiter').includes(l5))) out.push({ basis: ['Jupiter and Venus together', fromLagna(c, 'Jupiter') === 9 ? 'in the 9th house' : `with the 5th lord ${l5}`] })
+      if (fromLagna(c, 'Venus') === 1 && ['Moon', 'Jupiter'].every((g) => aspectsOnGraha(c, 'Venus').includes(g as Graha))) out.push({ basis: ['Venus in the lagna', 'aspected by the Moon and Jupiter'] })
+      const l10 = L(10), p10 = pos(c, l10)
+      if ((p10.dignity === 'exalted' || p10.dignity === 'own' || p10.dignity === 'moolatrikona') && (fromLagna(c, l10) === 1 || aspectedSigns(l10, p10.sign).includes(c.lagnaSign!))) out.push({ basis: [`10th lord ${l10} ${dignityPhrase(p10.dignity)}`, fromLagna(c, l10) === 1 ? 'in the lagna' : 'aspecting the lagna'] })
+      return out
+    },
+  },
+  {
+    id: 'neecha-dusthana-raja', name: 'Raja yoga from debilitated dusthana lords', group: 'Raja', tone: 'good', needsTime: true,
+    definition: 'A debilitated lord of the 3rd, 6th, 8th or 12th, with a strong lagna lord that occupies or aspects the lagna.',
+    result: 'A rise in status during the dasha of the debilitated lord.', source: 'BPHS; Charak XXI',
+    check: (c) => {
+      const ll = lordOfHouse(c, 1), pl = pos(c, ll)
+      const llOk = (strong(c, ll) || dignityScore(pl.dignity) >= 1) && (pl.house === 1 || aspectedSigns(ll, pl.sign).includes(c.lagnaSign!))
+      if (!llOk) return []
+      return [3, 6, 8, 12].map((n) => lordOfHouse(c, n)).filter((g, i, a) => a.indexOf(g) === i && g !== ll && pos(c, g).dignity === 'debilitated')
+        .map((g) => ({ basis: [`${g}, lord of the ${housesRuledBy(c, g).filter((x) => [3, 6, 8, 12].includes(x)).map(ordinal).join(' and ')}, debilitated`, `lagna lord ${ll} ${dignityPhrase(pl.dignity)} ${pl.house === 1 ? 'in' : 'aspecting'} the lagna`] }))
+    },
   },
 ]
 
@@ -370,17 +447,17 @@ const raja: YogaDef[] = [
 const dhana: YogaDef[] = [
   {
     id: 'dhana', name: 'Dhana yoga', group: 'Dhana', tone: 'good', needsTime: true,
-    definition: 'A lord of the 2nd or 11th joined with a lord of the 1st, 5th or 9th (conjunction, exchange or mutual aspect), or the 2nd and 11th lords joined.',
-    result: 'Good earning capacity, realised mainly in the dashas of the planets involved.', source: 'BPHS 41',
-    check: (c) => [...lordPairs(c, [2, 11], [1, 5, 9]), ...lordPairs(c, [2], [11])],
+    definition: 'Two of the lords of the 1st, 2nd, 5th, 9th and 11th related by conjunction, exchange, mutual aspect, or one in the other\'s sign aspected by it.',
+    result: 'Good earning capacity, realised mainly in the dashas of the planets involved. Full results need a strong lagna and lagna lord.', source: 'BPHS 41; Charak XXI',
+    check: (c) => [...lordPairs(c, [2, 11], [1, 5, 9]), ...lordPairs(c, [2], [11]), ...lordPairs(c, [1], [5, 9]), ...lordPairs(c, [5], [9])],
   },
   {
     id: 'lakshmi', name: 'Lakshmi yoga', group: 'Dhana', tone: 'good', needsTime: true,
-    definition: 'The 9th lord in its own, moolatrikona or exaltation sign in a kendra or trikona, with a sound lagna lord.',
+    definition: 'The 9th lord in its own, moolatrikona or exaltation sign in a kendra, with a strong lagna lord.',
     result: 'Wealth, good fortune, a respected family life and generosity.', source: 'BPHS 36',
     check: (c) => {
       const l9 = lordOfHouse(c, 9), at = fromLagna(c, l9)
-      return one(strong(c, l9) && [1, 4, 5, 7, 9, 10].includes(at) && lagnaLordSound(c), [`9th lord ${l9} ${dignityPhrase(pos(c, l9).dignity)}`, `in the ${h(at)}`])
+      return one(strong(c, l9) && KENDRA.includes(at) && lagnaLordSound(c), [`9th lord ${l9} ${dignityPhrase(pos(c, l9).dignity)}`, `in the ${h(at)}`])
     },
   },
   {
@@ -413,20 +490,28 @@ const dhana: YogaDef[] = [
   },
   {
     id: 'chamara', name: 'Chamara yoga', group: 'Other', tone: 'good', needsTime: true,
-    definition: 'The lagna lord exalted in a kendra and aspected by Jupiter.',
+    definition: 'The lagna lord exalted in a kendra and aspected by Jupiter, or two benefics together in the 1st, 7th, 9th or 10th.',
     result: 'Honour from authorities, learning and a long, distinguished life.', source: 'BPHS 36',
     check: (c) => {
       const ll = lordOfHouse(c, 1), p = pos(c, ll)
-      return one(p.dignity === 'exalted' && KENDRA.includes(p.house!) && aspectsOnGraha(c, ll).includes('Jupiter'), [`Lagna lord ${ll} exalted`, seat(c, ll), 'Jupiter aspects it'])
+      const out = one(p.dignity === 'exalted' && KENDRA.includes(p.house!) && aspectsOnGraha(c, ll).includes('Jupiter'), [`Lagna lord ${ll} exalted`, seat(c, ll), 'Jupiter aspects it'])
+      for (const hse of [1, 7, 9, 10]) {
+        const b = occupants(c, hse).filter((g) => BENEFICS.includes(g))
+        if (b.length >= 2) out.push({ basis: [`${b.join(' and ')} together in the ${h(hse)}`] })
+      }
+      return out
     },
   },
   {
     id: 'shankha', name: 'Shankha yoga', group: 'Other', tone: 'good', needsTime: true,
-    definition: 'The 5th and 6th lords in kendras from each other, with a sound lagna lord.',
+    definition: 'The 5th and 6th lords in kendras from each other with a strong lagna, or the lagna and 10th lords in movable signs with a strong 9th lord.',
     result: 'Humane, prosperous and long-lived; a comfortable family life.', source: 'BPHS 36',
     check: (c) => {
       const a = lordOfHouse(c, 5), b = lordOfHouse(c, 6)
-      return one(a !== b && mutualKendra(c, a, b) && lagnaLordSound(c), [`5th lord ${a} and 6th lord ${b} in mutual kendras`])
+      const out = one(a !== b && mutualKendra(c, a, b) && lagnaLordSound(c), [`5th lord ${a} and 6th lord ${b} in mutual kendras`])
+      const l1 = lordOfHouse(c, 1), l10 = lordOfHouse(c, 10), l9 = lordOfHouse(c, 9)
+      if (pos(c, l1).sign % 3 === 0 && pos(c, l10).sign % 3 === 0 && strong(c, l9)) out.push({ basis: [`Lagna lord ${l1} and 10th lord ${l10} in movable signs`, `9th lord ${l9} ${dignityPhrase(pos(c, l9).dignity)}`] })
+      return out
     },
   },
   {
@@ -476,16 +561,127 @@ const dhana: YogaDef[] = [
   },
   {
     id: 'pravrajya', name: 'Pravrajya yoga', group: 'Other', tone: 'mixed', needsTime: false,
-    definition: 'Four or more of the seven planets in one sign.',
-    result: 'A strong pull towards renunciation, spiritual discipline or a life devoted to one cause.', source: 'BPHS 77',
+    definition: 'Four or more of the seven planets in one sign; or the Moon-sign lord aspected by Saturn alone; or the Moon in a Saturn drekkana aspected by Mars and Saturn, or in a Mars navamsa aspected by Saturn; or Jupiter in the 9th with Saturn aspecting the lagna, the Moon and Jupiter.',
+    result: 'A strong pull towards renunciation, spiritual discipline or a life devoted to one cause.', source: 'BPHS 77; Charak XXII',
     check: (c) => {
       const out: YogaMatch[] = []
       for (let s = 0; s < 12; s++) {
         const here = SEVEN.filter((g) => pos(c, g).sign === s)
         if (here.length >= 4) out.push({ basis: [`${here.join(', ')} in ${signName(s)}`] })
       }
+      const moon = pos(c, 'Moon'), dl = SIGN_LORD[moon.sign]
+      const onDl = aspectsOnGraha(c, dl)
+      if (dl !== 'Saturn' && onDl.length === 1 && onDl[0] === 'Saturn') out.push({ basis: [`The Moon-sign lord ${dl} aspected by Saturn alone`] })
+      const dr = SIGN_LORD[vargaSign(3, moon.lon)]
+      const onMoon = aspectsOnGraha(c, 'Moon')
+      if (dr === 'Saturn' && onMoon.includes('Mars') && onMoon.includes('Saturn')) out.push({ basis: ['The Moon in a Saturn drekkana', 'aspected by Mars and Saturn'] })
+      if (SIGN_LORD[vargaSign(9, moon.lon)] === 'Mars' && onMoon.includes('Saturn')) out.push({ basis: ['The Moon in a Mars navamsa', 'aspected by Saturn'] })
+      if (c.lagnaSign !== null && fromLagna(c, 'Jupiter') === 9) {
+        const satOn = (s: number) => aspectedSigns('Saturn', pos(c, 'Saturn').sign).includes(s) || pos(c, 'Saturn').sign === s
+        if (satOn(c.lagnaSign) && satOn(moon.sign) && satOn(pos(c, 'Jupiter').sign)) out.push({ basis: ['Jupiter in the 9th', 'Saturn aspects the lagna, the Moon and Jupiter'], note: 'Associated with founding a school of thought.' })
+      }
       return out
     },
+  },
+  {
+    id: 'dhana-parashara', name: 'Dhana yoga (Parashara\'s special combinations)', group: 'Dhana', tone: 'good', needsTime: true,
+    definition: 'A planet in its own sign in the 5th with set planets in the 11th (for example Jupiter in the 5th and Mercury in the 11th); a planet in its own sign in the lagna under the influence of set planets (for example the Sun in Simha lagna with Mars and Jupiter); or one planet ruling the 2nd and 7th placed in the 4th.',
+    result: 'Wealth along the 5/11 axis of gains, or through the native\'s own standing.', source: 'BPHS; Charak XXI',
+    check: (c) => {
+      const out: YogaMatch[] = []
+      const own = (g: Graha) => SIGN_LORD[pos(c, g).sign] === g
+      const FIVE: [Graha, Graha[]][] = [['Mercury', ['Moon', 'Mars', 'Jupiter']], ['Sun', ['Moon', 'Jupiter', 'Saturn']], ['Saturn', ['Sun', 'Moon']], ['Jupiter', ['Mercury']], ['Mars', ['Venus']], ['Moon', ['Saturn']]]
+      for (const [g, eleven] of FIVE) if (fromLagna(c, g) === 5 && own(g) && eleven.every((x) => fromLagna(c, x) === 11)) out.push({ basis: [`${g} in its own sign in the 5th`, `${eleven.join(', ')} in the 11th`] })
+      if (fromLagna(c, 'Venus') === 5 && own('Venus') && fromLagna(c, 'Mars') === 1) out.push({ basis: ['Venus in its own sign in the 5th', 'Mars in the lagna'] })
+      const LAGNA: [Graha, Graha[]][] = [['Sun', ['Mars', 'Jupiter']], ['Moon', ['Mercury', 'Jupiter']], ['Mars', ['Mercury', 'Venus', 'Saturn']], ['Mercury', ['Jupiter', 'Saturn']], ['Jupiter', ['Mars', 'Mercury']], ['Venus', ['Mercury', 'Saturn']], ['Saturn', ['Mars', 'Jupiter']]]
+      for (const [g, inf] of LAGNA) {
+        if (fromLagna(c, g) !== 1 || !own(g)) continue
+        const near = [...conjunctWith(c, g), ...aspectsOnGraha(c, g)]
+        if (inf.every((x) => near.includes(x))) out.push({ basis: [`${g} in its own sign in the lagna`, `influenced by ${inf.join(' and ')}`] })
+      }
+      const l2 = lordOfHouse(c, 2)
+      if (l2 === lordOfHouse(c, 7) && fromLagna(c, l2) === 4) out.push({ basis: [`${l2} rules the 2nd and 7th`, 'placed in the 4th'] })
+      return out
+    },
+  },
+  {
+    id: 'daridrya-parashara', name: 'Daridrya yoga (Parashara)', group: 'Doshas and afflictions', tone: 'challenge', needsTime: true,
+    definition: 'Any of: the lagna and 12th lords exchanging places, or the lagna and 6th lords, with a maraka (2nd or 7th lord) joining or aspecting; the lagna or Moon with Ketu and the lagna lord in the 8th under maraka influence; an afflicted lagna lord in a dusthana with the 2nd lord debilitated or in the 6th; Mars and Saturn in the 2nd; Saturn in the 2nd aspected by the Sun, or the Sun in the 2nd aspected by Saturn.',
+    result: 'Financial strain and effort needed to hold on to resources.', source: 'BPHS; Charak XXI',
+    check: (c) => {
+      const out: YogaMatch[] = []
+      const L = (n: number) => lordOfHouse(c, n)
+      const l1 = L(1), p1 = pos(c, l1)
+      const mk = (gs: Graha[]) => [...new Set(gs.flatMap((g) => marakaOn(c, g)))]
+      for (const n of [12, 6]) {
+        const ln = L(n)
+        if (ln !== l1 && p1.house === n && fromLagna(c, ln) === 1) {
+          const m = mk([l1, ln])
+          if (m.length) out.push({ basis: [`Lagna lord ${l1} in the ${h(n)}`, `${ordinal(n)} lord ${ln} in the lagna`, `maraka ${m.join(', ')} joins or aspects`] })
+        }
+      }
+      const ketuWith = pos(c, 'Ketu').sign === c.lagnaSign || pos(c, 'Ketu').sign === pos(c, 'Moon').sign
+      if (ketuWith && p1.house === 8 && mk([l1]).length) out.push({ basis: ['Ketu with the lagna or Moon', `lagna lord ${l1} in the 8th`, `maraka ${mk([l1]).join(', ')} influences it`] })
+      const afflicted = [...conjunctWith(c, l1), ...aspectsOnGraha(c, l1)].some((g) => MALEFICS.includes(g))
+      const p2 = pos(c, L(2))
+      if (afflicted && DUSTHANA.includes(p1.house!) && (p2.dignity === 'debilitated' || p2.house === 6)) out.push({ basis: [`Afflicted lagna lord ${l1} in the ${h(p1.house!)}`, `2nd lord ${L(2)} ${p2.dignity === 'debilitated' ? 'debilitated' : 'in the 6th'}`] })
+      if (fromLagna(c, 'Mars') === 2 && fromLagna(c, 'Saturn') === 2) {
+        const merc = aspectsOnGraha(c, 'Mars').includes('Mercury')
+        out.push({ basis: ['Mars and Saturn in the 2nd'], note: merc ? 'Mercury aspects them, which the book says turns this into wealth.' : undefined, tone: merc ? 'good' : undefined })
+      }
+      if (fromLagna(c, 'Saturn') === 2 && aspectsOnGraha(c, 'Saturn').includes('Sun')) out.push({ basis: ['Saturn in the 2nd', 'aspected by the Sun'] })
+      if (fromLagna(c, 'Sun') === 2 && aspectsOnGraha(c, 'Sun').includes('Saturn')) out.push({ basis: ['The Sun in the 2nd', 'aspected by Saturn'] })
+      return out
+    },
+  },
+  {
+    id: 'arishta-lords', name: 'Arishta yoga (dusthana lords)', group: 'Doshas and afflictions', tone: 'challenge', needsTime: true,
+    definition: 'The lagna lord related to the lord of the 6th, 8th or 12th, or two of the 6th, 8th and 12th lords related to each other.',
+    result: 'Pressure on health and vitality, which modifies raja and dhana yogas. Stronger when the 2nd or 7th lord also joins.', source: 'Charak XXI',
+    check: (c) => [...lordPairs(c, [1], [6, 8, 12]), ...lordPairs(c, [6], [8, 12]), ...lordPairs(c, [8], [12])].map((m) => {
+      const lords = m.basis.slice(0, 2).map((b) => b.split(' ').pop() as Graha)
+      const mk = [...new Set(lords.flatMap((g) => marakaOn(c, g)))].filter((g) => !lords.includes(g))
+      return mk.length ? { ...m, note: `${mk.join(' and ')} (lord of the 2nd or 7th) also joins or aspects, which the texts call worse.` } : m
+    }),
+  },
+  {
+    id: 'parvata', name: 'Parvata yoga', group: 'Other', tone: 'good', needsTime: true,
+    definition: 'The 6th and 8th houses empty or holding only benefics, with benefics in the kendras and no malefic there; or the lagna and 12th lords in mutual kendras aspected by benefics.',
+    result: 'Fame, wealth, generosity, eloquence and leadership.', source: 'BPHS; Charak XXII',
+    check: (c) => {
+      const out: YogaMatch[] = []
+      const clean = (n: number) => occupants(c, n).every((g) => BENEFICS.includes(g))
+      const kb = BENEFICS.filter((g) => KENDRA.includes(fromLagna(c, g))), km = MALEFICS.filter((g) => KENDRA.includes(fromLagna(c, g)))
+      if (clean(6) && clean(8) && kb.length && !km.length) out.push({ basis: ['6th and 8th free of malefics', `${kb.join(', ')} in kendras`, 'no malefic in a kendra'] })
+      const l1 = lordOfHouse(c, 1), l12 = lordOfHouse(c, 12)
+      const asp = (g: Graha) => aspectsOnGraha(c, g).some((x) => BENEFICS.includes(x))
+      if (l1 !== l12 && mutualKendra(c, l1, l12) && asp(l1) && asp(l12)) out.push({ basis: [`Lagna lord ${l1} and 12th lord ${l12} in mutual kendras`, 'both aspected by benefics'] })
+      return out
+    },
+  },
+  {
+    id: 'maha-bhagya', name: 'Maha-bhagya yoga', group: 'Other', tone: 'good', needsTime: true,
+    definition: 'For a man: a day birth with the lagna, Sun and Moon all in odd signs. For a woman: a night birth with all three in even signs.',
+    result: 'Great good fortune: liberal, renowned, of good character, with land and standing.', source: 'BPHS; Charak XXII',
+    check: (c) => {
+      const day = ((pos(c, 'Sun').lon - c.lagna! + 360) % 360) >= 180
+      const odd = [c.lagnaSign!, pos(c, 'Sun').sign, pos(c, 'Moon').sign].map((x) => x % 2 === 0)
+      if (day && odd.every(Boolean)) return [{ basis: ['Day birth', 'lagna, Sun and Moon in odd signs'], note: 'This is the form for a man\'s chart.' }]
+      if (!day && odd.every((x) => !x)) return [{ basis: ['Night birth', 'lagna, Sun and Moon in even signs'], note: 'This is the form for a woman\'s chart.' }]
+      return []
+    },
+  },
+  {
+    id: 'chatussagara', name: 'Chatus-saagara yoga', group: 'Other', tone: 'good', needsTime: true,
+    definition: 'All four kendras (1st, 4th, 7th and 10th) occupied by planets.',
+    result: 'Wealth and high status; said to counter many arishtas.', source: 'Charak XXII',
+    check: (c) => one(KENDRA.every((k) => occupants(c, k).length > 0), KENDRA.map((k) => `${occupants(c, k).join(', ')} in the ${h(k)}`)),
+  },
+  {
+    id: 'hatha-hanta', name: 'Hatha-hantaa yoga', group: 'Doshas and afflictions', tone: 'challenge', needsTime: true,
+    definition: 'The Moon in the 11th house and the Sun in Karka.',
+    result: 'Setbacks brought on by one\'s own rash decisions; a call to act deliberately.', source: 'Charak XXII',
+    check: (c) => one(fromLagna(c, 'Moon') === 11 && pos(c, 'Sun').sign === 3, ['The Moon in the 11th', 'the Sun in Karka']),
   },
 ]
 
@@ -524,8 +720,8 @@ const conj = (c: VedicChart, a: Graha, bs: Graha[]) => bs.filter((b) => pos(c, a
 const doshas: YogaDef[] = [
   {
     id: 'mangal-dosha', name: 'Mangal dosha', group: 'Doshas and afflictions', tone: 'challenge', needsTime: false,
-    definition: 'Mars in the 1st, 2nd, 4th, 7th, 8th or 12th from the lagna, Moon or Venus, unless a classical cancellation applies.',
-    result: 'Friction or impatience in marriage. Mainly used when matching two charts.', source: 'Muhurta texts',
+    definition: 'Mars in the 1st, 4th, 7th, 8th or 12th from the lagna or the Moon (South Indian practice adds the 2nd house and counting from Venus), unless a classical cancellation applies.',
+    result: 'Friction or impatience in marriage. Mainly used when matching two charts, where the partner\'s Mars or another malefic in the same houses balances it.', source: 'Muhurta texts; Charak XXVII',
     check: (c) => {
       const m = mangalDosha(c)
       if (m.status === 'none') return []
@@ -602,7 +798,7 @@ const exactly = (c: VedicChart, hs: number[]) => {
 }
 const range = (start: number, n: number) => Array.from({ length: n }, (_, i) => ((start + i - 1) % 12) + 1)
 
-interface Akriti { name: string; def: string; result: string; sets: number[][] }
+interface Akriti { name: string; def: string; result: string; sets: number[][]; test?: (c: VedicChart) => boolean }
 const AKRITI: Akriti[] = [
   { name: 'Gada', def: 'All seven planets in two successive kendras.', result: 'Wealth through steady effort; learned and respected.', sets: [[1, 4], [4, 7], [7, 10], [10, 1]] },
   { name: 'Shakata (Nabhasa)', def: 'All seven planets in the 1st and 7th.', result: 'Fortunes that alternate; livelihood through vehicles or physical work.', sets: [[1, 7]] },
@@ -610,7 +806,7 @@ const AKRITI: Akriti[] = [
   { name: 'Shringataka', def: 'All seven planets in the 1st, 5th and 9th.', result: 'Happiness in later life; fortunate and principled.', sets: [[1, 5, 9]] },
   { name: 'Hala', def: 'All seven planets in one trine other than the lagna trine (2-6-10, 3-7-11 or 4-8-12).', result: 'Hard-working; livelihood from land or practical labour.', sets: [[2, 6, 10], [3, 7, 11], [4, 8, 12]] },
   { name: 'Kamala', def: 'All seven planets in the four kendras.', result: 'Virtue, fame and long life; respected widely.', sets: [[1, 4, 7, 10]] },
-  { name: 'Vapi', def: 'All seven planets in the panapharas (2, 5, 8, 11) or the apoklimas (3, 6, 9, 12).', result: 'Accumulates wealth and keeps it; modest in display.', sets: [[2, 5, 8, 11], [3, 6, 9, 12]] },
+  { name: 'Vapi', def: 'No planet in a kendra: all seven in the other eight houses (some authors restrict it to the panapharas or the apoklimas).', result: 'Accumulates and keeps wealth; small but lasting comforts.', sets: [], test: (c) => SEVEN.every((g) => !KENDRA.includes(fromLagna(c, g))) },
   { name: 'Yupa', def: 'All seven planets in the four houses from the 1st.', result: 'Generous and devoted to duty or ritual.', sets: [range(1, 4)] },
   { name: 'Shara', def: 'All seven planets in the four houses from the 4th.', result: 'Harsh in speech; skilled with tools or weapons.', sets: [range(4, 4)] },
   { name: 'Shakti', def: 'All seven planets in the four houses from the 7th.', result: 'Success in contests after sustained struggle.', sets: [range(7, 4)] },
@@ -665,6 +861,7 @@ const nabhasa: YogaDef[] = [
     id: `akriti-${a.name.toLowerCase().replace(/[^a-z]+/g, '-')}`, name: `${a.name} yoga`, group: 'Nabhasa', tone: 'mixed', needsTime: true,
     definition: a.def, result: a.result, source: 'BPHS 35',
     check: (c) => {
+      if (a.test) return one(a.test(c), ['No planet in a kendra'])
       const hit = a.sets.find((s) => exactly(c, s))
       return one(!!hit, hit ? [`Planets in houses ${hit.join(', ')}`] : [])
     },
@@ -674,11 +871,33 @@ const nabhasa: YogaDef[] = [
 export const YOGAS: YogaDef[] = [...mahapurusha, ...raja, ...dhana, ...solar, ...lunar, ...doshas, ...nabhasa]
 
 export function evaluateYogas(chart: VedicChart): YogaResult[] {
-  return YOGAS.map((def) => {
+  const results: YogaResult[] = YOGAS.map((def) => {
     const checked = !def.needsTime || chart.lagnaSign !== null
     const matches = checked ? def.check(chart) : []
     return { def, matches, present: matches.length > 0, checked }
   })
+  return applyNabhasaPrecedence(results)
+}
+
+/**
+ * When Nabhasa yogas overlap (Charak, ch. XX): an Aakriti yoga overrides any
+ * Sankhya or Aashraya yoga; Kedara, Shoola and Yuga lapse when an Aashraya
+ * yoga forms; Gola overrides an Aashraya yoga.
+ */
+function applyNabhasaPrecedence(results: YogaResult[]): YogaResult[] {
+  const on = (pred: (id: string) => boolean) => results.find((r) => r.present && pred(r.def.id))
+  const akriti = on((id) => id.startsWith('akriti-'))
+  const ashraya = on((id) => id.startsWith('ashraya-'))
+  const gola = on((id) => id === 'sankhya-1')
+  const supersede = (r: YogaResult, by: YogaResult) => { r.present = false; r.supersededBy = by.def.name }
+  for (const r of results) {
+    if (!r.present) continue
+    const id = r.def.id
+    if (akriti && (id.startsWith('sankhya-') || id.startsWith('ashraya-'))) supersede(r, akriti)
+    else if (ashraya && ['sankhya-4', 'sankhya-3', 'sankhya-2'].includes(id)) supersede(r, ashraya)
+    else if (gola && id.startsWith('ashraya-')) supersede(r, gola)
+  }
+  return results
 }
 
 /** Present yogas by id, for use inside reports. */

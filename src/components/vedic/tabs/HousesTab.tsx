@@ -12,6 +12,7 @@ import { ChartStyleToggle } from '../ChartPair'
 import SquareChart from '../SquareChart'
 import { useSettings } from '../../../lib/settings'
 import { fmtLon, rashiName } from '../format'
+import Term from '../../Term'
 
 type View = 'lords' | 'chalit' | 'kp'
 
@@ -81,7 +82,7 @@ function ChalitView({ chart }: { chart: VedicChart }) {
         <SquareChart style={settings.chartStyle} lagnaSign={chart.lagnaSign!} items={items} title="Bhava Chalit" subtitle="Planets by house, not sign" />
       </div>
       <div className="card">
-        <h2>Bhava Chalit</h2>
+        <h2><Term k="chalit">Bhava Chalit</Term></h2>
         <p className="small">The ascendant and midheaven mark the middles of the 1st and 10th houses, and each quadrant is divided into three (Sripati). A planet near a sign boundary can fall in a different house than in the sign chart.</p>
         {moved.length
           ? <ul className="spouse-list">{moved.map((g) => <li key={g.graha}>{g.graha}: sign chart house {g.house}, chalit house {c.planetHouse[g.graha]}</li>)}</ul>
@@ -105,7 +106,7 @@ function KpView({ chart }: { chart: VedicChart }) {
       {kp.fellBack && <p className="callout warn small">Placidus houses are undefined at this latitude; equal houses from the ascendant are used.</p>}
       <div className="grid-2">
         <div className="card table-wrap">
-          <h2>Cusps (Placidus)</h2>
+          <h2><Term k="kp">Cusps (Placidus)</Term></h2>
           <table className="data-table small">
             <thead><tr><th>House</th><th>Cusp</th><th>Sign lord</th><th>Star lord</th><th>Sub lord</th><th>Sub-sub</th></tr></thead>
             <tbody>{kp.cusps.map((c, i) => <tr key={i}><td>{i + 1}</td><td className="num">{fmtLon(c)}</td><td>{kp.cuspLords[i].sign}</td><td>{kp.cuspLords[i].star}</td><td><strong>{kp.cuspLords[i].sub}</strong></td><td>{kp.cuspLords[i].subSub}</td></tr>)}</tbody>
