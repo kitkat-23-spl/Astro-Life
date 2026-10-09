@@ -1,5 +1,5 @@
 /**
- * The rule framework shared by every life-area report: rule results, scores,
+ * The rule framework shared by every life-area report: rule results, condition counts,
  * evidence accumulation, divisional-chart verdicts and timing.
  */
 import { ordinal } from '../astro/constants'
@@ -99,7 +99,7 @@ export interface AreaSummary {
  * more; mixed otherwise. The strongest factors are the rules with the largest
  * effect on either side.
  */
-export function summarise(report: AreaReport): AreaSummary {
+export function summarise(report: Pick<AreaReport, 'groups' | 'conditions'>): AreaSummary {
   const fired = report.groups.flatMap((g) => g.results).filter((r) => r.fired)
   const c = report.conditions
   const leaning: Leaning = c.supportive >= 2 * c.challenging && c.supportive >= 3 ? 'supportive'

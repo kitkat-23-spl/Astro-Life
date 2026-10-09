@@ -374,6 +374,18 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 .vchart-cap strong { color: var(--ink); font-family: var(--serif); }
 .vchart.compact .vchart-cap { font-size: .75rem; }
 .area-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.year-area-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.year-ahead { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 0 0 24px; }
+.year-card { display: flex; flex-direction: column; gap: 10px; }
+.year-card h2 { margin: 0; }
+.year-card .eyebrow { margin: 0; }
+.year-card.is-selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.year-card .btn { align-self: flex-start; }
+.year-areas { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.year-areas li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); font-size: .9rem; }
+.year-areas li:last-child { border-bottom: 0; }
+.key-dates li { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.key-dates li:last-child { border-bottom: 0; }
 .area-card { display: flex; flex-direction: column; gap: 8px; padding: 16px; text-decoration: none; color: var(--ink-2); transition: border-color .15s; }
 .area-card:hover { border-color: var(--accent); }
 .area-head { display: flex; justify-content: space-between; align-items: baseline; }
@@ -638,6 +650,7 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
   .vedic-hero, .varga-layout { grid-template-columns: 1fr; }
   .varga-grid { grid-template-columns: repeat(3, 1fr); }
   .area-grid { grid-template-columns: repeat(3, 1fr); }
+  .year-area-grid { grid-template-columns: 1fr 1fr; }
   .today-grid { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 900px) {
@@ -657,6 +670,8 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
   main { padding-top: 18px; }
   .field-row, .insight-grid, .vedic-charts, .match-people, .two-col, .tool-grid, .grid-3 { grid-template-columns: 1fr; }
   .area-grid, .today-grid, .hora-grid { grid-template-columns: 1fr 1fr; }
+  .year-ahead, .year-area-grid { grid-template-columns: 1fr; }
+  .key-dates li { grid-template-columns: 1fr; gap: 2px; }
   .varga-grid { grid-template-columns: repeat(2, 1fr); }
   .big-three { gap: 6px; }
   .b3-sign { font-size: .95rem; }

@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ordinal } from '../astro/constants'
 import Segmented from '../components/Segmented'
 import { ChartStyleToggle, VargaSquare } from '../components/vedic/ChartPair'
-import { ReportNav } from '../components/vedic/ReportParts'
+import { AreaVerdict, EffectPill, ReportNav, RuleGroups } from '../components/vedic/ReportParts'
 import { fmtDate, fmtDateTime, fmtLon, rashiName } from '../components/vedic/format'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
-import { MUNTHA_RESULT, runningAge, tithiPravesh, varshaphal } from '../vedic/annual'
+import { runningAge, tithiPravesh } from '../vedic/annual'
+import { annualReading, type YearReading } from '../vedic/annualReading'
 import { BHAVA } from '../vedic/constants'
 import { dignityPhrase, pos } from '../vedic/query'
 import { vargaChart, type VedicChart } from '../vedic/sidereal'
@@ -43,7 +45,8 @@ export default function AnnualPage() {
           </div>
         </div>
       </header>
-      {kind === 'varshaphal' ? <Varshaphal natal={chart} age={year} /> : <Tithi natal={chart} age={year} />}
+      {kind === 'varshaphal' && <YearAhead natal={chart} current={current} selected={year} onPick={setAge} />}
+      {kind === 'varshaphal' ? <Varshaphal natal={chart} age={year} hash={hash} /> : <Tithi natal={chart} age={year} />}
     </div>
   )
 }
@@ -57,11 +60,34 @@ function ChartBox({ chart, title, subtitle }: { chart: VedicChart; title: string
   )
 }
 
-function Varshaphal({ natal, age }: { natal: VedicChart; age: number }) {
-  const v = useMemo(() => varshaphal(natal, age), [natal, age])
-  if (!v) return null
+/** The running year and the next one side by side, each with its lean and how each area reads. */
+function YearAhead({ natal, current, selected, onPick }: { natal: VedicChart; current: number; selected: number; onPick: (age: number) => void }) {
+  const years = useMemo(() => [current, current + 1].map((a) => annualReading(natal, a)), [natal, current])
+  return (
+    <section className="year-ahead">
+      {years.map((r, i) => r && (
+        <article key={r.v.age} className={`card year-card${r.v.age === selected ? ' is-selected' : ''}`}>
+          <p className="eyebrow">{i === 0 ? 'This year' : 'Next year'} · age {r.v.age}</p>
+          <h2>{fmtDate(r.v.start)} to {fmtDate(r.v.end)}</h2>
+          <p className="muted small">Year lord {r.v.yearLord} · muntha in the {ordinal(r.v.muntha.house)} house</p>
+          <AreaVerdict s={r.summary} compact />
+          <ul className="year-areas">
+            {r.areas.map((a) => <li key={a.id}><span>{a.title}</span><EffectPill effect={a.summary.leaning} label={a.summary.label} /></li>)}
+          </ul>
+          {r.v.age === selected
+            ? <p className="small muted">Shown in detail below.</p>
+            : <button className="btn ghost small" onClick={() => onPick(r.v.age)}>Read this year in detail</button>}
+        </article>
+      ))}
+    </section>
+  )
+}
+
+function Varshaphal({ natal, age, hash }: { natal: VedicChart; age: number; hash: string }) {
+  const r: YearReading | null = useMemo(() => annualReading(natal, age), [natal, age])
+  if (!r) return null
+  const { v } = r
   const zone = natal.birth.timezone
-  const yl = pos(v.chart, v.yearLord)
   const now = new Date()
   return (
     <>
@@ -75,15 +101,57 @@ function Varshaphal({ natal, age }: { natal: VedicChart; age: number }) {
               <tr><th scope="row">Ends</th><td>{fmtDateTime(v.end, zone)}</td></tr>
               <tr><th scope="row">Year lagna</th><td>{rashiName(v.chart.lagnaSign!)} ({v.dayChart ? 'day' : 'night'} chart)</td></tr>
               <tr><th scope="row">Muntha</th><td>{rashiName(v.muntha.sign)}, {ordinal(v.muntha.house)} house, lord {v.muntha.lord}</td></tr>
-              <tr><th scope="row">Year lord</th><td><strong>{v.yearLord}</strong>, {dignityPhrase(yl.dignity)} in the {ordinal(yl.house!)} house</td></tr>
+              <tr><th scope="row">Year lord</th><td><strong>{v.yearLord}</strong></td></tr>
             </tbody>
           </table>
-          <p className="small">Muntha in the {ordinal(v.muntha.house)} ({BHAVA[v.muntha.house - 1].short}) is {MUNTHA_RESULT(v.muntha.house)}.</p>
-          <p className="small">The year lord {v.yearLord} sets the tone of the year through the {ordinal(yl.house!)} house ({BHAVA[yl.house! - 1].topics}). {yl.dignity === 'exalted' || yl.dignity === 'own' || yl.dignity === 'moolatrikona' ? 'It is strong, so the year tends to go well in these matters.' : yl.dignity === 'debilitated' ? 'It is debilitated, so these matters need more care this year.' : ''}</p>
+          <AreaVerdict s={r.summary} />
         </div>
       </div>
 
-      <div className="grid-2 section-gap">
+      <h2 className="section-title">Areas of life this year</h2>
+      <p className="muted small">Each area is read from its house in the year chart (lord, occupants and aspects), its saham, the natal dasha lords that rule or occupy it, and Saturn, Jupiter and Rahu when they cross or aspect it during the year.</p>
+      <div className="year-area-grid">
+        {r.areas.map((a) => (
+          <article key={a.id} className="card area-card">
+            <span className="area-head"><strong>{a.title}</strong></span>
+            <AreaVerdict s={a.summary} compact />
+            {a.report && <Link className="area-open" to={{ pathname: `/chart/${a.report}`, hash }}>Birth chart report</Link>}
+          </article>
+        ))}
+      </div>
+
+      <h2 className="section-title">Month by month</h2>
+      <div className="card table-wrap">
+        <table className="data-table">
+          <thead><tr><th>Dates</th><th>Mudda period</th><th>Focus</th><th>Reading</th></tr></thead>
+          <tbody>
+            {r.mudda.map((m) => (
+              <tr key={m.lord} className={m.start <= now && now < m.end ? 'selected' : ''}>
+                <td className="num">{fmtDate(m.start)}<br />to {fmtDate(m.end)}</td>
+                <td><strong>{m.lord}</strong><br /><EffectPill effect={m.effect} /></td>
+                <td>{m.focus}</td>
+                <td className="small">{m.text}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="muted small">Mudda dasha is Vimshottari compressed into the year, starting from (birth nakshatra number + age - 2) counted in Vimshottari order. Each period is read from its lord's dignity, house and lordship in the year chart; the focus is the houses it occupies and rules.</p>
+      </div>
+
+      <h2 className="section-title">Key dates</h2>
+      <div className="card">
+        {r.dates.length
+          ? <ul className="upcoming key-dates">{r.dates.map((d) => <li key={d.date.getTime() + d.text}><span className="num">{fmtDate(d.date)}</span><span>{d.text}</span></li>)}</ul>
+          : <p className="muted small">No dasha sub-period or slow-planet sign change falls inside this year.</p>}
+        <p className="muted small">Natal Vimshottari sub-periods that begin during the year, and the sign changes of Saturn, Jupiter and Rahu, counted from the birth lagna.</p>
+      </div>
+
+      <h2 className="section-title">All rules for this year</h2>
+      <p className="muted small">Rules from Tajika Neelakanthi for the year chart, Parashari house rules applied to it, the natal Vimshottari dasha and the classical transit results. The lean reads them the same way as the life-area reports: mostly supportive when supportive rules outnumber challenging ones two to one, more challenging when challenging rules are as many or more, mixed otherwise. These are traditional indications that have not been tested against real outcomes.</p>
+      <RuleGroups groups={[...r.groups, ...r.areas.map((a) => a.group)]} />
+
+      <h2 className="section-title">Reference</h2>
+      <div className="grid-2">
         <section className="card table-wrap">
           <h2>Office bearers</h2>
           <table className="data-table small">
@@ -110,20 +178,6 @@ function Varshaphal({ natal, age }: { natal: VedicChart; age: number }) {
           </table>
           <p className="muted small">Sensitive points of the annual chart (Arabic parts). A saham in a good house, or with its lord strong, supports that matter this year.</p>
         </section>
-      </div>
-
-      <h2 className="section-title">Mudda dasha</h2>
-      <div className="card">
-        <ol className="chain">
-          {v.mudda.map((m) => (
-            <li key={m.lord} className={m.start <= now && now < m.end ? 'now-row' : ''}>
-              <strong>{m.lord}</strong>
-              <span />
-              <span className="muted small">{fmtDate(m.start)} to {fmtDate(m.end)}</span>
-            </li>
-          ))}
-        </ol>
-        <p className="muted small">Vimshottari compressed into the year, starting from (birth nakshatra number + age - 2) counted in Vimshottari order.</p>
       </div>
     </>
   )

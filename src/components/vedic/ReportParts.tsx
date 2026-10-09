@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import type { AreaSummary, ConditionCount, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
+import type { AreaSummary, ConditionCount, Effect, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
 import { REPORTS } from '../../vedic/reports'
 import type { TransitWindow } from '../../vedic/transits'
 import { yogaTone, type YogaResult } from '../../vedic/yogas'
@@ -52,14 +52,17 @@ export function ConditionBar({ c }: { c: ConditionCount }) {
   )
 }
 
-const LEAN_PILL = { supportive: 'good', mixed: 'mixed', challenging: 'challenge' } as const
+/** Coloured label for a rule effect or a summary lean. */
+export function EffectPill({ effect, label, className = '' }: { effect: Effect; label?: string; className?: string }) {
+  return <span className={`pill pill-${EFFECT_PILL[effect]} ${className}`.trim()}>{label ?? EFFECT_LABEL[effect]}</span>
+}
 
 /** The overall lean of a report, its strongest supporting factors and its main caution. */
 export function AreaVerdict({ s, compact }: { s: AreaSummary; compact?: boolean }) {
   const c = s.conditions
   return (
     <div className={`area-verdict-box ${compact ? 'compact' : ''}`}>
-      <span className={`pill lean pill-${LEAN_PILL[s.leaning]}`}>{s.label}</span>
+      <EffectPill effect={s.leaning} label={s.label} className="lean" />
       {(s.strengths.length > 0 || s.cautions.length > 0) && (
         <ul className="factors">
           {s.strengths.map((t) => <li key={t} className="plus">{t}</li>)}
