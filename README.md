@@ -71,18 +71,17 @@ The site works fully without Supabase; sign-in and saving simply stay hidden unt
 
 ## Free hosting
 
-**Cloudflare Pages (main site).** Free, with unlimited bandwidth, a global CDN, HTTPS and real response headers.
+**Cloudflare (main site).** Free, with a global CDN, HTTPS and real response headers. Cloudflare now sets new Git projects up as Workers with static assets; `wrangler.jsonc` in this repo tells it to serve `dist` and to send unknown paths to `index.html`.
 
-1. Sign in at <https://dash.cloudflare.com> → *Workers & Pages → Create → Pages → Connect to Git* and pick this repository.
-2. Project name: `astrolife` (the site becomes `https://astrolife.pages.dev`). Production branch: `main`.
-3. Build settings: framework preset *None*, build command `npm run build`, output directory `dist`.
-4. Environment variables (Production): `NODE_VERSION` = `22`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-5. Deploy. Every push to `main` redeploys, and pull requests get preview URLs.
-6. In Supabase *Authentication → URL Configuration*, set the Site URL to the new address and add `https://astrolife.pages.dev/**` to the Redirect URLs.
+1. Sign in at <https://dash.cloudflare.com> → *Workers & Pages → Create → Import a repository* and pick this repository.
+2. Project name: `astro-life` (it must match `name` in `wrangler.jsonc`). Build command `npm run build`, deploy command `npx wrangler deploy`, path `/`.
+3. Build variables: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (the anon key only). Vite reads them at build time, so they belong under *Build → Variables and secrets*, not the Worker's runtime variables.
+4. Deploy. Every push to `main` redeploys. The site is at `https://astro-life.<your-subdomain>.workers.dev`.
+5. In Supabase *Authentication → URL Configuration*, set the Site URL to the new address and add `https://astro-life.<your-subdomain>.workers.dev/**` to the Redirect URLs.
 
-Without a `404.html`, Cloudflare Pages serves `index.html` for unknown paths, so deep links work. `public/_headers` adds the security headers.
+`public/_headers` adds the security headers.
 
-A custom domain (for example a `.com` or `.in`, about ₹500 to ₹1,000 a year) can be added later under the Pages project's *Custom domains*; Cloudflare issues the certificate.
+A custom domain (for example a `.com` or `.in`, about ₹500 to ₹1,000 a year) can be added later under the project's *Settings → Domains & Routes*; Cloudflare issues the certificate.
 
 **GitHub Pages (backup).** `.github/workflows/deploy.yml` also publishes `https://kitkat-23-spl.github.io/Astro-Life/` on every push to `main`. Deep links work through `404.html` and `public/spa-redirect.js`.
 

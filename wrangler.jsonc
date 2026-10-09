@@ -1,0 +1,10 @@
+// Cloudflare Workers static-assets deploy (`npx wrangler deploy` after `npm run build`).
+{
+  "name": "astro-life",
+  "compatibility_date": "2025-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Unknown paths such as /chart/career serve index.html so deep links work.
+    "not_found_handling": "single-page-application"
+  }
+}
