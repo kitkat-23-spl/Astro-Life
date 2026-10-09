@@ -12,17 +12,6 @@ import './styles.css'
 
 installDomGuard()
 
-// GitHub Pages serves 404.html for deep links; it stashes the path so we can restore it.
-try {
-  const redirect = sessionStorage.getItem('astrolife:redirect')
-  if (redirect) {
-    sessionStorage.removeItem('astrolife:redirect')
-    history.replaceState(null, '', redirect)
-  }
-} catch {
-  // Storage blocked (strict privacy settings): deep links fall back to the home page.
-}
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>

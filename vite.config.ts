@@ -35,27 +35,12 @@ function csp(supabaseUrl: string | undefined): Plugin {
   }
 }
 
-/** GitHub Pages has no rewrites, so its 404 page bounces deep links back to the SPA. */
-function ghPages404(base: string): Plugin {
-  return {
-    name: 'astrolife-gh-pages-404',
-    apply: 'build',
-    generateBundle() {
-      this.emitFile({
-        type: 'asset',
-        fileName: '404.html',
-        source: `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Astro Life</title><script src="${base}spa-redirect.js" data-base="${base}"></script></head><body></body></html>`,
-      })
-    },
-  }
-}
-
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const base = env.VITE_BASE || '/'
   return {
     base,
-    plugins: [react(), csp(env.VITE_SUPABASE_URL), ...(env.GH_PAGES ? [ghPages404(base)] : [])],
+    plugins: [react(), csp(env.VITE_SUPABASE_URL)],
     // Never inline fonts as data: URIs; the CSP only allows fonts from this origin.
     build: { sourcemap: false, chunkSizeWarningLimit: 1200, assetsInlineLimit: (file: string) => (/\.(woff2?|ttf)$/.test(file) ? false : undefined) },
   }

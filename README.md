@@ -60,12 +60,11 @@ The site works fully without Supabase; sign-in and saving simply stay hidden unt
    - Configure the OAuth consent screen (app name "Astro Life", scopes: email, profile, openid).
 4. **Enable Google in Supabase**: *Authentication → Sign In / Providers → Google*, paste the Client ID and Secret. (The **secret stays in Supabase only**, never in this repo.)
 5. **Allow your site URL**: *Authentication → URL Configuration*:
-   - Site URL: your deployed URL (e.g. `https://astrolife.pages.dev`)
-   - Redirect URLs: `https://astrolife.pages.dev/**` and `https://kitkat-23-spl.github.io/Astro-Life/**` (plus `http://localhost:5173/**` for development)
+   - Site URL: your deployed URL (e.g. `https://astro-life.<your-subdomain>.workers.dev`)
+   - Redirect URLs: the same address followed by `/**` (plus `http://localhost:5173/**` for development)
 6. **Add the public keys** from *Project Settings → API*: the Project URL and the **anon / publishable** key.
    - Local: copy `.env.example` → `.env`
-   - Cloudflare Pages: project *Settings → Variables and Secrets*: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-   - GitHub Pages: repo *Settings → Secrets and variables → Actions → Variables*: the same two names
+   - Cloudflare: project *Settings → Build → Variables and secrets*: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 
 > Never use the `service_role` key in this app. The anon key is public by design; Row Level Security is what protects the data.
 
@@ -83,7 +82,7 @@ The site works fully without Supabase; sign-in and saving simply stay hidden unt
 
 A custom domain (for example a `.com` or `.in`, about ₹500 to ₹1,000 a year) can be added later under the project's *Settings → Domains & Routes*; Cloudflare issues the certificate.
 
-**GitHub Pages (backup).** `.github/workflows/deploy.yml` also publishes `https://kitkat-23-spl.github.io/Astro-Life/` on every push to `main`. Deep links work through `404.html` and `public/spa-redirect.js`.
+**Checks.** `.github/workflows/ci.yml` runs the tests and a build on every push and pull request. It does not deploy.
 
 ## Security
 
