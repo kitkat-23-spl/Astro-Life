@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GoogleIcon } from '../components/UserMenu'
 import { useAuth } from '../lib/auth'
-import { deleteAllCharts, deleteChart, listCharts, type SavedChart } from '../lib/charts'
+import { deleteAccount, deleteAllCharts, deleteChart, listCharts, type SavedChart } from '../lib/charts'
 import { encodeBirth, isBirthData } from '../lib/share'
 import { authEnabled } from '../lib/supabase'
 
@@ -56,6 +56,15 @@ export default function AccountPage() {
     }
   }
 
+  const removeAccount = async () => {
+    if (!confirm('Delete your account? This removes your sign-in record (name and email) and every saved chart. It cannot be undone.')) return
+    try {
+      await deleteAccount()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   return (
     <div>
       <header className="page-head">
@@ -81,10 +90,14 @@ export default function AccountPage() {
       </div>
       {charts && charts.length > 0 && (
         <p className="danger-zone small">
-          <button className="btn danger small" onClick={removeAll}>Delete all my data</button>
+          <button className="btn danger small" onClick={removeAll}>Delete all my charts</button>
           <span className="muted">Permanently removes every chart saved to your account.</span>
         </p>
       )}
+      <p className="danger-zone small">
+        <button className="btn danger small" onClick={removeAccount}>Delete my account</button>
+        <span className="muted">Removes your name, email and all saved charts from our database, and signs you out.</span>
+      </p>
     </div>
   )
 }

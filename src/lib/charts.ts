@@ -44,3 +44,18 @@ export async function deleteAllCharts(userId: string): Promise<void> {
   const { error } = await supabase.from('charts').delete().eq('user_id', userId)
   if (error) throw new Error(error.message)
 }
+
+/**
+ * Deletes the signed-in user's account: the Supabase user record (name, email,
+ * Google link) and, by cascade, every saved chart. Needs the delete_my_account
+ * function from supabase/migrations.
+ */
+export async function deleteAccount(): Promise<void> {
+  if (!supabase) return
+  const { error } = await supabase.rpc('delete_my_account')
+  if (error) {
+    throw new Error(error.code === 'PGRST202' ? 'Account deletion is not set up on the server yet. Your charts can still be deleted above.' : error.message)
+  }
+  // The session belonged to the deleted user; clear it on this device only.
+  await supabase.auth.signOut({ scope: 'local' })
+}

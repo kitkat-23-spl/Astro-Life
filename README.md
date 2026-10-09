@@ -54,7 +54,7 @@ The site works fully without Supabase; sign-in and saving simply stay hidden unt
 ## Setup: Google login with Supabase (≈10 minutes)
 
 1. **Create a Supabase project** (free) at <https://supabase.com>.
-2. **Create the database table**: open *SQL Editor*, paste [`supabase/migrations/20260930000000_charts.sql`](supabase/migrations/20260930000000_charts.sql) and run it.
+2. **Create the database table**: open *SQL Editor*, paste [`supabase/migrations/20260930000000_charts.sql`](supabase/migrations/20260930000000_charts.sql) and run it. Then do the same with [`supabase/migrations/20261009000000_delete_account.sql`](supabase/migrations/20261009000000_delete_account.sql), which powers the *Delete my account* button.
 3. **Google OAuth client**: in [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an *OAuth client ID* (Web application).
    - Authorized redirect URI: `https://<your-project-ref>.supabase.co/auth/v1/callback`
    - Configure the OAuth consent screen (app name "Astro Life", scopes: email, profile, openid).
