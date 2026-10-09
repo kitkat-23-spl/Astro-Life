@@ -61,7 +61,7 @@ function Lords({ chart, reading }: { chart: VedicChart; reading: VedicReading })
         {bb && <p className="muted small">Bhava bala in rupas: the lord's Shadbala plus directional strength by sign type plus aspects on the house middle (BPHS 28).</p>}
       </div>
       <p className="muted">Each house is ruled by the lord of its sign. Where that lord sits shows how the house's matters develop.</p>
-      <Cards items={reading.lords} list />
+      <Cards items={reading.lords} board />
     </>
   )
 }

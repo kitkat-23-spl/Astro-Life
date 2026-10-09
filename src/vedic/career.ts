@@ -9,6 +9,7 @@ import {
 } from './rules'
 import { signName, vargaChart, type VargaChart, type VedicChart } from './sidereal'
 import { charaKarakas } from './jaimini'
+import { vimshottari, type Period } from './dasha'
 import { evaluateYogas, type YogaResult } from './yogas'
 
 export const PLANET_CAREERS: Record<Graha, string[]> = {
@@ -52,11 +53,30 @@ const IN_TENTH: Record<Graha, string> = {
 }
 
 export interface FieldSuggestion { planet: Graha; score: number; fields: string[]; reasons: string[] }
-export interface ModeScore { label: string; score: number; reasons: string[] }
+export type ModeStrength = 'strong' | 'moderate' | 'weak' | 'none'
+/** A dasha period ruled by a planet that carries a mode of work. `ad` is absent for a whole mahadasha. */
+export interface ModePeriod { md: Graha; ad?: Graha; start: Date; end: Date; now: boolean }
+export interface ModeScore {
+  label: string
+  score: number
+  /** Indicators that apply. */
+  reasons: string[]
+  /** All five indicators, met or not. */
+  checks: { text: string; met: boolean }[]
+  strength: ModeStrength
+  /** Planets that carry this mode, whose dashas bring it forward. */
+  planets: Graha[]
+  periods: ModePeriod[]
+}
+export interface ModeVerdict { best: string[]; least: string[]; strength: ModeStrength; text: string }
+
+/** Five indicators per mode: three or more is a clear lean, two moderate, one on its own is weak. */
+export const modeStrength = (n: number): ModeStrength => (n >= 3 ? 'strong' : n === 2 ? 'moderate' : n === 1 ? 'weak' : 'none')
 
 export interface CareerReport extends AreaReport {
   fields: FieldSuggestion[]
   modes: ModeScore[]
+  modeVerdict: ModeVerdict
 }
 
 export function careerReport(chart: VedicChart, now = new Date(), yogas: YogaResult[] = evaluateYogas(chart)): CareerReport | null {
@@ -260,41 +280,47 @@ export function careerReport(chart: VedicChart, now = new Date(), yogas: YogaRes
   }))
 
   const modes: ModeScore[] = []
-  const mode = (label: string, checks: [boolean, string][]) => {
+  const periods = vimshottari(moon.lon, chart.utc)
+  const mode = (label: string, planets: Graha[], checks: [boolean, string][]) => {
     const fired = checks.filter(([ok]) => ok).map(([, r]) => r)
-    modes.push({ label, score: Math.round((fired.length / checks.length) * 100), reasons: fired })
+    const carriers = [...new Set(planets)]
+    modes.push({
+      label, score: Math.round((fired.length / checks.length) * 100), reasons: fired,
+      checks: checks.map(([met, text]) => ({ text, met })), strength: modeStrength(fired.length),
+      planets: carriers, periods: modePeriods(periods, carriers, now),
+    })
   }
   const l7 = lordOfHouse(chart, 7), l6 = lordOfHouse(chart, 6), l1 = lordOfHouse(chart, 1), l12 = lordOfHouse(chart, 12)
   const p7 = pos(chart, l7), p1 = pos(chart, l1), merc = pos(chart, 'Mercury')
-  mode('Business or trade', [
+  mode('Business or trade', [l7, 'Mercury'], [
     [!!linked(chart, l7, tenthLord) || tl.house === 7, `7th lord ${l7} linked with the 10th lord, or 10th lord in the 7th`],
     [KENDRA.includes(p7.house!) || [5, 9, 11].includes(p7.house!), `7th lord ${l7} well placed (${h(p7.house!)})`],
     [dignityScore(merc.dignity) >= 1 || KENDRA.includes(merc.house!), 'Mercury strong or in a kendra'],
     [!!influencesHouse(chart, 'Mercury', 10) || !!influencesHouse(chart, 'Mercury', 7), 'Mercury influences the 10th or 7th'],
     [occupants(chart, 7).some(isBenefic), 'Benefic in the 7th house'],
   ])
-  mode('Employment', [
+  mode('Employment', [l6, 'Saturn'], [
     [!!linked(chart, l6, tenthLord) || tl.house === 6, `6th lord ${l6} linked with the 10th lord, or 10th lord in the 6th`],
     [!!influencesHouse(chart, 'Saturn', 10), 'Saturn influences the 10th'],
     [pos(chart, l6).house === 10, '6th lord in the 10th'],
     [[6, 8, 12].includes(tl.house!), '10th lord in a dusthana'],
     [!(KENDRA.includes(p1.house!) && dignityScore(p1.dignity) > 0), 'Lagna lord not dominant'],
   ])
-  mode('Government or public sector', [
+  mode('Government or public sector', ['Sun', 'Jupiter'], [
     [!!influencesHouse(chart, 'Sun', 10), 'Sun occupies or aspects the 10th'],
     [dignityScore(sun.dignity) >= 2 || sun.house === 10, 'Sun strong (own, exalted or dig bala)'],
     [!!linked(chart, 'Sun', tenthLord) || tenthLord === 'Sun', 'Sun linked with the 10th lord'],
     [!!influencesHouse(chart, 'Jupiter', 10), 'Jupiter influences the 10th'],
     [!!vp(d10, 'Sun').dignity && GOOD_DIGNITY.includes(vp(d10, 'Sun').dignity!), 'Sun strong in D10'],
   ])
-  mode('Foreign or multinational', [
+  mode('Foreign or multinational', ['Rahu', l12], [
     [[12, 9].includes(tl.house!), '10th lord in the 12th or 9th'],
     [!!influencesHouse(chart, 'Rahu', 10) || !!linked(chart, 'Rahu', tenthLord), 'Rahu influences the 10th or its lord'],
     [pos(chart, l12).house === 10 || !!linked(chart, l12, tenthLord), `12th lord ${l12} linked with the career`],
     [[0, 3, 6, 9].includes((L + 9) % 12), 'Movable sign on the 10th'],
     [moon.house === 12 || moon.house === 9, 'Moon in the 9th or 12th'],
   ])
-  mode('Own venture', [
+  mode('Own venture', [l1, 'Mars'], [
     [KENDRA.includes(p1.house!) && dignityScore(p1.dignity) >= 0, `Lagna lord ${l1} strong in a kendra`],
     [!!linked(chart, l1, tenthLord) || tl.house === 1, 'Lagna lord linked with the 10th lord, or 10th lord in the 1st'],
     [!!influencesHouse(chart, 'Mars', 10) || !!influencesHouse(chart, 'Sun', 1), 'Mars on the 10th or Sun on the 1st'],
@@ -330,5 +356,38 @@ export function careerReport(chart: VedicChart, now = new Date(), yogas: YogaRes
   const headline = top
     ? `The strongest indications point to ${top.planet}-ruled fields (${top.fields.slice(0, 2).join(', ').toLowerCase()}). The 10th lord ${tenthLord} is in the ${h(tl.house!)}.`
     : `The 10th lord ${tenthLord} in the ${h(tl.house!)} shapes the career.`
-  return { conditions: countConditions(groups), headline, fields, modes, groups, vargas, ...timing }
+  return { conditions: countConditions(groups), headline, fields, modes, modeVerdict: verdictOf(modes), groups, vargas, ...timing }
+}
+
+/**
+ * Upcoming dashas that bring a mode forward: whole mahadashas of its planets,
+ * then sub-periods of its planets inside other mahadashas. The nearest three are kept.
+ */
+export function modePeriods(periods: Period[], planets: Graha[], from: Date, years = 15): ModePeriod[] {
+  const until = new Date(from.getTime() + years * 365.25 * 86400000)
+  const out: ModePeriod[] = []
+  for (const md of periods) {
+    if (md.end < from || md.start > until) continue
+    if (planets.includes(md.lord)) {
+      out.push({ md: md.lord, start: md.start, end: md.end, now: md.start <= from && from < md.end })
+      continue
+    }
+    for (const ad of md.sub ?? []) {
+      if (ad.end < from || ad.start > until || !planets.includes(ad.lord)) continue
+      out.push({ md: md.lord, ad: ad.lord, start: ad.start, end: ad.end, now: ad.start <= from && from < ad.end })
+    }
+  }
+  return out.sort((a, b) => a.start.getTime() - b.start.getTime()).slice(0, 3)
+}
+
+function verdictOf(modes: ModeScore[]): ModeVerdict {
+  const top = Math.max(...modes.map((m) => m.reasons.length))
+  const best = modes.filter((m) => m.reasons.length === top).map((m) => m.label)
+  const least = modes.filter((m) => m.reasons.length === 0).map((m) => m.label)
+  const strength = modeStrength(top)
+  const list = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0]).toLowerCase()
+  const text = top >= 2
+    ? `${best.length > 1 ? `${list(best)} are` : `${list(best)} is`} the clearest fit, with ${top} of its 5 indicators${best.length > 1 ? ' each' : ''} (${strength}).`
+    : 'No way of working stands out: none has more than one of its five indicators. Let the fields and the timing guide the choice more than the mode.'
+  return { best, least, strength, text: text.charAt(0).toUpperCase() + text.slice(1) }
 }

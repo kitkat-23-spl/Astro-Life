@@ -79,7 +79,7 @@ export default function PlanetsTab({ chart, reading }: { chart: VedicChart; read
       ) : <p className="muted">Shadbala needs a birth time.</p>}
 
       <h2 className="section-title"><Term k="dignity">Planet by planet</Term></h2>
-      <Cards items={reading.grahas} list />
+      <Cards items={reading.grahas} board />
     </>
   )
 }

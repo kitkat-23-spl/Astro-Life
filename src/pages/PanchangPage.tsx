@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import PlaceSearch from '../components/PlaceSearch'
 import type { Place } from '../lib/geocode'
 import { useSettings } from '../lib/settings'
+import ToneBoard from '../components/ToneBoard'
 import Term from '../components/Term'
 import type { GlossaryKey } from '../lib/glossary'
 import { GRAHA_INFO, NAKSHATRAS } from '../vedic/constants'
@@ -185,14 +186,19 @@ function DayQuality({ checks, birthStar, onStar }: { checks: ReturnType<typeof d
           {NAKSHATRAS.map((n, i) => <option key={n.name} value={i}>{n.name}</option>)}
         </select>
       </label>
-      <ul className="dq-list">
-        {checks.map((c) => (
-          <li key={c.id}>
-            <span className={`pill pill-${EFFECT_PILL[c.effect]}`}>{EFFECT_LABEL[c.effect]}</span>
-            <div><strong>{c.title}</strong><p className="small muted">{c.detail}</p></div>
-          </li>
-        ))}
-      </ul>
+      <ToneBoard
+        labels={{ good: 'Favourable', mixed: 'Caution or note', challenge: 'Avoid' }}
+        items={checks.map((c) => ({
+          id: c.id,
+          tone: c.effect === 'good' ? 'good' : c.effect === 'bad' ? 'challenge' : 'mixed',
+          node: (
+            <article className={`insight card dq-card tone-${EFFECT_PILL[c.effect]}`}>
+              <header className="insight-head"><h4>{c.title}</h4>{(c.effect === 'info' || c.effect === 'mixed') && <span className={`pill pill-${EFFECT_PILL[c.effect]}`}>{EFFECT_LABEL[c.effect]}</span>}</header>
+              <p className="small">{c.detail}</p>
+            </article>
+          ),
+        }))}
+      />
       <p className="muted small">After K.S. Charak's summary of the muhurta texts. Check the Rahu Kaal and Choghadiya below for the hour, and treat these as traditional guidance.</p>
     </section>
   )

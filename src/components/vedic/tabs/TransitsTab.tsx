@@ -8,6 +8,7 @@ import { vargaChart, type VedicChart } from '../../../vedic/sidereal'
 import { slowTimeline, transitConjunctions, transitReadings, type TransitReading } from '../../../vedic/transitReading'
 import { monthlyOutlook, sadeSati, sensitiveStarTransits, transitEvents, transitPositions } from '../../../vedic/transits'
 import { NAKSHATRAS } from '../../../vedic/constants'
+import ToneBoard from '../../ToneBoard'
 import Term from '../../Term'
 import Basis from '../../Basis'
 import { TONE_LABEL } from '../../InsightCard'
@@ -75,10 +76,10 @@ export default function TransitsTab({ chart, reading }: { chart: VedicChart; rea
       <h2 className="section-title"><Term k="gochara">What the transits mean for this chart</Term></h2>
       <p className="muted small">Each planet is read by the house it crosses from the lagna, the classical result from the natal Moon (Phaladeepika 26), where it sits and what it rules at birth, the natal planets it meets or aspects, its strength in the sign and the running dasha. These are traditional indications, not forecasts.</p>
       <p className="muted small">When a transit shows its effect within a sign: the Sun and Mars on entering it, Jupiter and Venus in the middle, the Moon and Saturn in the last third, Mercury and Rahu throughout (Charak XXIX).</p>
-      <div className="insight-list">{readings.filter((r) => SLOW.includes(r.graha)).map((r) => <ReadingCard key={r.graha} r={r} />)}</div>
+      <ToneBoard items={readings.filter((r) => SLOW.includes(r.graha)).map((r) => ({ id: r.graha, tone: r.tone, node: <ReadingCard r={r} /> }))} />
       <h3 className="sub-h">Faster planets</h3>
       <p className="muted small">The Sun, Venus and Mercury change sign every few weeks and the Moon every two to three days, so their effects are short.</p>
-      <div className="insight-list">{readings.filter((r) => !SLOW.includes(r.graha)).map((r) => <ReadingCard key={r.graha} r={r} />)}</div>
+      <ToneBoard items={readings.filter((r) => !SLOW.includes(r.graha)).map((r) => ({ id: r.graha, tone: r.tone, node: <ReadingCard r={r} /> }))} />
 
       {together.length > 0 && (
         <>

@@ -3,10 +3,11 @@ import { Link, useParams } from 'react-router-dom'
 import Basis from '../components/Basis'
 import Segmented from '../components/Segmented'
 import { ChartPair } from '../components/vedic/ChartPair'
+import { fmtRange } from '../components/vedic/format'
 import { AreaVerdict, DashaTimeline, MethodNote, ChartNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
 import { useSettings } from '../lib/settings'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
-import type { CareerReport } from '../vedic/career'
+import type { CareerReport, ModePeriod, ModeStrength } from '../vedic/career'
 import type { ChildrenReport } from '../vedic/children'
 import { GRAHA_INFO, RASHI } from '../vedic/constants'
 import type { EducationReport } from '../vedic/education'
@@ -152,20 +153,64 @@ function RankedPlanets({ items }: { items: { planet: keyof typeof GRAHA_INFO; sc
   )
 }
 
+const STRENGTH: Record<ModeStrength, { label: string; pill: string }> = {
+  strong: { label: 'Clear lean', pill: 'pill-good' },
+  moderate: { label: 'Moderate', pill: 'pill-mixed' },
+  weak: { label: 'Weak', pill: '' },
+  none: { label: 'Not indicated', pill: '' },
+}
+
+const periodLabel = (p: ModePeriod) => `${p.ad ? `${p.md} / ${p.ad}` : `${p.md} mahadasha`}, ${fmtRange(p.start, p.end)}${p.now ? ' (running now)' : ''}`
+
 function CareerSection({ r }: { r: CareerReport }) {
+  const now = new Date()
+  const v = r.modeVerdict
+  const bestModes = r.modes.filter((m) => v.best.includes(m.label))
+  const peaks = r.dashas.filter((d) => d.end > now).sort((a, b) => b.score - a.score).slice(0, 2).sort((a, b) => a.start.getTime() - b.start.getTime())
+  const modes = [...r.modes].sort((a, b) => b.reasons.length - a.reasons.length)
+  const [f1, f2] = r.fields
   return (
     <>
+      <section className="card in-short">
+        <h2>In short</h2>
+        <dl className="short-list">
+          <div>
+            <dt>What to focus on</dt>
+            <dd>{f1 ? <>{f1.planet}-ruled work: {f1.fields.slice(0, 3).join('; ').toLowerCase()}.{f2 && <> Next, {f2.planet}-ruled work: {f2.fields.slice(0, 2).join('; ').toLowerCase()}.</>}</> : 'No planet stands out; see the rules below.'}</dd>
+          </div>
+          <div>
+            <dt>How to work</dt>
+            <dd>{v.text}{v.least.length > 0 && <> Least indicated: {v.least.join(', ').toLowerCase()}.</>}</dd>
+          </div>
+          <div>
+            <dt>When</dt>
+            <dd>
+              {peaks.length > 0 && <>The strongest career periods ahead: {peaks.map((d) => `${d.md} / ${d.ad} (${fmtRange(d.start, d.end)})`).join(' and ')}. </>}
+              {v.strength !== 'weak' && v.strength !== 'none' && bestModes.map((m) => m.periods.length > 0 && <span key={m.label}>For {m.label.toLowerCase()}, the dashas of {m.planets.join(' and ')}: {m.periods.slice(0, 2).map(periodLabel).join('; ')}. </span>)}
+            </dd>
+          </div>
+        </dl>
+        <p className="muted small">Read from the rules on this page. A dasha brings forward what its planet promises in the birth chart; it does not add a promise that is not there.</p>
+      </section>
+
       <h2 className="section-title">Suitable fields</h2>
       <p className="muted">Independent classical rules each point to a planet. The planets named most often, and by the most important rules, indicate the fields that suit the chart. Every indication is listed.</p>
       <RankedPlanets items={r.fields.map((f) => ({ ...f, list: f.fields }))} />
+
       <h2 className="section-title">Mode of work</h2>
-      <div className="card modes">
-        {r.modes.map((m) => (
-          <div key={m.label} className="mode">
-            <div className="mode-head"><span>{m.label}</span><span className="muted small">{m.reasons.length} of 5 indicators</span></div>
-            <span className="bar-track"><span className="bar-fill" style={{ width: `${m.score}%` }} /></span>
-            {m.reasons.length > 0 && <p className="small muted">{m.reasons.join(' · ')}</p>}
-          </div>
+      <p className="muted small">Each way of working is tested against five classical indicators. An indicator is not good or bad by itself: each one that applies adds to the case for that mode. One on its own is weak, two is moderate and three or more is a clear lean. A low count means the chart does not point that way, not that it would fail.</p>
+      <div className="mode-grid">
+        {modes.map((m) => (
+          <article key={m.label} className={`card mode-card ms-${m.strength}`}>
+            <header className="insight-head">
+              <h3>{m.label}</h3>
+              <span className={`pill ${STRENGTH[m.strength].pill}`}>{STRENGTH[m.strength].label}</span>
+            </header>
+            <p className="small muted">{m.reasons.length} of 5 indicators apply</p>
+            <span className="dots" aria-hidden="true">{m.checks.map((c, i) => <span key={i} className={c.met ? 'on' : ''} />)}</span>
+            <ul className="checklist small">{m.checks.map((c) => <li key={c.text} className={c.met ? 'met' : 'unmet'}>{c.text}</li>)}</ul>
+            <p className="small mode-when"><strong>Comes forward in the dashas of {m.planets.join(' and ')}</strong>{m.periods.length ? <>: {m.periods.map(periodLabel).join('; ')}.</> : ' (none in the next 15 years).'}</p>
+          </article>
         ))}
       </div>
     </>

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import type { AreaSummary, ConditionCount, Effect, DashaHighlight, RuleGroup, VargaVerdict } from '../../vedic/rules'
 import { REPORTS } from '../../vedic/reports'
 import type { TransitWindow } from '../../vedic/transits'
 import { yogaTone, type YogaResult } from '../../vedic/yogas'
 import Basis from '../Basis'
+import ToneBoard, { type BoardItem } from '../ToneBoard'
 import { fmtRange } from './format'
 import { TONE_LABEL } from '../InsightCard'
 
@@ -120,35 +121,41 @@ export function MethodNote() {
 
 export function RuleGroups({ groups }: { groups: RuleGroup[] }) {
   const [showAll, setShowAll] = useState(false)
-  const total = groups.reduce((s, g) => s + g.results.length, 0)
-  const fired = groups.reduce((s, g) => s + g.results.filter((r) => r.fired).length, 0)
+  const all = groups.flatMap((g) => g.results.map((r) => ({ r, group: g.title })))
+  const fired = all.filter(({ r }) => r.fired).sort((a, b) => Math.abs(b.r.weight) - Math.abs(a.r.weight))
+  const unmet = all.filter(({ r }) => !r.fired)
+  const items: BoardItem[] = fired.map(({ r, group }) => ({
+    id: r.id,
+    tone: r.effect === 'supportive' ? 'good' : r.effect === 'challenging' ? 'challenge' : 'mixed',
+    node: (
+      <article className={`insight card rule-card tone-${EFFECT_PILL[r.effect]}`}>
+        <p className="card-eyebrow">{group}</p>
+        <header className="insight-head">
+          <h4>{r.title}</h4>
+          {r.effect === 'info' && <span className="pill pill-info">Note</span>}
+        </header>
+        <div className="insight-body">{r.detail.map((d, i) => <p key={i}>{d}</p>)}</div>
+        <Basis items={[r.chart, r.rule.replace(/\s*\([^)]*\)/g, '')]} />
+      </article>
+    ),
+  }))
   return (
     <div className="rule-groups">
       <div className="rule-toolbar">
-        <p className="muted small">{fired} of {total} rules apply to this chart</p>
+        <p className="muted small">{fired.length} of {all.length} rules apply to this chart, strongest first in each column</p>
         <label className="check small">
           <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show rules that do not apply
         </label>
       </div>
-      {groups.map((g) => (
-        <section key={g.title} className="rule-group">
-          <h3>{g.title}</h3>
-          <div className="insight-list">
-            {g.results.filter((r) => showAll || r.fired).map((r) => (
-              <article key={r.id} className={`insight card rule-card ${r.fired ? `tone-${EFFECT_PILL[r.effect]}` : 'not-fired'}`}>
-                <header className="insight-head">
-                  <h4>{r.title}</h4>
-                  {r.fired
-                    ? <span className={`pill pill-${EFFECT_PILL[r.effect]}`}>{EFFECT_LABEL[r.effect]}</span>
-                    : <span className="pill">Not present</span>}
-                </header>
-                {r.fired && <div className="insight-body">{r.detail.map((d, i) => <p key={i}>{d}</p>)}</div>}
-                <Basis items={[r.chart, r.rule.replace(/\s*\([^)]*\)/g, '')]} label={r.fired ? 'Based on' : 'Requires'} />
-              </article>
-            ))}
-          </div>
+      <ToneBoard items={items} />
+      {showAll && unmet.length > 0 && (
+        <section className="unmet-block">
+          <h3 className="sub-h">Rules that do not apply ({unmet.length})</h3>
+          <ul className="unmet-list small">
+            {unmet.map(({ r, group }) => <li key={r.id}><strong>{r.title}</strong> <span className="muted">· {group} · requires {r.rule.replace(/\s*\([^)]*\)/g, '')}</span></li>)}
+          </ul>
         </section>
-      ))}
+      )}
     </div>
   )
 }
@@ -202,10 +209,11 @@ export function TransitWindows({ items, house }: { items: TransitWindow[]; house
   )
 }
 
-export function YogaCard({ y }: { y: YogaResult }) {
+export function YogaCard({ y, eyebrow }: { y: YogaResult; eyebrow?: ReactNode }) {
   const tone = y.present ? yogaTone(y) : null
   return (
     <article className={`insight card yoga-card ${tone ? `tone-${tone}` : 'not-fired'}`}>
+      {eyebrow && <p className="card-eyebrow">{eyebrow}</p>}
       <header className="insight-head">
         <h3>{y.def.name}</h3>
         {tone ? <span className={`pill pill-${tone}`}>{TONE_LABEL[tone]}</span> : <span className="pill">{y.supersededBy ? 'Overridden' : y.checked ? 'Not present' : 'Needs birth time'}</span>}
