@@ -1,5 +1,7 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv, type Plugin } from 'vite'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { defineConfig, loadEnv, type Plugin, type ResolvedConfig } from 'vite'
 
 /**
  * Production-only Content Security Policy. Scripts may only come from this
@@ -27,11 +29,23 @@ function csp(supabaseUrl: string | undefined): Plugin {
     "frame-src 'none'",
     'upgrade-insecure-requests',
   ].join('; ')
+  let outDir = 'dist'
   return {
     name: 'astrolife-csp',
     apply: 'build',
+    configResolved: (c: ResolvedConfig) => { outDir = join(c.root, c.build.outDir) },
     transformIndexHtml: (html) =>
       html.replace('<!--CSP-->', `<meta http-equiv="Content-Security-Policy" content="${policy}" />`),
+    // Also send the policy as a real header (with frame-ancestors, which a meta tag ignores).
+    closeBundle() {
+      const file = join(outDir, '_headers')
+      try {
+        const headers = readFileSync(file, 'utf8')
+        writeFileSync(file, headers.replace("Content-Security-Policy: frame-ancestors 'none'", `Content-Security-Policy: ${policy}; frame-ancestors 'none'`))
+      } catch {
+        // No _headers file: the meta tag still applies.
+      }
+    },
   }
 }
 
