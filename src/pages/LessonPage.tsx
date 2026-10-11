@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { ChartBlock, ClassicalBlock, YogaBlock, YogaContents } from '../components/learn/LessonBlocks'
 import RichText from '../components/RichText'
 import { LESSONS, lessonBySlug, markLessonComplete } from '../learn/lessons'
 import type { Block, QuizQuestion } from '../learn/types'
@@ -12,6 +13,7 @@ export default function LessonPage() {
   const idx = LESSONS.indexOf(lesson)
   const prev = LESSONS[idx - 1]
   const next = LESSONS[idx + 1]
+  const yogaIds = lesson.blocks.flatMap((b) => (b.type === 'yoga' ? [b.id] : []))
 
   return (
     <article className="lesson" key={lesson.slug}>
@@ -23,6 +25,7 @@ export default function LessonPage() {
         <h1>{lesson.title}</h1>
         <p className="lede">{lesson.summary}</p>
       </header>
+      {yogaIds.length >= 3 && <YogaContents ids={yogaIds} />}
       {lesson.blocks.map((b, i) => <BlockView key={i} block={b} />)}
       {lesson.quiz.length > 0 && <Quiz questions={lesson.quiz} onPass={() => markLessonComplete(lesson.slug)} />}
       <nav className="lesson-nav">
@@ -69,6 +72,12 @@ function BlockView({ block }: { block: Block }) {
           <strong>Try it:</strong> <RichText text={block.text} /> <Link to="/chart">Open a kundali</Link>
         </p>
       )
+    case 'chart':
+      return <ChartBlock title={block.title} spec={block.spec} highlight={block.highlight} caption={block.caption} />
+    case 'yoga':
+      return <YogaBlock id={block.id} spec={block.spec} highlight={block.highlight} why={block.why} weak={block.weak} />
+    case 'classical':
+      return <ClassicalBlock title={block.title} rows={block.rows} source={block.source} />
   }
 }
 

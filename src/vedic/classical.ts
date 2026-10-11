@@ -636,3 +636,7 @@ export const CLASSICAL_SIZE = {
   inSign: Object.values(IN_SIGN).flat().length,
   aspects: Object.values(ASPECTS).flatMap((r) => Object.values(r).flat()).length,
 }
+
+/** The raw tables, for the lessons. Each text starts with its tone marker. */
+export const CLASSICAL_TABLES = { lordInHouse: LORD_IN_HOUSE, inHouse: IN_HOUSE, inSign: IN_SIGN, fromMoon: FROM_MOON }
+export const parseClassical = parse

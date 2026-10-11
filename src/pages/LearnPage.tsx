@@ -7,7 +7,10 @@ const MODULE_BLURB: Record<string, string> = {
   'The planets': 'The nine grahas in depth, how to judge their strength, and what each gives in every house.',
   'Planetary relationships': 'Drishti (aspects), conjunctions, house lordship, functional benefics and malefics, and yogas.',
   'Divisional charts & timing': 'D1–D10 vargas, Vimshottari dasha and transits (gochara), including Sade Sati and double transit.',
-  'Applied Jyotish': 'Career, marriage, kundali matching and full-chart synthesis, with real-life examples.',
+  'Classical results': 'What every house lord gives in every house, the nine planets in the twelve houses and from the Moon, and the seven planets in the twelve signs, from Parashara and Charak.',
+  'Yoga library': 'All 92 yogas the site checks, each with its meaning, the exact rule and an example chart that the engine verifies: Mahapurusha, raja, dhana, vipareeta, solar and lunar, special, doshas and the 32 Nabhasa yogas.',
+  'Timing and practice': 'Transits in depth with vedha, Ashtakavarga, the annual chart, muhurta, prashna, and how the texts approach health.',
+  'Applied Jyotish': 'Career, marriage, kundali matching with the full tables, and full-chart synthesis, with real-life examples.',
 }
 const WESTERN_BLURB: Record<string, string> = {
   Beginner: 'Tropical zodiac basics: signs, elements, planets and your Big Three.',

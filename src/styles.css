@@ -797,3 +797,42 @@ meter::-moz-meter-bar { background: var(--accent); border-radius: 999px; }
 @media (max-width: 560px) {
   .short-list > div { grid-template-columns: 1fr; gap: 2px; }
 }
+
+/* Lesson example charts and yoga cards */
+.vc-item.focus { fill: var(--accent); font-weight: 800; }
+.vc-item.dim { opacity: .45; }
+.lesson-chart { display: grid; grid-template-columns: minmax(0, 340px) 1fr; gap: 20px; align-items: start; margin: 18px 0; }
+.lesson-chart .vchart { margin: 0; }
+.lesson-chart-text h3 { margin-top: 0; }
+.lesson-chart-text p { margin: 0 0 .6em; }
+.yoga-lesson { margin: 26px 0; padding: 22px; }
+.yoga-lesson > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.yoga-lesson > header h3 { margin: 0; font-size: 1.3rem; }
+.yoga-lesson .yl-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.yoga-lesson dl { display: grid; grid-template-columns: 110px 1fr; gap: 8px 14px; margin: 14px 0; }
+.yoga-lesson dt { font-weight: 700; color: var(--ink); }
+.yoga-lesson dd { margin: 0; color: var(--ink-2); }
+.yoga-lesson .lesson-chart { margin: 8px 0 0; }
+.engine-check { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--ok-soft); font-size: .9rem; }
+.engine-check.no { background: var(--err-soft); }
+.engine-check.over { background: var(--warn-soft); }
+.engine-check .basis-chip { display: inline-block; margin: 4px 6px 0 0; padding: 2px 9px; border-radius: 999px; background: var(--surface); font-size: .8rem; font-weight: 600; }
+.yl-weak { margin-top: 10px; }
+.classical-table { margin: 14px 0 22px; padding: 18px 20px; }
+.classical-table h3 { margin-top: 0; }
+.classical-table ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.classical-table li { position: relative; padding-left: 18px; }
+.classical-table li::before { content: ''; position: absolute; left: 0; top: .55em; width: 8px; height: 8px; border-radius: 50%; background: var(--warn); }
+.classical-table li.cl-good::before { background: var(--ok); }
+.classical-table li.cl-challenge::before { background: var(--err); }
+.classical-table .cl-label { font-weight: 700; }
+.toc { margin: 10px 0 24px; padding: 16px 20px; }
+.toc ol { columns: 2; column-gap: 28px; margin: 6px 0 0; padding-left: 1.2em; }
+.toc li { break-inside: avoid; margin-bottom: 4px; }
+@media (max-width: 700px) {
+  .lesson-chart { grid-template-columns: 1fr; }
+  .yoga-lesson dl { grid-template-columns: 1fr; gap: 2px; }
+  .yoga-lesson dd { margin-bottom: 8px; }
+  .toc ol { columns: 1; }
+}
+.yoga-lesson { scroll-margin-top: 90px; }

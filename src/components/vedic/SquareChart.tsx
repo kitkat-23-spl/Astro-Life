@@ -8,7 +8,7 @@ export interface ChartItem {
   sign: number
   label: string
   title: string // full description for tooltips / screen readers
-  tone?: 'up' | 'down' | 'asc' | 'transit'
+  tone?: 'up' | 'down' | 'asc' | 'transit' | 'focus' | 'dim'
 }
 
 interface Props {

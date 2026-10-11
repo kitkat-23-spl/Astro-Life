@@ -10,9 +10,12 @@ const birth = { name: 'x', date: '1990-06-15', time: '10:30', place: 'Mumbai', l
 
 describe('curriculum', () => {
   it('has a complete, ordered Jyotish course', () => {
-    expect(VEDIC_COURSE).toHaveLength(19)
+    expect(VEDIC_COURSE).toHaveLength(40)
     expect(VEDIC_COURSE.every(Boolean)).toBe(true)
     for (const l of VEDIC_COURSE) expect(VEDIC_MODULES).toContain(l.module)
+    // Each module's lessons sit together in the course order.
+    const order = VEDIC_COURSE.map((l) => l.module)
+    expect(order.filter((m, i) => m !== order[i - 1])).toEqual(VEDIC_MODULES)
   })
   it('has unique slugs and valid quizzes', () => {
     expect(new Set(LESSONS.map((l) => l.slug)).size).toBe(LESSONS.length)
