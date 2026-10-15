@@ -4,6 +4,7 @@ import Basis from '../components/Basis'
 import Segmented from '../components/Segmented'
 import { ChartPair } from '../components/vedic/ChartPair'
 import { fmtRange } from '../components/vedic/format'
+import { ChartAccessProvider, Gate, PreviewBanner } from '../components/paywall/ChartAccess'
 import { AreaVerdict, DashaTimeline, MethodNote, ChartNav, RuleGroups, TransitWindows, VargaVerdicts } from '../components/vedic/ReportParts'
 import { useSettings } from '../lib/settings'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
@@ -77,6 +78,7 @@ export default function ReportPage() {
   if (!report) return <NeedTime hash={hash} what={meta.title.toLowerCase()} />
 
   return (
+    <ChartAccessProvider birth={birth}>
     <div className="report">
       <ChartNav hash={hash} />
       <header className="report-head night">
@@ -95,18 +97,21 @@ export default function ReportPage() {
         <AreaVerdict s={summarise(report)} />
       </header>
 
-      {meta.key === 'career' && <CareerSummary r={report as CareerReport} />}
+      <PreviewBanner />
+
+      {meta.key === 'career' && <Gate seed="career-short" lines={4}><CareerSummary r={report as CareerReport} /></Gate>}
 
       <MethodNote />
 
       <ChartPair chart={chart} a={vargaChart(chart, 1)} b={vargaChart(chart, cfg.varga)} aTitle="D1 Rashi" bTitle={cfg.vargaTitle} />
 
-      <Specific k={meta.key} report={report} />
+      <Gate seed={`specific-${meta.key}`} lines={6}><Specific k={meta.key} report={report} /></Gate>
 
       <h2 className="section-title">Divisional charts</h2>
-      <VargaVerdicts items={report.vargas} />
+      <Gate seed={`vargas-${meta.key}`} lines={3}><VargaVerdicts items={report.vargas} /></Gate>
 
       <h2 className="section-title">Timing</h2>
+      <Gate seed={`timing-${meta.key}`} lines={5}>
       <div className="timing-grid">
         <div>
           <h3>Dasha periods</h3>
@@ -119,11 +124,13 @@ export default function ReportPage() {
           <TransitWindows items={report.windows} house={cfg.house} />
         </div>
       </div>
+      </Gate>
 
       <h2 className="section-title">All rules</h2>
       {cfg.lesson && <p className="small"><Link to={`/learn/${cfg.lesson}`}>How these rules work</Link></p>}
       <RuleGroups groups={report.groups} />
     </div>
+    </ChartAccessProvider>
   )
 }
 

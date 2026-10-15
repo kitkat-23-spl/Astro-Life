@@ -10,6 +10,7 @@ import { AYANAMSA_LABEL } from '../../vedic/settings'
 import { signName } from '../../vedic/sidereal'
 import Term from '../Term'
 import { ChartStyleToggle, VargaSquare } from './ChartPair'
+import { ChartAccessProvider, PreviewBanner } from '../paywall/ChartAccess'
 import { ChartNav } from './ReportParts'
 import { fmtDeg } from './format'
 import AshtakavargaTab from './tabs/AshtakavargaTab'
@@ -66,6 +67,7 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
   ].filter(Boolean).map((h, i) => <span key={i}>{i > 0 && ' · '}{h}</span>)
 
   return (
+    <ChartAccessProvider birth={birth}>
     <div className="chart-view vedic">
       <ChartNav hash={encodeBirth(birth)} />
       <section className="vedic-hero night">
@@ -91,6 +93,8 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
         </div>
       </section>
 
+      <PreviewBanner />
+
       <section id={`vpanel-${tab}`} aria-label={TABS.find((t) => t.id === tab)!.label} className="tab-panel" ref={panelRef}>
         {tab === 'overview' && <OverviewTab chart={chart} reading={reading} hash={encodeBirth(birth)} go={go} />}
         {tab === 'planets' && <PlanetsTab chart={chart} reading={reading} />}
@@ -106,5 +110,6 @@ export default function VedicView({ birth, actions }: { birth: BirthData; action
         Jyotish is a traditional symbolic system. These rule-based readings describe tendencies, not fixed events, and are not a substitute for medical, legal, financial or marital advice.
       </p>
     </div>
+    </ChartAccessProvider>
   )
 }

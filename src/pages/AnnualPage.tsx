@@ -4,6 +4,7 @@ import { ordinal } from '../astro/constants'
 import Segmented from '../components/Segmented'
 import Term from '../components/Term'
 import { ChartStyleToggle, VargaSquare } from '../components/vedic/ChartPair'
+import { ChartAccessProvider, Gate, PreviewBanner } from '../components/paywall/ChartAccess'
 import { AreaVerdict, EffectPill, ChartNav, RuleGroups } from '../components/vedic/ReportParts'
 import { fmtDate, fmtDateTime, fmtLon, rashiName } from '../components/vedic/format'
 import { useBirthFromHash, useVedicChart } from '../lib/useVedic'
@@ -28,6 +29,7 @@ export default function AnnualPage() {
   const year = age ?? current
 
   return (
+    <ChartAccessProvider birth={birth}>
     <div className="report">
       <ChartNav hash={hash} />
       <header className="report-head night">
@@ -46,9 +48,11 @@ export default function AnnualPage() {
           </div>
         </div>
       </header>
+      <PreviewBanner />
       {kind === 'varshaphal' && <YearAhead natal={chart} current={current} selected={year} onPick={setAge} />}
       {kind === 'varshaphal' ? <Varshaphal natal={chart} age={year} hash={hash} /> : <Tithi natal={chart} age={year} />}
     </div>
+    </ChartAccessProvider>
   )
 }
 
@@ -122,6 +126,7 @@ function Varshaphal({ natal, age, hash }: { natal: VedicChart; age: number; hash
       </div>
 
       <h2 className="section-title"><Term k="mudda">Month by month</Term></h2>
+      <Gate seed="mudda" lines={5}>
       <div className="card table-wrap">
         <table className="data-table">
           <thead><tr><th>Dates</th><th>Mudda period</th><th>Focus</th><th>Reading</th></tr></thead>
@@ -138,6 +143,7 @@ function Varshaphal({ natal, age, hash }: { natal: VedicChart; age: number; hash
         </table>
         <p className="muted small">Mudda dasha is Vimshottari compressed into the year, starting from (birth nakshatra number + age - 2) counted in Vimshottari order. Each period is read from its lord's dignity, house and lordship in the year chart; the focus is the houses it occupies and rules.</p>
       </div>
+      </Gate>
 
       <h2 className="section-title">Key dates</h2>
       <div className="card">

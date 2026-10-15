@@ -6,6 +6,7 @@ import type { TransitWindow } from '../../vedic/transits'
 import { yogaTone, type YogaResult } from '../../vedic/yogas'
 import Basis from '../Basis'
 import ToneBoard, { type BoardItem } from '../ToneBoard'
+import { LockedText, useChartAccess } from '../paywall/ChartAccess'
 import { fmtRange } from './format'
 import { TONE_LABEL } from '../InsightCard'
 
@@ -92,17 +93,18 @@ export function EffectPill({ effect, label, className = '' }: { effect: Effect; 
 /** The overall lean of a report, its strongest supporting factors and its main caution. */
 export function AreaVerdict({ s, compact }: { s: AreaSummary; compact?: boolean }) {
   const c = s.conditions
+  const { locked } = useChartAccess()
   return (
     <div className={`area-verdict-box ${compact ? 'compact' : ''}`}>
       <EffectPill effect={s.leaning} label={s.label} className="lean" />
       {(s.strengths.length > 0 || s.cautions.length > 0) && (
         <ul className="factors">
-          {s.strengths.map((t) => <li key={t} className="plus">{t}</li>)}
-          {s.cautions.map((t) => <li key={t} className="minus">{t}</li>)}
+          {s.strengths.map((t) => <li key={t} className="plus">{locked ? <LockedText seed={t} words={Math.max(4, Math.round(t.split(' ').length * 0.8))} /> : t}</li>)}
+          {s.cautions.map((t) => <li key={t} className="minus">{locked ? <LockedText seed={t} words={Math.max(4, Math.round(t.split(' ').length * 0.8))} /> : t}</li>)}
         </ul>
       )}
       <ConditionBar c={c} />
-      <span className="small muted">{compact ? `${c.supportive} supportive · ${c.challenging} challenging · ${c.checked} rules` : `${c.supportive} supportive, ${c.mixed} mixed and ${c.challenging} challenging, of ${c.checked} classical rules`}</span>
+      <span className="small muted">{compact ? `${c.supportive} supportive · ${c.mixed} mixed · ${c.challenging} challenging · ${c.checked} rules` : `${c.supportive} supportive, ${c.mixed} mixed and ${c.challenging} challenging, of ${c.checked} classical rules`}</span>
     </div>
   )
 }
@@ -121,6 +123,7 @@ export function MethodNote() {
 
 export function RuleGroups({ groups }: { groups: RuleGroup[] }) {
   const [showAll, setShowAll] = useState(false)
+  const { locked } = useChartAccess()
   const all = groups.flatMap((g) => g.results.map((r) => ({ r, group: g.title })))
   const fired = all.filter(({ r }) => r.fired).sort((a, b) => Math.abs(b.r.weight) - Math.abs(a.r.weight))
   const unmet = all.filter(({ r }) => !r.fired)
@@ -143,12 +146,14 @@ export function RuleGroups({ groups }: { groups: RuleGroup[] }) {
     <div className="rule-groups">
       <div className="rule-toolbar">
         <p className="muted small">{fired.length} of {all.length} rules apply to this chart, strongest first in each column</p>
-        <label className="check small">
-          <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show rules that do not apply
-        </label>
+        {!locked && (
+          <label className="check small">
+            <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} /> Show rules that do not apply
+          </label>
+        )}
       </div>
       <ToneBoard items={items} />
-      {showAll && unmet.length > 0 && (
+      {showAll && !locked && unmet.length > 0 && (
         <section className="unmet-block">
           <h3 className="sub-h">Rules that do not apply ({unmet.length})</h3>
           <ul className="unmet-list small">

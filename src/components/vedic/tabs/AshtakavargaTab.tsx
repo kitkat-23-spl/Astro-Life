@@ -5,6 +5,7 @@ import { BINDU_MEANING, ashtakavarga, kakshyaCheck, savByHouse, savReadings } fr
 import type { VedicChart } from '../../../vedic/sidereal'
 import { transitPositions } from '../../../vedic/transits'
 import Term from '../../Term'
+import { Gate } from '../../paywall/ChartAccess'
 import { ChartStyleToggle } from '../ChartPair'
 import SquareChart from '../SquareChart'
 import { rashiName } from '../format'
@@ -31,10 +32,12 @@ export default function AshtakavargaTab({ chart }: { chart: VedicChart }) {
           <h2><Term k="sav">Reading the totals</Term></h2>
           <p className="small">The seven planets give 337 bindus in all. 28 in a sign is average: more makes its house stronger and transits through it easier, fewer makes it weaker.</p>
           <p className="small"><strong>Strong houses (28+):</strong> {strong.join(', ') || 'none'}<br /><strong>Weak houses (under 25):</strong> {weak.join(', ') || 'none'}</p>
-          <div className="classical">
-            <ul>{savReadings(chart, av).map((r) => <li key={r.id} className={TONE_CLASS[r.tone]}>{r.text}</li>)}</ul>
-            <p className="classical-src">Charak XXX</p>
-          </div>
+          <Gate seed="sav" lines={4}>
+            <div className="classical">
+              <ul>{savReadings(chart, av).map((r) => <li key={r.id} className={TONE_CLASS[r.tone]}>{r.text}</li>)}</ul>
+              <p className="classical-src">Charak XXX</p>
+            </div>
+          </Gate>
         </div>
       </div>
 

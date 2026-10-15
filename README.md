@@ -84,6 +84,39 @@ A custom domain (for example a `.com` or `.in`, about ₹500 to ₹1,000 a year)
 
 **Checks.** `.github/workflows/ci.yml` runs the tests and a build on every push and pull request. It does not deploy.
 
+## Paid readings (Razorpay)
+
+The site can sell chart credits: 1 chart for ₹299, 2 for ₹499, 3 for ₹699 and 5 for ₹1,000. One credit unlocks every reading for one person's birth details, permanently; those details are then fixed to the credit. The chart, Panchang, matching and Learn stay free. Without `VITE_PAYWALL=on` everything is free and nothing below is needed.
+
+How it fits together:
+
+- `supabase/migrations/20261015000000_chart_credits.sql`: `purchases` and `unlocked_charts` tables (row-level security, users read only their own rows, no client writes) and the `chart_credits()` and `unlock_chart()` functions. Unlocked rows cannot be edited or deleted by users.
+- `supabase/functions/`: `create-order` (prices are set here, on the server), `verify-payment` (checks Razorpay's signature) and `razorpay-webhook` (marks payments paid or refunded even if the browser closed).
+- `src/lib/entitlements.tsx`, `src/components/paywall/`: the browser side. Locked readings are replaced with random blurred stand-in text, so the real text is not in the page. This is a soft paywall: the rules run in the browser, so a determined developer could still reproduce them.
+
+Setup, once Razorpay has approved your account:
+
+1. Run the migration in the Supabase SQL editor.
+2. Install the Supabase CLI, run `supabase login` and `supabase link --project-ref <ref>`, then:
+   ```
+   supabase functions deploy create-order verify-payment
+   supabase functions deploy razorpay-webhook --no-verify-jwt
+   supabase secrets set RAZORPAY_KEY_ID=rzp_... RAZORPAY_KEY_SECRET=... RAZORPAY_WEBHOOK_SECRET=... ALLOWED_ORIGINS=https://astro-life.vedic-astro.workers.dev
+   ```
+   The key secret and webhook secret live only in Supabase secrets, never in this repository or in Cloudflare.
+3. In the Razorpay dashboard, *Settings → Webhooks*, add `https://<ref>.supabase.co/functions/v1/razorpay-webhook` with the events `payment.captured`, `order.paid` and `refund.processed`, and the same webhook secret.
+4. In Cloudflare build variables add `VITE_PAYWALL=on`, `VITE_BUSINESS_NAME`, `VITE_CONTACT_EMAIL` and `VITE_CONTACT_ADDRESS` (shown on the Terms and Refunds pages, which Razorpay asks for), then redeploy. The build then also allows Razorpay in the Content Security Policy.
+5. Test with Razorpay test-mode keys first (`rzp_test_...`), then switch the secrets to live keys.
+
+To give someone credits by hand (a refund replacement, or for testing):
+
+```sql
+insert into public.purchases (user_id, pack, credits, amount_paise, provider, status, paid_at)
+values ('<user uuid>', 'manual', 1, 0, 'manual', 'paid', now());
+```
+
+To refund, refund the payment in the Razorpay dashboard; the webhook marks the purchase refunded and its credits stop counting.
+
 ## Security
 
 - **Row Level Security** on `charts`: users can only select, insert or delete their own rows. `anon` has no access, `user_id` defaults to `auth.uid()`, payload size is capped, and a trigger limits accounts to 100 charts.

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { PAYWALL } from './lib/paywall'
 import ErrorBoundary from './components/ErrorBoundary'
 import UserMenu from './components/UserMenu'
 import AccountPage from './pages/AccountPage'
@@ -11,6 +12,8 @@ import LessonPage from './pages/LessonPage'
 import MatchPage from './pages/MatchPage'
 import NotFound from './pages/NotFound'
 import PanchangPage from './pages/PanchangPage'
+import { RefundsPage, TermsPage } from './pages/PolicyPages'
+import PricingPage from './pages/PricingPage'
 import PrivacyPage from './pages/PrivacyPage'
 import ReportPage from './pages/ReportPage'
 import SettingsPage from './pages/SettingsPage'
@@ -60,6 +63,9 @@ export default function App() {
             <Route path="/learn/:slug" element={<LessonPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/refunds" element={<RefundsPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>
@@ -73,6 +79,9 @@ export default function App() {
             <Link to="/match">Match</Link>
             <Link to="/learn">Learn</Link>
             <Link to="/settings">Settings</Link>
+            {PAYWALL && <Link to="/pricing">Pricing</Link>}
+            <Link to="/terms">Terms</Link>
+            <Link to="/refunds">Refunds</Link>
             <Link to="/privacy">Privacy</Link>
           </nav>
         </div>

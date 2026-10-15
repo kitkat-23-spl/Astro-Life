@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GoogleIcon } from '../components/UserMenu'
 import { useAuth } from '../lib/auth'
+import { useEntitlements } from '../lib/entitlements'
+import { PAYWALL } from '../lib/paywall'
 import { deleteAccount, deleteAllCharts, deleteChart, listCharts, type SavedChart } from '../lib/charts'
 import { encodeBirth, isBirthData } from '../lib/share'
 import { authEnabled } from '../lib/supabase'
 
 export default function AccountPage() {
   const { user, loading, signInWithGoogle } = useAuth()
+  const { credits, unlocked } = useEntitlements()
   const [charts, setCharts] = useState<SavedChart[] | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -72,6 +75,31 @@ export default function AccountPage() {
         <h1>Your saved charts</h1>
       </header>
       {error && <p className="error">{error}</p>}
+      {PAYWALL && (
+        <section className="card credits-card">
+          <div className="credits-head">
+            <div>
+              <h2>Chart credits</h2>
+              <p className="small muted">{credits ? <><strong>{credits.remaining}</strong> left · {credits.used} used</> : 'Loading...'}</p>
+            </div>
+            <Link className="btn primary small" to="/pricing">Buy credits</Link>
+          </div>
+          {unlocked.length > 0 && (
+            <>
+              <h3>Unlocked charts</h3>
+              <p className="small muted">Each one used a credit. Their birth details are fixed and cannot be edited.</p>
+              <ul className="unlocked-list">
+                {unlocked.filter((u) => isBirthData(u.birth)).map((u) => (
+                  <li key={u.id}>
+                    <span><strong>{u.label}</strong> <span className="muted small">{u.birth.date}{u.birth.time ? ` · ${u.birth.time}` : ''} · {u.birth.place}</span></span>
+                    <Link className="btn ghost small" to={{ pathname: '/chart', hash: encodeBirth(u.birth) }}>Open</Link>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+      )}
       {charts === null && !error && <p className="muted">Loading…</p>}
       {charts?.length === 0 && (
         <p className="muted">No saved charts yet. <Link to="/chart">Create one</Link></p>
@@ -96,7 +124,7 @@ export default function AccountPage() {
       )}
       <p className="danger-zone small">
         <button className="btn danger small" onClick={removeAccount}>Delete my account</button>
-        <span className="muted">Removes your name, email and all saved charts from our database, and signs you out.</span>
+        <span className="muted">Removes your name, email and all saved charts from our database, and signs you out.{PAYWALL ? ' Unused credits and unlocked charts are lost.' : ''}</span>
       </p>
     </div>
   )
